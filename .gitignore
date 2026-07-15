@@ -1,0 +1,12 @@
+# Archivos temporales de Office
+~$*
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Visual Studio Code
+.vscode/
+
+# Logs
+*.log

@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0a; 
+    margin: 30px;
+    min-height: 100vh;
+    color: #fff;
+}
+
+h1 {
+    text-align: center;
+    color: #888;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 30px;
+}
+
+/* 5. GRILLA RESPONSIVE DENSA */
+#contenedor {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* 1. CONVERTIR EN CARD REAL */
+.tarjeta {
+    background: #141414; /* Fondo oscuro suave */
+    border: 1px solid #2a2a2a; /* Borde sutil */
+    border-radius: 12px; /* Esquinas redondeadas */
+    overflow: hidden;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    /* Limpio efectos anteriores */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    position: static;
+}
+
+.tarjeta::after {
+    display: none; /* Oculto el overlay raro que teníamos antes */
+}
+
+.tarjeta:hover {
+    transform: translateY(-4px); /* Se levanta poquito */
+    border-color: #555; /* Borde que se ilumina */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5); /* Sombra de elevación */
+}
+
+/* 2. IMAGEN AJUSTADA */
+.tarjeta img {
+    width: 100%;
+    height: 120px; /* Más compacta para que quepan más productos */
+    object-fit: cover;
+    display: block;
+    border-bottom: 1px solid #2a2a2a; /* Línea divisoria entre la foto y el texto */
+    transition: transform 0.2s ease;
+    filter: none; /* Limpio filtros anteriores */
+}
+
+.tarjeta:hover img {
+    transform: scale(1.03); /* Zoom súper sutil al pasar el mouse */
+}
+
+/* CUERPO DE LA TARJETA */
+.info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* Separación ordenada entre elementos */
+    /* Limpio fondos anteriores */
+    background: transparent;
+    backdrop-filter: none;
+}
+
+.info h2 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Si el nombre es largo, pone "..." */
+    /* Limpio efectos neón anteriores */
+    transition: none;
+    text-shadow: none;
+}
+
+.tarjeta:hover .info h2 {
+    color: #fff; /* Al hacer hover, el texto se pone blancura total, nada de neón */
+}
+
+/* 4. CATEGORÍA COMO CHIP/TAG */
+.info p {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 999px; /* Forma de pastilla */
+    background: rgba(255, 255, 255, 0.05);
+    color: #aaa;
+    border: 1px solid #333;
+    align-self: flex-start; /* El chip no se estira hasta el final, ocupa solo lo que mide el texto */
+    text-transform: uppercase; /* Todo en mayúsculas para que parezca un tag */
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin: 0 !important; /* Limpio márgenes por defecto del párrafo */
+}
+
+/* 3. BADGE DE STOCK */
+/* 
+   NOTA IMPORTANTE: 
+   Como no podemos tocar el JS, CSS no puede "leer" el número para saber si es alto o bajo 
+   y ponerlo rojo o verde automáticamente. Te lo dejo con el formato de "Badge" verde pulido. 
+*/
+.stock {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 999px; /* Forma de badge redondo */
+    background: rgba(34,197,94,0.15); /* Verde translúcido */
+    color: #22c55e; /* Texto verde */
+    align-self: flex-start;
+    font-weight: 600;
+    /* Limpio estilos de borde grueso anteriores */
+    border: none;
+    letter-spacing: 0px;
+    display: inline-block;
+}
