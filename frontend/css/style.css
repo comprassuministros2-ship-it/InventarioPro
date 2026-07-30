@@ -130,4 +130,28 @@ h1 {
     border: none;
     letter-spacing: 0px;
     display: inline-block;
+}body::before {
+    content: "🚀 HOLA MUNDO - InventarioPro desde la PC del trabajo";
+    display: block;
+    text-align: center;
+    padding: 14px;
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #00ff88;
+    background: rgba(0,255,136,.08);
+    border: 1px solid #00ff88;
+    border-radius: 10px;
+    animation: aparecer 1s ease;
+}
+
+@keyframes aparecer{
+    from{
+        opacity:0;
+        transform:translateY(-20px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
 }
