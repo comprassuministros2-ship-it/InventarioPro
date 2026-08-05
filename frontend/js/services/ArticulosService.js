@@ -6,8 +6,7 @@ class ArticulosService {
 
     async obtenerArticulos() {
 
-        // Próximamente:
-        // Obtener artículos desde la API
+        return await this.api.get();
 
     }
 

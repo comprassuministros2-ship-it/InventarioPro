@@ -4,17 +4,15 @@ class ApiService {
         this.baseUrl = CONFIG.API.BASE_URL;
     }
 
-    async get(endpoint) {
+    async get() {
 
-        // Próximamente:
-        // Conexión con Apps Script
+        const response = await fetch(this.baseUrl);
 
-    }
+        if (!response.ok) {
+            throw new Error("Error al conectar con la API");
+        }
 
-    async post(endpoint, data) {
-
-        // Próximamente:
-        // Envío de datos
+        return await response.json();
 
     }
 
