@@ -9,53 +9,81 @@
 </head>
 
 <body>
-
-<header></header>
-
-<main>
-
-    <section class="buscador-wrapper" role="search" aria-label="Buscar artículos en el inventario">
-        <div class="buscador-glow">
-            <div class="buscador-input-contenedor">
-                <svg
-                    class="buscador-icono"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                >
-                    <circle cx="11" cy="11" r="7"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input
-                    type="text"
-                    id="inputBusqueda"
-                    class="buscador-input"
-                    aria-label="Buscar artículos por nombre, ID, categoría o patrimonio"
-                    autocomplete="off"
-                    spellcheck="false"
-                >
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar" aria-hidden="false">
+            <div class="sidebar-logo">
+                <span class="sidebar-logo-dot"></span>
+                <span class="sidebar-logo-text">InventarioPro</span>
             </div>
-        </div>
-        <p id="buscadorInfo" class="buscador-info" aria-live="polite"></p>
-    </section>
 
-    <div id="contenedor"></div>
+            <nav class="sidebar-nav" aria-label="Navegación principal">
+                <a href="#" class="sidebar-link is-active">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                    <span>Inventario</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+                    <span>Movimientos</span>
+                </a>
+                <a href="#" class="sidebar-link">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>
+                    <span>Reportes</span>
+                </a>
+            </nav>
 
-</main>
+            <div class="sidebar-footer">
+                <a href="#" class="sidebar-link">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    <span>Configuración</span>
+                </a>
+            </div>
+        </aside>
 
-<footer></footer>
+        <header class="topbar">
+            <button class="topbar-menu-btn" id="btnMenu" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false" type="button">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="topbar-title">
+                <h1>Inventario</h1>
+                <p>Gestión de artículos y stock</p>
+            </div>
 
-<script src="js/Config.js"></script>
-<script src="js/services/ApiService.js"></script>
-<script src="js/services/ArticulosService.js"></script>
-<script src="js/script.js"></script>
+            <section class="buscador-wrapper" role="search" aria-label="Buscar artículos en el inventario">
+                <div class="buscador-glow">
+                    <div class="buscador-input-contenedor">
+                        <svg class="buscador-icono" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="inputBusqueda" class="buscador-input" placeholder="Buscar por nombre, ID, categoría o patrimonio..." aria-label="Buscar artículos por nombre, ID, categoría o patrimonio" autocomplete="off" spellcheck="false">
+                    </div>
+                </div>
+                <p id="buscadorInfo" class="buscador-info" aria-live="polite"></p>
+            </section>
 
+            <div class="topbar-actions">
+                <button class="btn btn-ghost" type="button">Exportar</button>
+                <button class="btn btn-primary" type="button">+ Nuevo artículo</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div id="contenedor"></div>
+        </main>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+    <footer></footer>
+
+    <script src="js/Config.js"></script>
+    <script src="js/services/ApiService.js"></script>
+    <script src="js/services/ArticulosService.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/sidebar.js"></script>
 </body>
 
 </html>
