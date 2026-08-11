@@ -41,19 +41,23 @@ body {
     top: 0;
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 20px;
     width: 240px;
     height: 100vh;
     padding: 24px 16px;
+    overflow: hidden;
     background: #111111;
     border-right: 1px solid #232323;
+}
+
+.sidebar-brand {
+    padding: 0 8px;
 }
 
 .sidebar-logo {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 0 8px;
 }
 
 .sidebar-logo-dot {
@@ -66,25 +70,52 @@ body {
 }
 
 .sidebar-logo-text {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    letter-spacing: 0.2px;
+    letter-spacing: 0.4px;
+}
+
+.sidebar-version {
+    margin-top: 5px;
+    color: #6f6f6f;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.7px;
 }
 
 .sidebar-nav {
     display: flex;
     flex: 1;
     flex-direction: column;
+    gap: 18px;
+    min-height: 0;
+    padding-right: 4px;
+    overflow-y: auto;
+}
+
+.sidebar-nav-group {
+    display: flex;
+    flex-direction: column;
     gap: 4px;
+}
+
+.sidebar-section-title {
+    margin: 0 0 5px;
+    padding: 0 12px;
+    color: #666666;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
 }
 
 .sidebar-link {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
+    padding: 9px 12px;
     color: #a3a3a3;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     text-decoration: none;
     border-radius: 9px;
@@ -107,8 +138,78 @@ body {
 }
 
 .sidebar-footer {
-    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 14px;
     border-top: 1px solid #232323;
+}
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 4px;
+}
+
+.sidebar-user-avatar {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    color: #0a0a0a;
+    font-size: 11px;
+    font-weight: 600;
+    background: #38bdf8;
+    border-radius: 50%;
+}
+
+.sidebar-user-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sidebar-user-name {
+    overflow: hidden;
+    color: #e5e5e5;
+    font-size: 12px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-user-role {
+    overflow: hidden;
+    margin-top: 2px;
+    color: #777777;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    color: #a3a3a3;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: left;
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    color: #ffffff;
+    border-color: #444444;
 }
 
 /* Fondo oscuro detrás del menú móvil */
@@ -165,8 +266,6 @@ body {
     gap: 10px;
     margin-left: auto;
 }
-
-/* Botones generales del header */
 
 .btn {
     padding: 9px 16px;
@@ -306,7 +405,7 @@ body {
 }
 
 /* =========================================================
-   7. FILTROS DE INVENTARIO
+   7. FILTROS POR CATEGORÍA
    ========================================================= */
 
 .filtros-wrapper {
@@ -317,11 +416,6 @@ body {
     max-width: 1200px;
     margin: 0 auto 24px;
 }
-
-/*
-   Este selector apunta directamente a los botones:
-   <button data-filtro="todos">
-*/
 
 .filtros-wrapper button[data-filtro] {
     appearance: none;
@@ -347,138 +441,24 @@ body {
     outline-offset: 2px;
 }
 
-/* Estado activo: TODOS */
+/* Categoría seleccionada */
 
-.filtros-wrapper button[data-filtro="todos"].is-active {
+.filtros-wrapper button[data-filtro].is-active {
     color: #0a0a0a;
     background: #38bdf8;
     border-color: #38bdf8;
 }
 
-/* Estado activo: DISPONIBLES */
-
-.filtros-wrapper button[data-filtro="disponibles"].is-active {
-    color: #052e16;
-    background: #22c55e;
-    border-color: #22c55e;
-}
-
-/* Estado activo: STOCK BAJO */
-
-.filtros-wrapper button[data-filtro="stock-bajo"].is-active {
-    color: #451a03;
-    background: #f59e0b;
-    border-color: #f59e0b;
-}
-
-/* Estado activo: SIN STOCK */
-
-.filtros-wrapper button[data-filtro="sin-stock"].is-active {
-    color: #450a0a;
-    background: #ef4444;
-    border-color: #ef4444;
-}
-
 /* =========================================================
-   8. CONTENEDOR Y TARJETAS DE ARTÍCULOS
+   8. TABLA DE INVENTARIO
    ========================================================= */
 
 #contenedor {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-.tarjeta {
-    position: static;
-    overflow: hidden;
-    background: #141414;
-    border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    box-shadow: none;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.tarjeta:hover {
-    border-color: #555555;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-    transform: translateY(-4px);
-}
-
-.tarjeta img {
-    display: block;
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    border-bottom: 1px solid #2a2a2a;
-    transition: transform 0.2s ease;
-}
-
-.tarjeta:hover img {
-    transform: scale(1.03);
-}
-
-.info {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px;
-}
-
-.info h2 {
-    overflow: hidden;
-    color: #e0e0e0;
-    font-size: 0.95rem;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.tarjeta:hover .info h2 {
-    color: #ffffff;
-}
-
-.info p {
-    align-self: flex-start;
-    margin: 0 !important;
-    padding: 3px 8px;
-    color: #aaaaaa;
-    font-size: 0.65rem;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid #333333;
-    border-radius: 999px;
-}
-
-.stock {
-    display: inline-block;
-    align-self: flex-start;
-    padding: 4px 10px;
-    color: #22c55e;
-    font-size: 0.75rem;
-    font-weight: 600;
-    background: rgba(34, 197, 94, 0.15);
-    border-radius: 999px;
-}
-
-.sin-resultados {
-    grid-column: 1 / -1;
-    padding: 40px 20px;
-    color: #888888;
-    font-size: 0.9rem;
-    text-align: center;
-}
-
-/* =========================================================
-   9. TABLA DE INVENTARIO
-   ========================================================= */
-
 .tabla-inventario-wrapper {
-    grid-column: 1 / -1;
     width: 100%;
     overflow-x: auto;
     background: #141414;
@@ -488,15 +468,16 @@ body {
 
 .tabla-inventario {
     width: 100%;
-    min-width: 480px;
+    min-width: 860px;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
 }
 
 .tabla-inventario thead th {
     position: sticky;
     top: 0;
-    padding: 10px 16px;
+    z-index: 1;
+    padding: 12px 16px;
     color: #888888;
     font-size: 0.68rem;
     font-weight: 600;
@@ -508,7 +489,7 @@ body {
 }
 
 .tabla-inventario tbody td {
-    padding: 10px 16px;
+    padding: 12px 16px;
     color: #cccccc;
     vertical-align: middle;
     border-bottom: 1px solid #202020;
@@ -522,10 +503,13 @@ body {
     background: #1a1a1a;
 }
 
+/* Primera columna: icono, nombre e ID */
+
 .item-celda {
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 210px;
 }
 
 .item-icono-placeholder {
@@ -533,28 +517,98 @@ body {
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    color: #555555;
+    width: 34px;
+    height: 34px;
+    color: #6d6d6d;
     background: #1f1f1f;
-    border: 1px solid #2a2a2a;
+    border: 1px solid #303030;
     border-radius: 8px;
 }
 
 .item-nombre {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+    min-width: 0;
 }
 
 .item-nombre .nombre {
-    color: #e0e0e0;
-    font-weight: 500;
+    overflow: hidden;
+    color: #e8e8e8;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .item-nombre .id {
-    color: #666666;
+    color: #707070;
     font-size: 0.7rem;
+}
+
+/* Badges de tabla */
+
+.categoria-badge,
+.estado-stock,
+.acciones-articulo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 4px 8px;
+    color: #a3a3a3;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #303030;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.categoria-badge {
+    color: #bae6fd;
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.22);
+}
+
+.estado-stock,
+.acciones-articulo {
+    color: #777777;
+}
+
+/* Mensaje cuando no existen resultados */
+
+.sin-resultados {
+    padding: 40px 20px;
+    color: #888888;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* =========================================================
+   9. ELEMENTOS LEGADOS
+   Se mantienen por compatibilidad con el render anterior.
+   ========================================================= */
+
+.tarjeta {
+    overflow: hidden;
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+}
+
+.tarjeta img {
+    display: block;
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.info {
+    padding: 12px;
+}
+
+.stock {
+    color: #22c55e;
 }
 
 /* =========================================================
@@ -611,7 +665,6 @@ body {
         transition: opacity 0.25s ease, visibility 0s linear 0.25s;
     }
 
-    .sidebar.is-open ~ .sidebar-overlay,
     .sidebar-overlay.is-visible {
         visibility: visible;
         pointer-events: auto;
@@ -625,11 +678,6 @@ body {
 
     .main-content {
         padding: 24px;
-    }
-
-    .tabla-inventario {
-        min-width: 420px;
-        font-size: 0.8rem;
     }
 }
 
@@ -657,13 +705,13 @@ body {
 }
 
 @media (max-width: 480px) {
-    #contenedor {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 12px;
-    }
-
     .topbar-actions .btn-primary {
         padding: 8px 10px;
         font-size: 12px;
+    }
+
+    .filtros-wrapper button[data-filtro] {
+        padding: 7px 12px;
+        font-size: 0.7rem;
     }
 }

@@ -1,3 +1,4 @@
+
 // ==========================
 // Estado en memoria
 // ==========================
@@ -49,32 +50,86 @@ function renderizarArticulos(datos) {
         return;
     }
 
-    let html = "";
+    const textoSeguro = valor => {
+        const texto = valor === null || valor === undefined || valor === ""
+            ? "—"
+            : String(valor);
+
+        return texto
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    let filas = "";
 
     datos.forEach(item => {
-        html += `
-        <div class="tarjeta">
-            <img
-                src="https://ui-avatars.com/api/?name=${item.articulo}&background=random&color=fff&bold=true&size=128"
-                alt="${item.articulo}"
-            >
+        filas += `
+            <tr>
+                <td>
+                    <div class="item-celda">
+                        <span class="item-icono-placeholder" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
+                                <path d="M3.3 7L12 12l8.7-5"></path>
+                                <path d="M12 22V12"></path>
+                            </svg>
+                        </span>
 
-            <div class="info">
-                <h2>${item.articulo}</h2>
+                        <div class="item-nombre">
+                            <span class="nombre">${textoSeguro(item.articulo)}</span>
+                            <span class="id">ID: ${textoSeguro(item.id)}</span>
+                        </div>
+                    </div>
+                </td>
 
-                <div class="stock">
-                    Stock: ${item.stockIni}
-                </div>
+                <td>
+                    <span class="categoria-badge">
+                        ${textoSeguro(item.categoriaID)}
+                    </span>
+                </td>
 
-                <p>
-                    Categoría: ${item.categoriaID}
-                </p>
-            </div>
-        </div>
+                <td>—</td>
+
+                <td>${textoSeguro(item.stockIni)}</td>
+
+                <td>
+                    <span class="estado-stock">—</span>
+                </td>
+
+                <td>—</td>
+
+                <td>
+                    <span class="acciones-articulo">—</span>
+                </td>
+            </tr>
         `;
     });
 
-    contenedor.innerHTML = html;
+    contenedor.innerHTML = `
+        <div class="tabla-inventario-wrapper">
+            <table class="tabla-inventario">
+                <thead>
+                    <tr>
+                        <th>Artículo</th>
+                        <th>Categoría</th>
+                        <th>Ubicación</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        <th>Tipo</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${filas}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 // ==========================
@@ -132,22 +187,18 @@ function aplicarFiltro(datos) {
         return [];
     }
 
+    if (filtroActivo === "todos") {
+        return datos;
+    }
+
+    const filtroNormalizado = normalizarTexto(filtroActivo)
+        .replace(/[-_]+/g, " ");
+
     return datos.filter(item => {
-        const stock = obtenerStock(item);
+        const categoriaNormalizada = normalizarTexto(item.categoriaID)
+            .replace(/[-_]+/g, " ");
 
-        if (filtroActivo === "disponibles") {
-            return stock > 0;
-        }
-
-        if (filtroActivo === "stock-bajo") {
-            return stock >= 1 && stock <= 5;
-        }
-
-        if (filtroActivo === "sin-stock") {
-            return stock === 0;
-        }
-
-        return true;
+        return categoriaNormalizada === filtroNormalizado;
     });
 }
 
