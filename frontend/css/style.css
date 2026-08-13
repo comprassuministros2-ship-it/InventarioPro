@@ -409,44 +409,107 @@ body {
    ========================================================= */
 
 .filtros-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
     max-width: 1200px;
     margin: 0 auto 24px;
 }
 
-.filtros-wrapper button[data-filtro] {
-    appearance: none;
-    padding: 8px 14px;
-    color: #a3a3a3;
-    font-family: "Inter", sans-serif;
-    font-size: 0.75rem;
-    font-weight: 600;
+.filtros-barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
     background: #141414;
     border: 1px solid #2a2a2a;
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    border-radius: 12px;
 }
 
-.filtros-wrapper button[data-filtro]:hover {
+.filtros-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.filtros-titulo {
+    color: #a3a3a3;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.filtro-todos {
+    padding: 7px 14px;
+    color: #a3a3a3;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: #1d1d1d;
+    border: 1px solid #343434;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.filtro-todos:hover {
     color: #ffffff;
     border-color: #555555;
 }
 
-.filtros-wrapper button[data-filtro]:focus-visible {
-    outline: 2px solid #38bdf8;
-    outline-offset: 2px;
-}
-
-/* Categoría seleccionada */
-
-.filtros-wrapper button[data-filtro].is-active {
+.filtro-todos.is-active {
     color: #0a0a0a;
     background: #38bdf8;
     border-color: #38bdf8;
+}
+
+.filtro-select-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filtro-select-label {
+    color: #777777;
+    font-size: 0.75rem;
+}
+
+.filtro-select {
+    min-width: 230px;
+    padding: 8px 34px 8px 12px;
+    color: #e5e5e5;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: #0f0f0f;
+    border: 1px solid #343434;
+    border-radius: 8px;
+    cursor: pointer;
+    outline: none;
+}
+
+.filtro-select:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+}
+
+.filtro-select option {
+    color: #e5e5e5;
+    background: #171717;
+}
+
+@media (max-width: 650px) {
+    .filtros-barra {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .filtro-select-wrapper {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .filtro-select {
+        width: 100%;
+    }
 }
 
 /* =========================================================

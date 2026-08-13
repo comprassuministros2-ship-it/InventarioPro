@@ -113,15 +113,15 @@ function renderizarArticulos(datos) {
         <div class="tabla-inventario-wrapper">
             <table class="tabla-inventario">
                 <thead>
-                    <tr>
-                        <th>Artículo</th>
-                        <th>Categoría</th>
-                        <th>Ubicación</th>
-                        <th>Stock</th>
-                        <th>Estado</th>
-                        <th>Tipo</th>
-                        <th>Acciones</th>
-                    </tr>
+                   <tr>
+    <th>Artículo</th>
+    <th>Stock</th>
+    <th>Categoría</th>
+    <th>Estado</th>
+    <th>Ubicación</th>
+    <th>Acciones</th>
+    <th>Tipo</th>
+</tr>
                 </thead>
 
                 <tbody>
@@ -316,29 +316,38 @@ function configurarBuscador() {
 // Configuración de filtros
 // ==========================
 function configurarFiltros() {
-    const chips = document.querySelectorAll(".chip");
+    const botonTodos = document.querySelector(".filtro-todos");
+    const selectCategoria = document.getElementById("selectCategoria");
     const input = document.getElementById("inputBusqueda");
 
-    chips.forEach(chip => {
-        chip.addEventListener("click", () => {
-            const nuevoFiltro = chip.dataset.filtro;
+    if (!botonTodos || !selectCategoria) return;
 
-            if (!nuevoFiltro) return;
+    function actualizarVista() {
+        const valor = input ? input.value : "";
+        const resultados = aplicarFiltro(filtrarArticulos(valor));
 
-            filtroActivo = nuevoFiltro;
+        renderizarArticulos(resultados);
+        actualizarInfoResultados(resultados.length, valor);
+    }
 
-            chips.forEach(item => {
-                item.classList.remove("is-active");
-            });
+    botonTodos.addEventListener("click", () => {
+        filtroActivo = "todos";
 
-            chip.classList.add("is-active");
+        botonTodos.classList.add("is-active");
+        selectCategoria.value = "";
 
-            const valor = input ? input.value : "";
-            const resultados = aplicarFiltro(filtrarArticulos(valor));
+        actualizarVista();
+    });
 
-            renderizarArticulos(resultados);
-            actualizarInfoResultados(resultados.length, valor);
-        });
+    selectCategoria.addEventListener("change", () => {
+        filtroActivo = selectCategoria.value || "todos";
+
+        botonTodos.classList.toggle(
+            "is-active",
+            filtroActivo === "todos"
+        );
+
+        actualizarVista();
     });
 }
 

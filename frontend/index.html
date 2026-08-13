@@ -215,22 +215,44 @@
 
         <main class="main-content">
             <section class="filtros-wrapper" aria-label="Filtros por categoría">
-                <button class="chip is-active" type="button" data-filtro="todos">Todos</button>
-                <button class="chip" type="button" data-filtro="merchandig">Merchandig</button>
-                <button class="chip" type="button" data-filtro="pml">PML</button>
-                <button class="chip" type="button" data-filtro="bebidas">Bebidas</button>
-                <button class="chip" type="button" data-filtro="libreria">Libreria</button>
-                <button class="chip" type="button" data-filtro="juegos">Juegos</button>
-                <button class="chip" type="button" data-filtro="indumentaria">Indumentaria</button>
-                <button class="chip" type="button" data-filtro="cascos-mercomax">Cascos Mercomax</button>
-                <button class="chip" type="button" data-filtro="impresoras-zx">Impresoras Zx</button>
-                <button class="chip" type="button" data-filtro="pda">PDA</button>
-                <button class="chip" type="button" data-filtro="mobiliario">Mobiliario</button>
-                <button class="chip" type="button" data-filtro="bicicletas-futura">Bicicletas Futura</button>
-                <button class="chip" type="button" data-filtro="emergencias">Emergencias</button>
-                <button class="chip" type="button" data-filtro="ceremonial">Ceremonial</button>
-                <button class="chip" type="button" data-filtro="seguridad-vial">Seguridad Vial</button>
-            </section>
+    <div class="filtros-barra">
+        <div class="filtros-info">
+            <span class="filtros-titulo">Categorías</span>
+
+            <button
+                class="filtro-todos is-active"
+                type="button"
+                data-filtro="todos"
+            >
+                Todas
+            </button>
+        </div>
+
+        <div class="filtro-select-wrapper">
+            <label class="filtro-select-label" for="selectCategoria">
+                Filtrar por categoría
+            </label>
+
+            <select id="selectCategoria" class="filtro-select">
+                <option value="">Seleccionar categoría</option>
+                <option value="merchandig">Merchandig</option>
+                <option value="pml">PML</option>
+                <option value="bebidas">Bebidas</option>
+                <option value="libreria">Libreria</option>
+                <option value="juegos">Juegos</option>
+                <option value="indumentaria">Indumentaria</option>
+                <option value="cascos-mercomax">Cascos Mercomax</option>
+                <option value="impresoras-zx">Impresoras Zx</option>
+                <option value="pda">PDA</option>
+                <option value="mobiliario">Mobiliario</option>
+                <option value="bicicletas-futura">Bicicletas Futura</option>
+                <option value="emergencias">Emergencias</option>
+                <option value="ceremonial">Ceremonial</option>
+                <option value="seguridad-vial">Seguridad Vial</option>
+            </select>
+        </div>
+    </div>
+</section>
 
             <div id="contenedor"></div>
         </main>
