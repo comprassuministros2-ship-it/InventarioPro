@@ -1,3 +1,141 @@
+// ==========================
+// Utilidades de búsqueda
+// ==========================
+function normalizarTexto(valor) {
+    return (valor ?? "")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
+
+// Filtra el listado global `articulos` según el término de búsqueda.
+// Si no se pasa `termino`, lo toma del input #buscador (ajustar id si difiere).
+function aplicarFiltro(termino = document.getElementById("buscador")?.value ?? "") {
+    const terminoNormalizado = normalizarTexto(termino);
+
+    if (!terminoNormalizado) {
+        return articulos;
+    }
+
+    return articulos.filter(item => {
+        const campos = [
+            item.articulo,
+            item.id,
+            item.categoriaID,
+            item.patrimonio
+        ];
+
+        return campos.some(campo =>
+            normalizarTexto(campo).includes(terminoNormalizado)
+        );
+    });
+}
+
+// ==========================
+// Render de artículos
+// ==========================
+function renderizarArticulos(datos) {
+    const contenedor = document.getElementById("contenedor");
+    if (!contenedor) return;
+
+    if (!datos || datos.length === 0) {
+        contenedor.innerHTML = `
+            <p class="sin-resultados">
+                No se encontraron artículos que coincidan con la búsqueda.
+            </p>
+        `;
+        return;
+    }
+
+    const textoSeguro = valor => {
+        const texto = valor === null || valor === undefined || valor === ""
+            ? "—"
+            : String(valor);
+
+        return texto
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    let filas = "";
+
+    datos.forEach(item => {
+        filas += `
+            <tr>
+                <td>
+                    <div class="item-celda">
+                        <span class="item-icono-placeholder" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
+                                <path d="M3.3 7L12 12l8.7-5"></path>
+                                <path d="M12 22V12"></path>
+                            </svg>
+                        </span>
+
+                        <div class="item-nombre">
+                            <span class="nombre">${textoSeguro(item.articulo)}</span>
+                            <span class="id">ID: ${textoSeguro(item.id)}</span>
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Stock -->
+                <td>${textoSeguro(item.stockIni)}</td>
+
+                <!-- Categoría -->
+                <td>
+                    <span class="categoria-badge">
+                        ${textoSeguro(item.categoriaID)}
+                    </span>
+                </td>
+
+                <!-- Estado (falta lógica: derivar de stockIni, ej. stockIni <= item.stockMin) -->
+                <td>
+                    <span class="estado-stock">—</span>
+                </td>
+
+                <!-- Ubicación (falta campo en el objeto item, ej. item.ubicacion) -->
+                <td>—</td>
+
+                <!-- Acciones -->
+                <td>
+                    <span class="acciones-articulo">—</span>
+                </td>
+
+                <!-- Tipo (falta campo en el objeto item, ej. item.tipo) -->
+                <td>—</td>
+            </tr>
+        `;
+    });
+
+    contenedor.innerHTML = `
+        <div class="tabla-inventario-wrapper">
+            <table class="tabla-inventario">
+                <thead>
+                    <tr>
+                        <th>Artículo</th>
+                        <th>Stock</th>
+                        <th>Categoría</th>
+                        <th>Estado</th>
+                        <th>Ubicación</th>
+                        <th>Acciones</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${filas}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
 
 // ==========================
 // Estado en memoria
@@ -27,7 +165,7 @@ async function cargarArticulos() {
 
         articulos = Array.isArray(datos) ? datos : [];
 
-        renderizarArticulos(aplicarFiltro(articulos));
+        renderizarArticulos(aplicarFiltroCategoria(articulos));
     } catch (error) {
         console.error("Error cargando artículos:", error);
     }
@@ -94,13 +232,13 @@ function renderizarArticulos(datos) {
 
                 <td>—</td>
 
+                <td>—</td>
+
                 <td>${textoSeguro(item.stockIni)}</td>
 
                 <td>
                     <span class="estado-stock">—</span>
                 </td>
-
-                <td>—</td>
 
                 <td>
                     <span class="acciones-articulo">—</span>
@@ -113,15 +251,15 @@ function renderizarArticulos(datos) {
         <div class="tabla-inventario-wrapper">
             <table class="tabla-inventario">
                 <thead>
-                   <tr>
-    <th>Artículo</th>
-    <th>Stock</th>
-    <th>Categoría</th>
-    <th>Estado</th>
-    <th>Ubicación</th>
-    <th>Acciones</th>
-    <th>Tipo</th>
-</tr>
+                    <tr>
+                        <th>Artículo</th>
+                        <th>Categoría</th>
+                        <th>Ubicación</th>
+                        <th>Tipo</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
                 </thead>
 
                 <tbody>
@@ -182,7 +320,7 @@ function obtenerStock(item) {
     return Number.isFinite(stock) ? stock : 0;
 }
 
-function aplicarFiltro(datos) {
+function aplicarFiltroCategoria(datos) {
     if (!Array.isArray(datos)) {
         return [];
     }
@@ -305,7 +443,8 @@ function configurarBuscador() {
             reanudarPlaceholderAnimado(input);
         }
 
-        const resultados = aplicarFiltro(filtrarArticulos(valor));
+        const resultados =
+            aplicarFiltroCategoria(filtrarArticulos(valor));
 
         renderizarArticulos(resultados);
         actualizarInfoResultados(resultados.length, valor);
@@ -324,7 +463,8 @@ function configurarFiltros() {
 
     function actualizarVista() {
         const valor = input ? input.value : "";
-        const resultados = aplicarFiltro(filtrarArticulos(valor));
+        const resultados =
+            aplicarFiltroCategoria(filtrarArticulos(valor));
 
         renderizarArticulos(resultados);
         actualizarInfoResultados(resultados.length, valor);
