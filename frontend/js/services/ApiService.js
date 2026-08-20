@@ -1,38 +1,63 @@
-class ApiService {
+function doGet() {
 
-    constructor() {
-        this.baseUrl = CONFIG.API.BASE_URL;
-    }
+  const resultado = obtenerArticulos();
 
-    async get() {
-
-        const response = await fetch(this.baseUrl);
-
-        if (!response.ok) {
-            throw new Error("Error al conectar con la API");
-        }
-
-        return await response.json();
-
-    }
-
-    async post(datos) {
-
-        const response = await fetch(this.baseUrl, {
-            method: "POST",
-            // Apps Script requiere text/plain para evitar problemas de CORS
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify(datos)
-        });
-
-        if (!response.ok) {
-            throw new Error("Error al conectar con la API");
-        }
-
-        return await response.json();
-
-    }
+  return ContentService
+    .createTextOutput(JSON.stringify(resultado))
+    .setMimeType(ContentService.MimeType.JSON);
 
 }
 
-const apiService = new ApiService();
+/**
+ * Punto de entrada para escritura (POST)
+ */
+function doPost(e) {
+
+  const body = JSON.parse(e.postData.contents);
+
+  let resultado;
+
+  switch (body.accion) {
+
+    case "actualizarStock":
+      resultado = actualizarStock(body.id, body.stock);
+      break;
+
+    default:
+      resultado = { exito: false, error: "Acción no reconocida" };
+
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify(resultado))
+    .setMimeType(ContentService.MimeType.JSON);
+
+}
+
+/**
+ * Actualiza el stock de un artículo puntual buscándolo por ID
+ */
+function actualizarStock(id, nuevoStock) {
+
+  const hoja = SpreadsheetApp
+    .getActiveSpreadsheet()
+    .getSheetByName("API_Prueba");
+
+  const datos = hoja.getDataRange().getValues();
+
+  for (let i = 1; i < datos.length; i++) {
+
+    if (datos[i][0] == id) {
+
+      // Columna C = stockInicial (índice 2 en el array, columna 3 en la hoja)
+      hoja.getRange(i + 1, 3).setValue(nuevoStock);
+
+      return { exito: true, id: id, nuevoStock: nuevoStock };
+
+    }
+
+  }
+
+  return { exito: false, error: "Artículo no encontrado" };
+
+}
