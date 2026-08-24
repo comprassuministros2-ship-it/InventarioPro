@@ -1,41 +1,4 @@
 // ==========================
-// Utilidades de búsqueda
-// ==========================
-function normalizarTexto(valor) {
-    return (valor ?? "")
-        .toString()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
-}
-
-// Filtra el listado global `articulos` según el término de búsqueda.
-// Si no se pasa `termino`, lo toma del input #buscador (ajustar id si difiere).
-// NOTA: esta función no se llama desde ningún lado actualmente (la búsqueda
-// real la resuelve `filtrarArticulos`, más abajo). Se deja sin tocar.
-function aplicarFiltro(termino = document.getElementById("buscador")?.value ?? "") {
-    const terminoNormalizado = normalizarTexto(termino);
-
-    if (!terminoNormalizado) {
-        return articulos;
-    }
-
-    return articulos.filter(item => {
-        const campos = [
-            item.articulo,
-            item.id,
-            item.categoriaID,
-            item.patrimonio
-        ];
-
-        return campos.some(campo =>
-            normalizarTexto(campo).includes(terminoNormalizado)
-        );
-    });
-}
-
-// ==========================
 // Estado en memoria
 // ==========================
 let articulos = [];
@@ -63,14 +26,14 @@ async function cargarArticulos() {
 
         articulos = Array.isArray(datos) ? datos : [];
 
-        renderizarArticulos(aplicarFiltroCategoria(articulos));
+        renderizarArticulos(aplicarFiltro(articulos));
     } catch (error) {
         console.error("Error cargando artículos:", error);
     }
 }
 
 // ==========================
-// Render de artículos
+// Render — data table de Inventario General
 // ==========================
 function renderizarArticulos(datos) {
     const contenedor = document.getElementById("contenedor");
@@ -86,97 +49,57 @@ function renderizarArticulos(datos) {
         return;
     }
 
-    const textoSeguro = valor => {
-        const texto = valor === null || valor === undefined || valor === ""
-            ? "—"
-            : String(valor);
-
-        return texto
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    };
-
     let filas = "";
 
-    datos.forEach(item => {
-        filas += `
-            <tr>
-                <td>
-                    <div class="item-celda">
-                        <span class="item-icono-placeholder" aria-hidden="true">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                                stroke="currentColor" stroke-width="2">
-                                <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"></path>
-                                <path d="M3.3 7L12 12l8.7-5"></path>
-                                <path d="M12 22V12"></path>
-                            </svg>
-                        </span>
+    datos.forEach(function (item) {
+        var categoria = item.categoriaID ? item.categoriaID : "-";
+        var stock = obtenerStock(item);
+        var estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
+        var estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
 
-                        <div class="item-nombre">
-                            <span class="nombre">${textoSeguro(item.articulo)}</span>
-                            <span class="id">ID: ${textoSeguro(item.id)}</span>
-                        </div>
-                    </div>
-                </td>
-
-                <td>
-                    <span class="categoria-badge">
-                        ${textoSeguro(item.categoriaID)}
-                    </span>
-                </td>
-
-                <td>—</td>
-
-                <td>—</td>
-
-                <td>
-                    <span
-                        class="stock-valor"
-                        data-id="${textoSeguro(item.id)}"
-                        tabindex="0"
-                    >${textoSeguro(item.stockInicial ?? item.stockIni)}</span>
-                </td>
-
-                <td>
-                    <span class="estado-stock">—</span>
-                </td>
-
-                <td>
-                    <span class="acciones-articulo">—</span>
-                </td>
-            </tr>
-        `;
+        filas += '<tr>' +
+            '<td><div class="item-celda">' +
+            '<div class="item-icono-placeholder" aria-hidden="true">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M9 7V5a3 3 0 016 0v2"></path></svg>' +
+            '</div>' +
+            '<div class="item-nombre">' +
+            '<span class="nombre">' + item.articulo + '</span>' +
+            '<span class="id">ID ' + item.id + '</span>' +
+            '</div>' +
+            '</div></td>' +
+            '<td><span class="badge-categoria">' + categoria + '</span></td>' +
+            '<td>—</td>' +
+            '<td><span class="stock">' + item.stockIni + '</span></td>' +
+            '<td><span class="badge-estado ' + estadoClase + '">' + estadoTexto + '</span></td>' +
+            '<td>—</td>' +
+            '<td><div class="acciones-celda">' +
+            '<button class="btn-accion" type="button" aria-label="Ver detalle" title="Detalle">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' +
+            '</button>' +
+            '<button class="btn-accion" type="button" aria-label="Registrar salida" title="Salida">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"></path></svg>' +
+            '</button>' +
+            '</div></td>' +
+            '</tr>';
     });
 
-    contenedor.innerHTML = `
-        <div class="tabla-inventario-wrapper">
-            <table class="tabla-inventario">
-                <thead>
-                    <tr>
-                        <th>Artículo</th>
-                        <th>Categoría</th>
-                        <th>Ubicación</th>
-                        <th>Tipo</th>
-                        <th>Stock</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    ${filas}
-                </tbody>
-            </table>
-        </div>
-    `;
+    contenedor.innerHTML = '<div class="tabla-inventario-wrapper"><table class="tabla-inventario"><thead><tr>' +
+        '<th>Artículo</th><th>Categoría</th><th>Ubicación</th><th>Stock</th><th>Estado</th><th>Tipo</th><th>Acciones</th>' +
+        '</tr></thead><tbody>' + filas + '</tbody></table></div>';
 }
 
 // ==========================
-// Búsqueda
+// Utilidades de búsqueda
 // ==========================
+function normalizarTexto(valor) {
+    return (valor ?? "")
+        .toString()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
+
 function filtrarArticulos(termino) {
     const terminoNormalizado = normalizarTexto(termino);
 
@@ -185,24 +108,20 @@ function filtrarArticulos(termino) {
     }
 
     return articulos.filter(item => {
-        const campos = [
-            item.articulo,
-            item.id,
-            item.categoriaID,
-            item.patrimonio
-        ];
+        const idCoincideExacto = normalizarTexto(item.id) === terminoNormalizado;
 
-        return campos.some(campo =>
+        const camposParciales = [item.articulo, item.categoriaID, item.patrimonio];
+        const coincideParcial = camposParciales.some(campo =>
             normalizarTexto(campo).includes(terminoNormalizado)
         );
+
+        return idCoincideExacto || coincideParcial;
     });
 }
 
 // ==========================
-// Filtros de stock
+// Filtros de stock y categoría
 // ==========================
-// NOTA: esta función no se llama desde ningún lado actualmente. Se deja
-// sin tocar por si está pensada para la lógica de "Estado" pendiente.
 function obtenerStock(item) {
     const valor = item?.stockIni;
 
@@ -217,23 +136,36 @@ function obtenerStock(item) {
     return Number.isFinite(stock) ? stock : 0;
 }
 
-function aplicarFiltroCategoria(datos) {
+function aplicarFiltro(datos) {
     if (!Array.isArray(datos)) {
         return [];
     }
 
-    if (filtroActivo === "todos") {
-        return datos;
-    }
-
-    const filtroNormalizado = normalizarTexto(filtroActivo)
-        .replace(/[-_]+/g, " ");
-
     return datos.filter(item => {
-        const categoriaNormalizada = normalizarTexto(item.categoriaID)
-            .replace(/[-_]+/g, " ");
+        const stock = obtenerStock(item);
 
-        return categoriaNormalizada === filtroNormalizado;
+        if (filtroActivo === "disponibles") {
+            return stock > 0;
+        }
+
+        if (filtroActivo === "stock-bajo") {
+            return stock >= 1 && stock <= 5;
+        }
+
+        if (filtroActivo === "sin-stock") {
+            return stock === 0;
+        }
+
+        if (filtroActivo === "todos" || !filtroActivo) {
+            return true;
+        }
+
+        const categoriaItem = normalizarTexto(item.categoriaID);
+        const categoriaFiltro = normalizarTexto(filtroActivo);
+
+        return categoriaItem === categoriaFiltro ||
+            categoriaItem.includes(categoriaFiltro) ||
+            categoriaFiltro.includes(categoriaItem);
     });
 }
 
@@ -319,91 +251,7 @@ function reanudarPlaceholderAnimado(input) {
 }
 
 // ==========================
-// Edición de stock (click para editar inline)
-// ==========================
-function inicializarEdicionStock() {
-    const contenedor = document.getElementById("contenedor");
-    if (!contenedor) return;
-
-    // Click (o Enter) en el número: lo convierte en input editable
-    contenedor.addEventListener("click", (e) => {
-        const valor = e.target.closest(".stock-valor");
-        if (!valor) return;
-        activarEdicionStock(valor);
-    });
-
-    contenedor.addEventListener("keydown", (e) => {
-        const valor = e.target.closest(".stock-valor");
-        if (!valor) return;
-
-        if (e.key === "Enter") {
-            e.preventDefault();
-            activarEdicionStock(valor);
-        }
-    });
-}
-
-function activarEdicionStock(spanValor) {
-    // Evita duplicar el input si ya está en edición
-    if (spanValor.querySelector("input")) return;
-
-    const id = spanValor.dataset.id;
-    const valorActual = spanValor.textContent.trim();
-
-    spanValor.textContent = "";
-
-    const input = document.createElement("input");
-    input.type = "number";
-    input.className = "input-stock";
-    input.min = "0";
-    input.value = valorActual === "—" ? "" : valorActual;
-
-    spanValor.appendChild(input);
-    input.focus();
-    input.select();
-
-    let yaGuardado = false;
-
-    const guardar = async () => {
-        if (yaGuardado) return;
-        yaGuardado = true;
-
-        const nuevoStock = Number(input.value);
-
-        try {
-            const resultado = await articulosService.actualizarStock(id, nuevoStock);
-
-            if (!resultado.exito) {
-                throw new Error(resultado.error || "No se pudo actualizar");
-            }
-
-            const item = articulos.find(a => a.id == id);
-            if (item) item.stockInicial = nuevoStock;
-
-            spanValor.textContent = String(nuevoStock);
-        } catch (error) {
-            console.error("Error actualizando stock:", error);
-            spanValor.textContent = valorActual;
-        }
-    };
-
-    input.addEventListener("blur", guardar);
-
-    input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            input.blur();
-        }
-
-        if (e.key === "Escape") {
-            yaGuardado = true;
-            spanValor.textContent = valorActual;
-        }
-    });
-}
-
-// ==========================
-// Buscador y filtros
+// Buscador
 // ==========================
 function configurarBuscador() {
     const input = document.getElementById("inputBusqueda");
@@ -424,48 +272,40 @@ function configurarBuscador() {
             reanudarPlaceholderAnimado(input);
         }
 
-        const resultados =
-            aplicarFiltroCategoria(filtrarArticulos(valor));
+        const resultados = aplicarFiltro(filtrarArticulos(valor));
 
         renderizarArticulos(resultados);
         actualizarInfoResultados(resultados.length, valor);
     });
 }
 
+// ==========================
+// Configuración de filtros
+// ==========================
 function configurarFiltros() {
-    const botonTodos = document.querySelector(".filtro-todos");
-    const selectCategoria = document.getElementById("selectCategoria");
+    const chips = document.querySelectorAll(".chip");
     const input = document.getElementById("inputBusqueda");
 
-    if (!botonTodos || !selectCategoria) return;
+    chips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            const nuevoFiltro = chip.dataset.filtro;
 
-    function actualizarVista() {
-        const valor = input ? input.value : "";
-        const resultados =
-            aplicarFiltroCategoria(filtrarArticulos(valor));
+            if (!nuevoFiltro) return;
 
-        renderizarArticulos(resultados);
-        actualizarInfoResultados(resultados.length, valor);
-    }
+            filtroActivo = nuevoFiltro;
 
-    botonTodos.addEventListener("click", () => {
-        filtroActivo = "todos";
+            chips.forEach(item => {
+                item.classList.remove("is-active");
+            });
 
-        botonTodos.classList.add("is-active");
-        selectCategoria.value = "";
+            chip.classList.add("is-active");
 
-        actualizarVista();
-    });
+            const valor = input ? input.value : "";
+            const resultados = aplicarFiltro(filtrarArticulos(valor));
 
-    selectCategoria.addEventListener("change", () => {
-        filtroActivo = selectCategoria.value || "todos";
-
-        botonTodos.classList.toggle(
-            "is-active",
-            filtroActivo === "todos"
-        );
-
-        actualizarVista();
+            renderizarArticulos(resultados);
+            actualizarInfoResultados(resultados.length, valor);
+        });
     });
 }
 
@@ -474,6 +314,5 @@ function configurarFiltros() {
 // ==========================
 document.addEventListener("DOMContentLoaded", configurarBuscador);
 document.addEventListener("DOMContentLoaded", configurarFiltros);
-document.addEventListener("DOMContentLoaded", inicializarEdicionStock);
 
 cargarArticulos();
