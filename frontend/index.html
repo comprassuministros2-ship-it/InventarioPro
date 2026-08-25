@@ -1,11 +1,145 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InventarioPro</title>
+    <!-- TU CSS ORIGINAL (No lo toco, pero el nuevo estilo va a pisar algunas cosas del sidebar) -->
     <link rel="stylesheet" href="css/style.css">
+
+    <!-- ESTILOS NUEVOS PARA EL SIDEBAR (PRIORIDAD 1) -->
+    <style>
+        /* 1. Variables de color para Modo Oscuro (por defecto) */
+        :root, [data-theme="dark"] {
+            --sidebar-bg: #0f1115;
+            --sidebar-hover: #1f2937;
+            --sidebar-active: #0ea5e9;
+            --sidebar-text: #e2e8f0;
+            --sidebar-text-muted: #94a3b8;
+            --sidebar-border: #1e293b;
+            --sidebar-btn-bg: #1f2937;
+        }
+
+        /* Variables para Modo Claro */
+        [data-theme="light"] {
+            --sidebar-bg: #f8fafc;
+            --sidebar-hover: #e2e8f0;
+            --sidebar-active: #0ea5e9;
+            --sidebar-text: #0f172a;
+            --sidebar-text-muted: #475569;
+            --sidebar-border: #e2e8f0;
+            --sidebar-btn-bg: #e2e8f0;
+        }
+
+        /* 2. Mejoras estéticas sobre tu Sidebar */
+        .sidebar {
+            background-color: var(--sidebar-bg) !important;
+            border-right: 1px solid var(--sidebar-border);
+            transition: background-color 0.3s, color 0.3s, transform 0.3s ease;
+        }
+
+        .sidebar-logo-text {
+            font-weight: 800;
+            color: #38bdf8;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-version {
+            color: var(--sidebar-text-muted);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .sidebar-section-title {
+            color: var(--sidebar-text-muted) !important;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 20px 20px 10px 20px;
+            margin: 0;
+        }
+
+        .sidebar-link {
+            color: var(--sidebar-text) !important;
+            border-radius: 8px;
+            margin: 2px 12px;
+            padding: 12px 15px;
+            font-weight: 500;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-link:hover {
+            background-color: var(--sidebar-hover);
+        }
+
+        .sidebar-link.is-active {
+            background-color: var(--sidebar-active) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2);
+        }
+
+        .sidebar-user-name {
+            color: var(--sidebar-text);
+            font-weight: 700;
+        }
+
+        .sidebar-user-role {
+            color: var(--sidebar-text-muted);
+            font-size: 12px;
+        }
+
+        .theme-toggle {
+            width: calc(100% - 24px);
+            margin: 10px 12px;
+            background-color: var(--sidebar-btn-bg);
+            border: 1px solid var(--sidebar-border);
+            color: var(--sidebar-text);
+            border-radius: 8px;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--sidebar-hover);
+        }
+
+        /* 3. Responsive (Se achica o desaparece en celular) */
+        @media (max-width: 992px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100vh;
+                z-index: 1000;
+                width: 260px;
+                transform: translateX(-100%);
+                box-shadow: 5px 0 20px rgba(0,0,0,0.3);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -240,11 +374,42 @@
 
     <footer></footer>
 
+    <!-- TUS SCRIPTS ORIGINALES (No se tocan) -->
     <script src="js/Config.js"></script>
     <script src="js/services/ApiService.js"></script>
     <script src="js/services/ArticulosService.js"></script>
     <script src="js/script.js"></script>
     <script src="js/sidebar.js"></script>
+
+    <!-- NUEVO SCRIPT PARA MODO CLARO/OSCURO -->
+    <script>
+        // Lógica del modo Claro/Oscuro
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.querySelector('.theme-toggle');
+            
+            // Verificar si hay un tema guardado en el navegador
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.documentElement.setAttribute('data-theme', savedTheme);
+                if (themeToggle) {
+                    themeToggle.querySelector('span').textContent = savedTheme === 'dark' ? 'Modo oscuro' : 'Modo claro';
+                }
+            }
+
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                    
+                    // Actualizar el texto del botón
+                    themeToggle.querySelector('span').textContent = newTheme === 'dark' ? 'Modo oscuro' : 'Modo claro';
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>
