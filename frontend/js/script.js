@@ -70,6 +70,73 @@ function renderizarArticulos(datos) {
             '</div>' +
             '</div></td>' +
             
+            // 2. Stock (SOLO VISUALIZACIÓN)
+            '<td><span class="stock">' + stock + '</span></td>' +
+
+            // 3. Categoría
+            '<td><span class="badge-categoria">' + categoria + '</span></td>' +
+            
+            // 4. Acciones
+            '<td><div class="acciones-celda">' +
+            '<button class="btn-accion" type="button" aria-label="Ver detalle" title="Detalle">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' +
+            '</button>' +
+            '<button class="btn-accion btn-entrada" type="button" data-id="' + item.id + '" data-articulo="' + escaparHtml(item.articulo) + '" aria-label="Registrar entrada" title="Entrada">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>' +
+            '</button>' +
+            '</div></td>' +
+            
+            // 5. Ubicación
+            '<td>—</td>' +
+            
+            // 6. Estado
+            '<td><span class="badge-estado ' + estadoClase + '">' + estadoTexto + '</span></td>' +
+            
+            // 7. Tipo
+            '<td>—</td>' +
+            '</tr>';
+    });
+
+    contenedor.innerHTML = '<div class="tabla-inventario-wrapper"><table class="tabla-inventario"><thead><tr>' +
+        '<th>Artículo</th><th>Stock</th><th>Categoría</th><th>Acciones</th><th>Ubicación</th><th>Estado</th><th>Tipo</th>' +
+        '</tr></thead><tbody>' + filas + '</tbody></table></div>';
+}// Render — data table de Inventario General
+// ==========================
+function renderizarArticulos(datos) {
+    const contenedor = document.getElementById("contenedor");
+
+    if (!contenedor) return;
+
+    if (!datos || datos.length === 0) {
+        contenedor.innerHTML = `
+            <p class="sin-resultados">
+                No se encontraron artículos que coincidan con la búsqueda.
+            </p>
+        `;
+        return;
+    }
+
+    let filas = "";
+
+    datos.forEach(function (item) {
+        var categoria = item.categoriaID ? item.categoriaID : "-";
+        var stock = obtenerStock(item);
+        var estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
+        var estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
+
+        // ORDEN DE COLUMNAS: Artículo | Stock | Categoría | Acciones | Ubicación | Estado | Tipo
+        filas += '<tr>' +
+            // 1. Artículo
+            '<td><div class="item-celda">' +
+            '<div class="item-icono-placeholder" aria-hidden="true">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M9 7V5a3 3 0 016 0v2"></path></svg>' +
+            '</div>' +
+            '<div class="item-nombre">' +
+            '<span class="nombre">' + item.articulo + '</span>' +
+            '<span class="id">ID ' + item.id + '</span>' +
+            '</div>' +
+            '</div></td>' +
+            
             // 2. Stock (EDITABLE)
             '<td><div class="stock-editable">' +
             '<span class="stock">' + item.stockIni + '</span>' +
