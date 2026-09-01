@@ -1,13 +1,10 @@
 const CONFIG = {
-
   API: {
-    BASE_URL: "https://script.google.com/macros/s/AKfycbxC-ACNG6NxUBx_U1bM1M1HS2gs91TSCNc5jZmFR9LvKxR_xdK96ExkzvxJNM3i0Y2hNg/exec",
+    BASE_URL: "https://script.google.com/macros/s/AKfycbxN34Vs4R7cKAHUEAKJK65WuF8Ii96Oov1ymUY6JgdnEkiyXN0ZnLZFPOww96DD05K6GQ/exec",
     TIMEOUT_MS: 15000
   },
-
   APP: {
     NAME: "InventarioPro",
     VERSION: "1.0.0"
   }
-
 };

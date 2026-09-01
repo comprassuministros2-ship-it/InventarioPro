@@ -1,36 +1,32 @@
-/**
- * ArticulosService
- * 
- * Servicio encargado de conectar el Frontend con la API de Google Sheets.
- * Todas las funciones retornan una Promesa.
- */
 class ArticulosService {
-
-    constructor() {
-        this.api = apiService;
-    }
-
     /**
-     * Obtiene todos los artículos desde la hoja "API_Prueba".
-     * Devuelve un array de objetos con los datos del inventario.
+     * Obtiene todos los artículos desde Google Apps Script
      */
     async obtenerArticulos() {
-        return await this.api.get();
+        // Asumimos que ApiService tiene un método get()
+        return await apiService.get();
     }
 
     /**
-     * Registrar una ENTRADA de mercadería.
-     * Envía el ID del artículo y la cantidad que se suma al stock.
-     * La API (Code.gs) guardará el movimiento en la hoja "Movimientos" y actualizará el stock.
+     * Envía los datos de una entrada al backend
      */
-    async registrarEntrada(id, cantidad) {
-        return await this.api.post({
-            accion: "registrarEntrada",
+    async registrarEntrada(id, cantidad, proveedor, ordenCompra, tipoCompra, observacion, fecha) {
+        // Armamos el objeto que le vamos a enviar a doPost(e) en Apps Script
+        const payload = {
+            accion: "registrarEntrada", // <- ESENCIAL: el switch del backend busca esto
             id: id,
-            cantidad: cantidad
-        });
-    }
+            cantidad: cantidad,
+            proveedor: proveedor,
+            ordenCompra: ordenCompra,
+            tipoCompra: tipoCompra,
+            observacion: observacion,
+            fecha: fecha // <- La fecha que agregamos en el paso anterior
+        };
 
+        // Asumimos que ApiService tiene un método post() que recibe un objeto
+        return await apiService.post(payload);
+    }
 }
 
+// Lo instanciamos para que script.js pueda usar "articulosService.obtenerArticulos()"
 const articulosService = new ArticulosService();

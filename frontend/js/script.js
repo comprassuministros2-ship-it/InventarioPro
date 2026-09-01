@@ -1,118 +1,68 @@
-// ==========================
-// Estado en memoria
-// ==========================
+// ============================================================
+// INVENTARIO PRO - SCRIPT PRINCIPAL
+// Maneja: Navegación, Renderizado, Búsqueda, Filtros y Entradas
+// ============================================================
+
+// Estado global
 let articulos = [];
 let filtroActivo = "todos";
 
-// ==========================
-// Frases del placeholder animado
-// ==========================
-const FRASES_PLACEHOLDER = [
-    "Buscar por nombre...",
-    "Buscar por ID...",
-    "Buscar por categoría...",
-    "Buscar por patrimonio..."
-];
+// ============================================================
+// 1. NAVEGACIÓN ENTRE PÁGINAS (Entradas, Inventario, etc.)
+// ============================================================
+function navegarAPagina(nombre) {
+    document.querySelectorAll('.pagina').forEach(p => p.classList.remove('activa'));
+    const target = document.getElementById('pagina-' + nombre);
+    if (target) target.classList.add('activa');
 
-let placeholderTimeoutId = null;
-let animacionPlaceholderActiva = false;
+    document.querySelectorAll('.sidebar-link').forEach(e => e.classList.remove('is-active'));
+    const activo = document.querySelector(`.sidebar-link[data-page="${nombre}"]`);
+    if (activo) activo.classList.add('is-active');
 
-// ==========================
-// Carga de artículos
-// ==========================
-async function cargarArticulos() {
-    try {
-        const datos = await articulosService.obtenerArticulos();
-
-        articulos = Array.isArray(datos) ? datos : [];
-
-        renderizarArticulos(aplicarFiltro(articulos));
-    } catch (error) {
-        console.error("Error cargando artículos:", error);
+    if (nombre === 'inventario') {
+        cargarArticulos();
     }
 }
 
-// ==========================
-// Render — data table de Inventario General
-// ==========================
-function renderizarArticulos(datos) {
-    const contenedor = document.getElementById("contenedor");
-
-    if (!contenedor) return;
-
-    if (!datos || datos.length === 0) {
-        contenedor.innerHTML = `
-            <p class="sin-resultados">
-                No se encontraron artículos que coincidan con la búsqueda.
-            </p>
-        `;
-        return;
-    }
-
-    let filas = "";
-
-    datos.forEach(function (item) {
-        var categoria = item.categoriaID ? item.categoriaID : "-";
-        var stock = obtenerStock(item);
-        var estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
-        var estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
-
-        // ORDEN DE COLUMNAS: Artículo | Stock | Categoría | Acciones | Ubicación | Estado | Tipo
-        filas += '<tr>' +
-            // 1. Artículo
-            '<td><div class="item-celda">' +
-            '<div class="item-icono-placeholder" aria-hidden="true">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M9 7V5a3 3 0 016 0v2"></path></svg>' +
-            '</div>' +
-            '<div class="item-nombre">' +
-            '<span class="nombre">' + item.articulo + '</span>' +
-            '<span class="id">ID ' + item.id + '</span>' +
-            '</div>' +
-            '</div></td>' +
-            
-            // 2. Stock (SOLO VISUALIZACIÓN)
-            '<td><span class="stock">' + stock + '</span></td>' +
-
-            // 3. Categoría
-            '<td><span class="badge-categoria">' + categoria + '</span></td>' +
-            
-            // 4. Acciones
-            '<td><div class="acciones-celda">' +
-            '<button class="btn-accion" type="button" aria-label="Ver detalle" title="Detalle">' +
-            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' +
-            '</button>' +
-            '<button class="btn-accion btn-entrada" type="button" data-id="' + item.id + '" data-articulo="' + escaparHtml(item.articulo) + '" aria-label="Registrar entrada" title="Entrada">' +
-            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>' +
-            '</button>' +
-            '</div></td>' +
-            
-            // 5. Ubicación
-            '<td>—</td>' +
-            
-            // 6. Estado
-            '<td><span class="badge-estado ' + estadoClase + '">' + estadoTexto + '</span></td>' +
-            
-            // 7. Tipo
-            '<td>—</td>' +
-            '</tr>';
+function configurarNavegacion() {
+    const enlaces = document.querySelectorAll('.sidebar-link');
+    enlaces.forEach(e => {
+        e.addEventListener('click', function(ev) {
+            ev.preventDefault();
+            const page = this.dataset.page;
+            if (page) navegarAPagina(page);
+        });
     });
 
-    contenedor.innerHTML = '<div class="tabla-inventario-wrapper"><table class="tabla-inventario"><thead><tr>' +
-        '<th>Artículo</th><th>Stock</th><th>Categoría</th><th>Acciones</th><th>Ubicación</th><th>Estado</th><th>Tipo</th>' +
-        '</tr></thead><tbody>' + filas + '</tbody></table></div>';
-}// Render — data table de Inventario General
-// ==========================
+    const hash = window.location.hash.replace('#', '');
+    if (hash) navegarAPagina(hash);
+}
+
+// ============================================================
+// 2. CARGA DE ARTÍCULOS
+// ============================================================
+async function cargarArticulos() {
+    try {
+        const datos = await articulosService.obtenerArticulos();
+        articulos = Array.isArray(datos) ? datos : [];
+        renderizarArticulos(aplicarFiltro(articulos));
+    } catch (error) {
+        console.error("Error cargando artículos:", error);
+        const contenedor = document.getElementById("contenedorInventario");
+        if (contenedor) contenedor.innerHTML = `<p class="placeholder">Error al cargar inventario: ${error.message}</p>`;
+    }
+}
+
+// ============================================================
+// 3. RENDERIZADO DE LA TABLA DE INVENTARIO
+// ============================================================
 function renderizarArticulos(datos) {
-    const contenedor = document.getElementById("contenedor");
+    const contenedor = document.getElementById("contenedorInventario");
 
     if (!contenedor) return;
 
     if (!datos || datos.length === 0) {
-        contenedor.innerHTML = `
-            <p class="sin-resultados">
-                No se encontraron artículos que coincidan con la búsqueda.
-            </p>
-        `;
+        contenedor.innerHTML = `<p class="placeholder">No se encontraron artículos que coincidan con la búsqueda.</p>`;
         return;
     }
 
@@ -124,9 +74,7 @@ function renderizarArticulos(datos) {
         var estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
         var estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
 
-        // ORDEN DE COLUMNAS: Artículo | Stock | Categoría | Acciones | Ubicación | Estado | Tipo
         filas += '<tr>' +
-            // 1. Artículo
             '<td><div class="item-celda">' +
             '<div class="item-icono-placeholder" aria-hidden="true">' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M9 7V5a3 3 0 016 0v2"></path></svg>' +
@@ -136,19 +84,11 @@ function renderizarArticulos(datos) {
             '<span class="id">ID ' + item.id + '</span>' +
             '</div>' +
             '</div></td>' +
-            
-            // 2. Stock (EDITABLE)
-            '<td><div class="stock-editable">' +
-            '<span class="stock">' + item.stockIni + '</span>' +
-            '<button class="btn-accion btn-editar-stock" type="button" onclick="iniciarEdicionStock(event, ' + item.id + ', ' + stock + ')" title="Editar stock">' +
-            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>' +
-            '</button>' +
-            '</div></td>' +
-
-            // 3. Categoría
             '<td><span class="badge-categoria">' + categoria + '</span></td>' +
-            
-            // 4. Acciones
+            '<td class="td-centrado">—</td>' +
+            '<td><span class="stock-numero">' + stock + '</span></td>' +
+            '<td><span class="badge-estado ' + estadoClase + '">' + estadoTexto + '</span></td>' +
+            '<td class="td-centrado">—</td>' +
             '<td><div class="acciones-celda">' +
             '<button class="btn-accion" type="button" aria-label="Ver detalle" title="Detalle">' +
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>' +
@@ -157,78 +97,17 @@ function renderizarArticulos(datos) {
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"></path></svg>' +
             '</button>' +
             '</div></td>' +
-            
-            // 5. Ubicación
-            '<td>—</td>' +
-            
-            // 6. Estado
-            '<td><span class="badge-estado ' + estadoClase + '">' + estadoTexto + '</span></td>' +
-            
-            // 7. Tipo
-            '<td>—</td>' +
             '</tr>';
     });
 
-    contenedor.innerHTML = '<div class="tabla-inventario-wrapper"><table class="tabla-inventario"><thead><tr>' +
-        '<th>Artículo</th><th>Stock</th><th>Categoría</th><th>Acciones</th><th>Ubicación</th><th>Estado</th><th>Tipo</th>' +
+    contenedor.innerHTML = '<div class="inventario-tabla-wrapper"><table class="inventario-tabla"><thead><tr>' +
+        '<th>Artículo</th><th>Categoría</th><th>Ubicación</th><th>Stock</th><th>Estado</th><th>Tipo</th><th>Acciones</th>' +
         '</tr></thead><tbody>' + filas + '</tbody></table></div>';
 }
 
-// ==========================
-// EDICIÓN DE STOCK (PRIORIDAD 2)
-// ==========================
-function iniciarEdicionStock(event, id, stockActual) {
-    event.stopPropagation(); 
-    
-    const td = event.target.closest('td');
-    const contenedorStock = td.querySelector('.stock-editable');
-    
-    contenedorStock.innerHTML = `
-        <input type="number" class="stock-input" id="inputStock_${id}" value="${stockActual}" min="0">
-        <button class="btn-stock-accion btn-stock-guardar" onclick="guardarStock(event, ${id})" title="Guardar">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"></path></svg>
-        </button>
-        <button class="btn-stock-accion" onclick="cancelarEdicionStock(event, ${id}, ${stockActual})" title="Cancelar">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-    `;
-
-    const input = document.getElementById(`inputStock_${id}`);
-    if(input) input.focus();
-}
-
-async function guardarStock(event, id) {
-    event.stopPropagation();
-    const input = document.getElementById(`inputStock_${id}`);
-    const nuevoStock = parseFloat(input.value);
-
-    if (isNaN(nuevoStock) || nuevoStock < 0) {
-        alert("Ingresa un stock válido");
-        return;
-    }
-
-    const btn = event.target.closest('button');
-    btn.disabled = true;
-
-    try {
-        // 1. Guardamos en Sheets (No leemos respuesta, pero no falla)
-        await articulosService.actualizarStock(id, nuevoStock);
-
-        // 2. VOLVEMOS A LLAMAR A LA API PARA LEER LOS DATOS REALES DE SHEETS
-        await cargarArticulos(); 
-
-        console.log("✅ Stock actualizado y tabla refrescada con datos de Sheets.");
-
-    } catch (error) {
-        console.error("Error al guardar stock:", error);
-        alert("Hubo un error al guardar");
-    } finally {
-        btn.disabled = false;
-    }
-}
-// ==========================
-// Utilidades de búsqueda
-// ==========================
+// ============================================================
+// 4. UTILIDADES DE BÚSQUEDA Y FILTROS
+// ============================================================
 function normalizarTexto(valor) {
     return (valor ?? "")
         .toString()
@@ -240,217 +119,211 @@ function normalizarTexto(valor) {
 
 function filtrarArticulos(termino) {
     const terminoNormalizado = normalizarTexto(termino);
-
-    if (!terminoNormalizado) {
-        return articulos;
-    }
+    if (!terminoNormalizado) return articulos;
 
     return articulos.filter(item => {
         const idCoincideExacto = normalizarTexto(item.id) === terminoNormalizado;
-
         const camposParciales = [item.articulo, item.categoriaID, item.patrimonio];
         const coincideParcial = camposParciales.some(campo =>
             normalizarTexto(campo).includes(terminoNormalizado)
         );
-
         return idCoincideExacto || coincideParcial;
     });
 }
 
-// ==========================
-// Filtros de stock y categoría
-// ==========================
 function obtenerStock(item) {
     const valor = item?.stockIni;
-
-    if (typeof valor === "number") {
-        return Number.isFinite(valor) ? valor : 0;
-    }
-
-    const stock = Number.parseFloat(
-        String(valor ?? "").trim().replace(",", ".")
-    );
-
+    if (typeof valor === "number") return Number.isFinite(valor) ? valor : 0;
+    const stock = Number.parseFloat(String(valor ?? "").trim().replace(",", "."));
     return Number.isFinite(stock) ? stock : 0;
 }
 
 function aplicarFiltro(datos) {
-    if (!Array.isArray(datos)) {
-        return [];
-    }
-
+    if (!Array.isArray(datos)) return [];
     return datos.filter(item => {
         const stock = obtenerStock(item);
-
-        if (filtroActivo === "disponibles") {
-            return stock > 0;
-        }
-
-        if (filtroActivo === "stock-bajo") {
-            return stock >= 1 && stock <= 5;
-        }
-
-        if (filtroActivo === "sin-stock") {
-            return stock === 0;
-        }
-
-        if (filtroActivo === "todos" || !filtroActivo) {
-            return true;
-        }
+        if (filtroActivo === "disponibles") return stock > 0;
+        if (filtroActivo === "stock-bajo") return stock >= 1 && stock <= 5;
+        if (filtroActivo === "sin-stock") return stock === 0;
+        if (filtroActivo === "todos" || !filtroActivo) return true;
 
         const categoriaItem = normalizarTexto(item.categoriaID);
         const categoriaFiltro = normalizarTexto(filtroActivo);
-
-        return categoriaItem === categoriaFiltro ||
-            categoriaItem.includes(categoriaFiltro) ||
-            categoriaFiltro.includes(categoriaItem);
+        return categoriaItem === categoriaFiltro || categoriaItem.includes(categoriaFiltro) || categoriaFiltro.includes(categoriaItem);
     });
 }
 
-function actualizarInfoResultados(cantidad, termino) {
-    const infoEl = document.getElementById("buscadorInfo");
-
-    if (!infoEl) return;
-
-    if (!termino) {
-        infoEl.textContent = "";
-        return;
-    }
-
-    if (cantidad === 0) {
-        infoEl.textContent =
-            "No se encontraron artículos que coincidan con la búsqueda.";
-        return;
-    }
-
-    infoEl.textContent =
-        `${cantidad} resultado${cantidad === 1 ? "" : "s"} encontrado${cantidad === 1 ? "" : "s"}`;
-}
-
-// ==========================
-// Placeholder animado
-// ==========================
-function iniciarPlaceholderAnimado(input) {
-    if (!input) return;
-
-    const prefiereReducirMovimiento =
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (prefiereReducirMovimiento) {
-        input.placeholder = FRASES_PLACEHOLDER[0];
-        return;
-    }
-
-    animacionPlaceholderActiva = true;
-
-    let fraseIndex = 0;
-    let charIndex = 0;
-    let borrando = false;
-
-    function tick() {
-        if (!animacionPlaceholderActiva) return;
-
-        const fraseActual = FRASES_PLACEHOLDER[fraseIndex];
-
-        if (!borrando) {
-            charIndex++;
-            input.placeholder = fraseActual.substring(0, charIndex);
-
-            if (charIndex === fraseActual.length) {
-                borrando = true;
-                placeholderTimeoutId = setTimeout(tick, 1300);
-                return;
-            }
-        } else {
-            charIndex--;
-            input.placeholder = fraseActual.substring(0, charIndex);
-
-            if (charIndex === 0) {
-                borrando = false;
-                fraseIndex = (fraseIndex + 1) % FRASES_PLACEHOLDER.length;
-            }
-        }
-
-        placeholderTimeoutId = setTimeout(tick, borrando ? 35 : 65);
-    }
-
-    tick();
-}
-
-function detenerPlaceholderAnimado() {
-    animacionPlaceholderActiva = false;
-    clearTimeout(placeholderTimeoutId);
-}
-
-function reanudarPlaceholderAnimado(input) {
-    if (animacionPlaceholderActiva) return;
-
-    iniciarPlaceholderAnimado(input);
-}
-
-// ==========================
-// Buscador
-// ==========================
 function configurarBuscador() {
     const input = document.getElementById("inputBusqueda");
-
-    if (!input) {
-        console.warn("No se encontró el campo de búsqueda (#inputBusqueda).");
-        return;
-    }
-
-    iniciarPlaceholderAnimado(input);
-
+    if (!input) return;
     input.addEventListener("input", () => {
         const valor = input.value;
-
-        if (valor.length > 0) {
-            detenerPlaceholderAnimado();
-        } else {
-            reanudarPlaceholderAnimado(input);
-        }
-
         const resultados = aplicarFiltro(filtrarArticulos(valor));
-
         renderizarArticulos(resultados);
-        actualizarInfoResultados(resultados.length, valor);
     });
 }
 
-// ==========================
-// Configuración de filtros
-// ==========================
 function configurarFiltros() {
     const chips = document.querySelectorAll(".chip");
     const input = document.getElementById("inputBusqueda");
-
     chips.forEach(chip => {
         chip.addEventListener("click", () => {
             const nuevoFiltro = chip.dataset.filtro;
-
             if (!nuevoFiltro) return;
-
             filtroActivo = nuevoFiltro;
-
-            chips.forEach(item => {
-                item.classList.remove("is-active");
-            });
-
+            chips.forEach(item => item.classList.remove("is-active"));
             chip.classList.add("is-active");
-
             const valor = input ? input.value : "";
             const resultados = aplicarFiltro(filtrarArticulos(valor));
-
             renderizarArticulos(resultados);
-            actualizarInfoResultados(resultados.length, valor);
         });
     });
 }
 
-// ==========================
-// Inicialización
-// ==========================
-document.addEventListener("DOMContentLoaded", configurarBuscador);
-document.addEventListener("DOMContentLoaded", configurarFiltros);
+// ============================================================
+// 5. LÓGICA DE ENTRADAS
+// ============================================================
+let idArticuloSeleccionado = null;
 
-cargarArticulos();
+async function cargarArticulosParaBuscador() {
+    try {
+        const datos = await articulosService.obtenerArticulos();
+        articulos = Array.isArray(datos) ? datos : [];
+        const datalist = document.getElementById("listaArticulos");
+        if (datalist) {
+            datalist.innerHTML = '';
+            articulos.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = `${item.articulo} (ID ${item.id})`;
+                opt.dataset.id = item.id;  // 👈 LÍNEA AGREGADA PARA QUE GUARDE EL ID
+                datalist.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        console.error('Error cargando artículos para buscador:', e);
+    }
+}
+
+function configurarBuscadorEntradas() {
+    const inputArticulo = document.getElementById("inputArticulo");
+    const hiddenId = document.getElementById("articuloId");
+    if (!inputArticulo || !hiddenId) return;
+
+    inputArticulo.addEventListener("input", function() {
+        const valor = this.value;
+        const opcion = Array.from(document.getElementById("listaArticulos").options).find(o => o.value === valor);
+        if (opcion) {
+            hiddenId.value = opcion.dataset.id || '';
+            mostrarVistaPrevia(opcion.dataset.id);
+        } else {
+            hiddenId.value = '';
+            const coincidencia = articulos.find(item => item.articulo.toLowerCase().includes(valor.toLowerCase()));
+            if (coincidencia) {
+                mostrarVistaPrevia(coincidencia.id);
+            } else {
+                document.getElementById('vistaPreviaContenido').innerHTML = '<p class="placeholder">No se encontró el artículo</p>';
+            }
+        }
+    });
+}
+
+function mostrarVistaPrevia(id) {
+    const item = articulos.find(a => String(a.id) === String(id));
+    if (!item) return;
+
+    const stock = obtenerStock(item);
+    let estadoClase = 'badge-disponible', estadoTexto = 'Disponible';
+    if (stock === 0) { estadoClase = 'badge-sin-stock'; estadoTexto = 'Sin stock'; }
+    else if (stock <= 5) { estadoClase = 'badge-critico'; estadoTexto = 'Crítico'; }
+    else if (stock <= 10) { estadoClase = 'badge-bajo'; estadoTexto = 'Bajo'; }
+
+    document.getElementById('vistaPreviaContenido').innerHTML = `
+        <div class="articulo-preview">
+            <div class="nombre">${item.articulo}</div>
+            <div class="stock-grande">${stock}</div>
+            <div style="color: var(--text-muted);">unidades actuales</div>
+            <div class="detalle">
+                <span class="badge ${estadoClase}">${estadoTexto}</span>
+                ${item.stockMin ? `<span style="color:var(--text-muted);font-size:0.85rem;">Mínimo: ${item.stockMin}</span>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+async function registrarEntrada(e) {
+    e.preventDefault();
+
+    const id = document.getElementById("articuloId").value;
+    const cantidad = parseInt(document.getElementById("cantidad").value);
+    const proveedor = document.getElementById("proveedor").value.trim();
+    const factura = document.getElementById("factura").value.trim();
+    const observaciones = document.getElementById("observaciones").value.trim();
+    const fecha = document.getElementById("fechaEntrada").value;
+
+    if (!id) { alert('❌ Seleccioná un artículo'); return; }
+    if (isNaN(cantidad) || cantidad <= 0) { alert('❌ Cantidad inválida'); return; }
+    if (!proveedor) { alert('❌ Ingresá el proveedor'); return; }
+
+    const btn = document.getElementById('btnRegistrar');
+    btn.disabled = true;
+    btn.textContent = 'Registrando...';
+
+    try {
+        const payload = {
+            accion: 'registrarEntrada', 
+            id: id,
+            cantidad: cantidad,
+            proveedor: proveedor,
+            ordenCompra: factura,
+            tipoCompra: '',
+            observacion: observaciones,
+            fecha: fecha
+        };
+
+        const resultado = await apiService.post(payload);
+        if (resultado && resultado.exito === false) {
+            throw new Error(resultado.error || 'Error desconocido');
+        }
+
+        alert('✅ Entrada registrada correctamente');
+        
+        document.getElementById('formEntrada').reset();
+        document.getElementById('articuloId').value = '';
+        document.getElementById('vistaPreviaContenido').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+        document.getElementById('registradoPor').value = 'Juan Rodríguez';
+        
+        await cargarArticulosParaBuscador();
+        if (document.getElementById('pagina-inventario').classList.contains('activa')) {
+            cargarArticulos();
+        }
+
+    } catch (error) {
+        alert(`❌ Error: ${error.message}`);
+        console.error(error);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Registrar entrada';
+    }
+}
+
+// ============================================================
+// 6. INICIALIZACIÓN
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    configurarNavegacion();
+    configurarBuscador();
+    configurarFiltros();
+    cargarArticulos();
+    cargarArticulosParaBuscador();
+    configurarBuscadorEntradas();
+
+    const formEntrada = document.getElementById('formEntrada');
+    if (formEntrada) {
+        formEntrada.addEventListener('submit', registrarEntrada);
+    }
+
+    const fechaInput = document.getElementById('fechaEntrada');
+    if (fechaInput) {
+        fechaInput.value = new Date().toISOString().split('T')[0];
+    }
+});
