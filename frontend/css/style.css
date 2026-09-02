@@ -476,8 +476,8 @@ body {
     pointer-events: none;
 }
 
-/* Botón principal del formulario */
-.btn-primary {
+/* Botón principal del formulario (renombrado para no chocar con la topbar) */
+.btn-submit {
     background: #0ea5e9;
     color: white;
     border: none;
@@ -490,11 +490,11 @@ body {
     transition: opacity 0.2s;
 }
 
-.btn-primary:hover {
+.btn-submit:hover {
     opacity: 0.9;
 }
 
-.btn-primary:disabled {
+.btn-submit:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -613,7 +613,7 @@ body {
 }
 
 /* =========================================
-   TABLA DE INVENTARIO GENERAL
+   TABLA DE INVENTARIO GENERAL (wrapper)
    ========================================= */
 .inventario-tabla-wrapper {
     background: var(--bg-card);
@@ -623,7 +623,6 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     margin: 1rem 1.5rem;
 }
-
 .inventario-tabla {
     width: 100%;
     border-collapse: collapse;
@@ -736,4 +735,403 @@ body {
     .inventario-tabla-wrapper {
         margin: 1rem 0;
     }
+}
+/* =====================================================
+   TABLA DE INVENTARIO — MEJORAS VISUALES (AGREGADO v2)
+   Se agrega al final para sobrescribir los estilos
+   anteriores SIN borrar nada del CSS existente.
+   ===================================================== */
+
+/* ---- Contenedor / wrapper ---- */
+.inventario-tabla-wrapper {
+    margin: 1rem 1.5rem 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+    overflow-x: auto;   /* scroll horizontal solo en pantallas chicas */
+}
+
+/* La tabla ocupa TODO el ancho disponible */
+.inventario-tabla {
+    width: 100%;
+    min-width: 700px;          /* evita celdas apretadas */
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* ---- Celdas: buen espaciado ---- */
+.inventario-tabla th,
+.inventario-tabla td {
+    padding: .95rem 1.2rem;
+    vertical-align: middle;
+}
+
+.inventario-tabla td strong {
+    color: var(--text);        /* fix: antes era #fff fijo, rompía en modo claro */
+}
+
+/* ---- Encabezado ---- */
+.inventario-tabla thead th {
+    white-space: nowrap;
+    border-bottom: 2px solid #38bdf8;   /* acento bajo el header */
+}
+
+/* ---- Filas: hover con acento ---- */
+.inventario-tabla tbody tr {
+    transition: background-color .15s ease;
+}
+
+.inventario-tabla tbody tr:hover td {
+    background: rgba(56, 189, 248, .07);
+}
+
+/* Barrita de acento en el borde izquierdo de la fila con hover */
+.inventario-tabla tbody tr:hover td:first-child {
+    box-shadow: inset 3px 0 0 #38bdf8;
+}
+
+/* Última fila sin borde (el wrapper ya tiene borde propio) */
+.inventario-tabla tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ---- Celda ARTÍCULO: imagen cuadrada + nombre ---- */
+.articulo-celda {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    min-width: 200px;
+}
+
+.articulo-imagen {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+}
+
+.articulo-imagen img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;   /* nunca se deforma */
+}
+
+/* Placeholder cuando el artículo no tiene imagen */
+.articulo-imagen-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+}
+
+.articulo-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.articulo-nombre {
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+}
+
+/* opcional: segunda línea chica bajo el nombre */
+.articulo-meta {
+    font-size: .75rem;
+    color: var(--text-muted);
+}
+
+/* ---- Stock destacado ---- */
+.stock-numero {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---- Badges y botones de acción: retoques ---- */
+.badge {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+}
+
+.btn-accion {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.btn-accion:hover {
+    transform: translateY(-1px);
+}
+
+/* ---- Scrollbar sutil (Chrome/Edge/Safari) ---- */
+.inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
+.inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
+.inventario-tabla-wrapper::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .inventario-tabla th,
+    .inventario-tabla td { padding: .7rem .8rem; }
+
+    .articulo-imagen { width: 38px; height: 38px; }
+    .articulo-celda { min-width: 160px; }
+}
+/* =========================================
+   TABLA DE INVENTARIO GENERAL (UNIFICADO)
+   ========================================= */
+.inventario-tabla-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+    margin: 1rem 1.5rem 2rem;
+    overflow-x: auto;   /* scroll horizontal solo en pantallas chicas */
+}
+
+.inventario-tabla {
+    width: 100%;
+    min-width: 700px;          /* evita celdas apretadas */
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+}
+
+.inventario-tabla th,
+.inventario-tabla td {
+    padding: .95rem 1.2rem;
+    vertical-align: middle;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.inventario-tabla th {
+    background: var(--bg-input);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    border-bottom: 2px solid #38bdf8;   /* acento bajo el header */
+}
+
+.inventario-tabla tbody tr {
+    transition: background-color .15s ease;
+}
+
+.inventario-tabla tbody tr:hover td {
+    background: rgba(56, 189, 248, .07);
+}
+
+/* Barrita de acento en el borde izquierdo de la fila con hover */
+.inventario-tabla tbody tr:hover td:first-child {
+    box-shadow: inset 3px 0 0 #38bdf8;
+}
+
+/* Última fila sin borde */
+.inventario-tabla tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ---- Celda ARTÍCULO: imagen cuadrada + nombre ---- */
+.articulo-celda {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    min-width: 200px;
+}
+
+.articulo-imagen {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+}
+
+.articulo-imagen img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;   /* nunca se deforma */
+}
+
+/* Placeholder cuando el artículo no tiene imagen */
+.articulo-imagen-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 1.25rem;
+    color: var(--text-muted);
+}
+
+.articulo-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.articulo-nombre {
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+}
+
+/* opcional: segunda línea chica bajo el nombre */
+.articulo-meta {
+    font-size: .75rem;
+    color: var(--text-muted);
+}
+
+/* ---- Stock destacado ---- */
+.stock-numero {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---- Badges y botones de acción: retoques ---- */
+.badge {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+}
+
+.btn-accion {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.btn-accion:hover {
+    transform: translateY(-1px);
+}
+
+/* ---- Scrollbar sutil (Chrome/Edge/Safari) ---- */
+.inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
+.inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
+.inventario-tabla-wrapper::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+    .inventario-tabla th,
+    .inventario-tabla td { padding: .7rem .8rem; }
+    .articulo-imagen { width: 38px; height: 38px; }
+    .articulo-celda { min-width: 160px; }
+}
+/* =========================================
+   VISTA LIBRE Y PROLIJA DE LA TABLA
+   ========================================= */
+
+/* 1. El contenedor principal debe tener padding y centrado */
+.main-content {
+    padding: 2rem !important;
+    max-width: 1300px; /* Ancho máximo cómodo, centrado */
+    margin: 0 auto !important;
+}
+
+/* 2. El contenedor de la tabla (el cuadro) */
+.inventario-tabla-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    padding: 0.5rem; /* Un poco de aire dentro del cuadro */
+    overflow-x: auto; /* Permite scroll si es muy angosto */
+    margin: 1rem 0;
+}
+
+/* 3. La tabla en sí */
+.inventario-tabla {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+}
+
+/* 4. Celdas y bordes (sin que se "coman" las esquinas) */
+.inventario-tabla th,
+.inventario-tabla td {
+    padding: 1rem 1.2rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+}
+
+/* 5. Esquinas redondeadas para el header y la última fila */
+.inventario-tabla thead th:first-child { border-top-left-radius: 10px; }
+.inventario-tabla thead th:last-child { border-top-right-radius: 10px; }
+.inventario-tabla tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
+.inventario-tabla tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+
+/* 6. Hover suave */
+.inventario-tabla tbody tr:hover td {
+    background: rgba(56, 189, 248, 0.06);
+}
+
+/* 7. Imagen del artículo (si la tiene) */
+.articulo-imagen {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+}
+/* =========================================
+   TABLA BÁSICA (SOLO PARA VER CÓMO QUEDA)
+   ========================================= */
+.main-content {
+    padding: 2rem;
+    max-width: 100%;
+}
+
+.inventario-tabla-wrapper {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.inventario-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventario-tabla th,
+.inventario-tabla td {
+    padding: 1rem;
+    border-bottom: 1px solid #334155;
+    color: #e2e8f0;
+    text-align: left;
+}
+
+.inventario-tabla th {
+    background: #0f172a;
+    font-weight: bold;
+}
+
+.inventario-tabla tr:last-child td {
+    border-bottom: none;
 }
