@@ -1,49 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* =========================================
+   VARIABLES — TEMA CLARO (única paleta para
+   dark y light: la app siempre se ve clara)
+   ========================================= */
+:root,
+[data-theme="dark"],
+[data-theme="light"] {
+    --bg: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-input: #ffffff;
+    --bg-hover: #f1f5f9;
+    --border: #e2e8f0;
+    --text: #0f172a;
+    --text-muted: #475569;
+    --text-soft: #94a3b8;
+
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-soft: #eff6ff;
+    --accent-border: #bfdbfe;
+
+    --sidebar-bg: #ffffff;
+    --sidebar-hover: #f1f5f9;
+    --sidebar-active: #2563eb;
+    --sidebar-active-bg: #eff6ff;
+    --sidebar-text: #0f172a;
+    --sidebar-text-muted: #475569;
+    --sidebar-border: #e2e8f0;
+    --sidebar-btn-bg: #ffffff;
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04), 0 1px 3px rgba(15, 23, 42, .06);
+    --shadow-md: 0 1px 3px rgba(15, 23, 42, .06), 0 4px 12px rgba(15, 23, 42, .05);
+}
 
 body {
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
-    background: #0a0a0a;
-    color: #fff;
-}
-
-/* =========================================
-   VARIABLES DE TEMA (OSCURO / CLARO)
-   ========================================= */
-:root, [data-theme="dark"] {
-    --bg: #0a0a0a;
-    --bg-card: #1e293b;
-    --bg-input: #0f172a;
-    --bg-hover: #1f2937;
-    --border: #334155;
-    --text: #e2e8f0;
-    --text-muted: #94a3b8;
-    --sidebar-bg: #0f1115;
-    --sidebar-hover: #1f2937;
-    --sidebar-active: #0ea5e9;
-    --sidebar-text: #e2e8f0;
-    --sidebar-text-muted: #94a3b8;
-    --sidebar-border: #1e293b;
-    --sidebar-btn-bg: #1f2937;
-}
-
-[data-theme="light"] {
-    --bg: #f8fafc;
-    --bg-card: #ffffff;
-    --bg-input: #f1f5f9;
-    --bg-hover: #e2e8f0;
-    --border: #e2e8f0;
-    --text: #0f172a;
-    --text-muted: #475569;
-    --sidebar-bg: #f8fafc;
-    --sidebar-hover: #e2e8f0;
-    --sidebar-active: #0ea5e9;
-    --sidebar-text: #0f172a;
-    --sidebar-text-muted: #475569;
-    --sidebar-border: #e2e8f0;
-    --sidebar-btn-bg: #e2e8f0;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
 }
 
 /* =========================================
@@ -55,6 +53,11 @@ body {
     grid-template-rows: 92px minmax(0, 1fr);
     grid-template-areas: 'sidebar topbar' 'sidebar main';
     min-height: 100vh;
+    transition: grid-template-columns 0.3s ease; /* se adapta al ancho del menú */
+}
+
+.app-layout.sidebar-collapsed {
+    grid-template-columns: 70px minmax(0, 1fr);
 }
 
 /* =========================================
@@ -69,9 +72,15 @@ body {
     gap: 28px;
     height: 100vh;
     padding: 24px 16px;
-    background: var(--sidebar-bg) !important;
+    background: var(--sidebar-bg);
     border-right: 1px solid var(--sidebar-border);
-    transition: background-color 0.3s, color 0.3s, transform 0.3s ease;
+    transition: background-color 0.3s, transform 0.3s ease, margin-left 0.3s ease;
+}
+
+/* Menú oculto en PC (el JS agrega la clase "hidden") */
+.sidebar.hidden {
+    transform: translateX(-100%);
+    margin-left: -240px;
 }
 
 .sidebar-logo {
@@ -85,37 +94,41 @@ body {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #38bdf8;
-    box-shadow: 0 0 10px rgba(56, 189, 248, .7);
+    background: var(--accent);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .15);
+    flex-shrink: 0;
 }
 
 .sidebar-logo-text {
     font-size: 16px;
-    font-weight: 600;
-    color: #38bdf8;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
 }
 
 .sidebar-version {
-    color: var(--sidebar-text-muted);
+    color: var(--text-soft);
     font-size: 12px;
     margin-top: 5px;
     padding: 0 8px;
 }
 
 .sidebar-section-title {
-    color: var(--sidebar-text-muted);
-    font-size: 12px;
-    font-weight: 800;
+    color: var(--text-soft);
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
     padding: 20px 8px 10px 8px;
     margin: 0;
+    white-space: nowrap;
 }
 
 .sidebar-nav {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    overflow-y: auto;
 }
 
 .sidebar-link {
@@ -128,17 +141,19 @@ body {
     font-size: 14px;
     font-weight: 500;
     text-decoration: none;
+    white-space: nowrap;
     transition: background 0.2s, color 0.2s;
 }
 
 .sidebar-link:hover {
     background: var(--sidebar-hover);
-    color: var(--sidebar-text);
+    color: var(--text);
 }
 
 .sidebar-link.is-active {
-    background: rgba(56, 189, 248, .12);
-    color: #38bdf8;
+    background: var(--sidebar-active-bg);
+    color: var(--accent);
+    font-weight: 600;
 }
 
 .sidebar-footer {
@@ -159,27 +174,31 @@ body {
     justify-content: center;
     width: 32px;
     height: 32px;
-    background: #38bdf8;
-    color: #0a0a0a;
+    background: var(--accent);
+    color: #ffffff;
     border-radius: 50%;
     font-weight: 700;
     font-size: 12px;
+    flex-shrink: 0;
 }
 
 .sidebar-user-info {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .sidebar-user-name {
     font-size: 14px;
     font-weight: 700;
     color: var(--sidebar-text);
+    white-space: nowrap;
 }
 
 .sidebar-user-role {
     font-size: 12px;
     color: var(--sidebar-text-muted);
+    white-space: nowrap;
 }
 
 .theme-toggle {
@@ -187,7 +206,7 @@ body {
     margin: 10px 8px;
     background: var(--sidebar-btn-bg);
     border: 1px solid var(--sidebar-border);
-    color: var(--sidebar-text);
+    color: var(--sidebar-text-muted);
     border-radius: 8px;
     padding: 10px 15px;
     display: flex;
@@ -197,6 +216,7 @@ body {
     cursor: pointer;
     font-weight: 500;
     font-size: 14px;
+    font-family: inherit;
     transition: background 0.2s;
 }
 
@@ -204,8 +224,42 @@ body {
     background: var(--sidebar-hover);
 }
 
+/* ---- Menú colapsado a solo íconos (clase "collapsed" del JS) ---- */
+.sidebar.collapsed {
+    width: 70px;
+    padding: 24px 8px;
+}
+
+.sidebar.collapsed .sidebar-logo-text,
+.sidebar.collapsed .sidebar-version,
+.sidebar.collapsed .sidebar-section-title,
+.sidebar.collapsed .sidebar-user-name,
+.sidebar.collapsed .sidebar-user-role,
+.sidebar.collapsed .theme-toggle span {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-logo,
+.sidebar.collapsed .sidebar-link,
+.sidebar.collapsed .sidebar-user,
+.sidebar.collapsed .theme-toggle {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+    text-align: center;
+}
+
+.sidebar.collapsed .sidebar-logo {
+    padding: 0;
+}
+
+.sidebar.collapsed .theme-toggle {
+    width: 100%;
+    margin: 10px 0;
+}
+
 /* =========================================
-   TOPBAR (Barra superior)
+   TOPBAR
    ========================================= */
 .topbar {
     grid-area: topbar;
@@ -216,17 +270,26 @@ body {
     align-items: center;
     gap: 24px;
     padding: 12px 32px;
-    background: var(--bg);
+    background: var(--bg-card);
     border-bottom: 1px solid var(--border);
 }
 
 .topbar-menu-btn {
-    display: none;
-    padding: 6px;
-    color: #fff;
+    display: inline-flex !important; /* hamburguesa visible en todas las pantallas */
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    color: var(--text-muted);
     background: none;
     border: 0;
+    border-radius: 8px;
     cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.topbar-menu-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text);
 }
 
 .topbar-title h1 {
@@ -247,34 +310,60 @@ body {
     margin-left: auto;
 }
 
+/* =========================================
+   BOTONES
+   ========================================= */
 .btn {
     padding: 9px 16px;
     border: 1px solid transparent;
     border-radius: 8px;
     font-weight: 500;
     font-size: 13px;
+    font-family: inherit;
     cursor: pointer;
     transition: 0.2s;
 }
 
+/* Secundario: blanco, borde gris, texto gris */
 .btn-ghost {
     color: var(--text-muted);
-    background: transparent;
+    background: var(--bg-card);
     border-color: var(--border);
 }
 
 .btn-ghost:hover {
-    color: #38bdf8;
-    border-color: #38bdf8;
+    color: var(--accent);
+    border-color: var(--accent-border);
+    background: var(--accent-soft);
 }
 
-.btn-primary {
-    color: #0a0a0a;
-    background: #38bdf8;
+/* Primario: azul #2563eb, texto blanco */
+.btn-primary,
+.btn-submit {
+    color: #ffffff;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
 }
 
-.btn-primary:hover {
-    background: #5fc9fa;
+.btn-primary:hover,
+.btn-submit:hover {
+    background: var(--accent-hover);
+}
+
+.btn-submit {
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* =========================================
@@ -286,31 +375,6 @@ body {
     flex: 1;
 }
 
-.buscador-glow {
-    position: relative;
-    isolation: isolate;
-    border-radius: 999px;
-}
-
-.buscador-glow::before {
-    position: absolute;
-    z-index: -1;
-    inset: -2px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, transparent, rgba(56, 189, 248, .9), transparent);
-    background-size: 200% 100%;
-    filter: blur(3px);
-    opacity: .7;
-    pointer-events: none;
-    content: '';
-    animation: brilloBuscador 4s linear infinite;
-}
-
-@keyframes brilloBuscador {
-    from { background-position: 200% 0; }
-    to { background-position: -200% 0; }
-}
-
 .buscador-input-contenedor {
     display: flex;
     align-items: center;
@@ -318,7 +382,12 @@ body {
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: 999px;
-    transition: box-shadow .25s ease, border-color .25s ease;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.buscador-input-contenedor:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
 }
 
 .buscador-icono {
@@ -327,7 +396,7 @@ body {
     width: 18px;
     height: 18px;
     margin-right: 10px;
-    color: var(--text-muted);
+    color: var(--text-soft);
 }
 
 .buscador-input {
@@ -339,59 +408,47 @@ body {
     border: 0;
     outline: 0;
     font: inherit;
-    font-size: .9rem;
+    font-size: 0.9rem;
 }
 
 .buscador-input::placeholder {
-    color: var(--text-muted);
-}
-
-.buscador-input-contenedor:focus-within {
-    border-color: #38bdf8;
-    box-shadow: 0 4px 18px rgba(56, 189, 248, .25);
+    color: var(--text-soft);
 }
 
 .buscador-info {
     min-height: 16px;
     margin-top: 5px;
     color: var(--text-muted);
-    font-size: .75rem;
+    font-size: 0.75rem;
     text-align: center;
 }
 
 /* =========================================
-   CONTENIDO PRINCIPAL
+   CONTENIDO PRINCIPAL Y PÁGINAS
    ========================================= */
 .main-content {
     grid-area: main;
-    padding: 0;
+    padding: 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
     overflow-y: auto;
 }
 
-/* Control de páginas (para navegación) */
-.pagina {
-    display: none;
-}
+.pagina { display: none; }
+.pagina.activa { display: block; }
 
-.pagina.activa {
-    display: block;
-}
-
-.page-header {
-    margin-bottom: 2rem;
-    padding: 1.5rem 1.5rem 0 1.5rem;
-}
+.page-header { margin-bottom: 2rem; }
 
 .page-header h1 {
     font-size: 1.8rem;
     color: var(--text);
-    margin: 0 0 0.2rem 0;
+    margin-bottom: 0.2rem;
+    font-weight: 700;
 }
 
 .page-header .fecha-hoy {
     color: var(--text-muted);
     font-size: 0.9rem;
-    margin: 0;
 }
 
 /* =========================================
@@ -402,16 +459,10 @@ body {
     grid-template-columns: 2fr 1fr;
     gap: 2rem;
     max-width: 100%;
-    padding: 0 1.5rem;
-    margin: 0 auto;
 }
 
 @media (max-width: 992px) {
-    .entradas-wrapper {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-        padding: 0 1rem;
-    }
+    .entradas-wrapper { grid-template-columns: 1fr; }
 }
 
 .entradas-form {
@@ -419,18 +470,17 @@ body {
     padding: 1.5rem;
     border-radius: 12px;
     border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
 }
 
 .entradas-form h2 {
-    margin-top: 0;
+    margin-bottom: 1.5rem;
     font-size: 1.4rem;
     color: var(--text);
-    margin-bottom: 1.5rem;
+    font-weight: 700;
 }
 
-.form-group {
-    margin-bottom: 1.2rem;
-}
+.form-group { margin-bottom: 1.2rem; }
 
 .form-group label {
     display: block;
@@ -452,15 +502,30 @@ body {
     border-radius: 8px;
     color: var(--text);
     font-size: 0.95rem;
+    font-family: inherit;
     box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-group textarea {
-    resize: vertical;
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.form-group textarea { resize: vertical; }
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-soft);
 }
 
 .form-group .buscador-wrapper {
     position: relative;
+    width: 100%;
+    margin: 0;
 }
 
 .form-group .buscador-wrapper input {
@@ -472,31 +537,8 @@ body {
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
+    color: var(--text-soft);
     pointer-events: none;
-}
-
-/* Botón principal del formulario (renombrado para no chocar con la topbar) */
-.btn-submit {
-    background: #0ea5e9;
-    color: white;
-    border: none;
-    padding: 0.7rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    width: 100%;
-    font-size: 1rem;
-    transition: opacity 0.2s;
-}
-
-.btn-submit:hover {
-    opacity: 0.9;
-}
-
-.btn-submit:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
 }
 
 /* =========================================
@@ -514,11 +556,13 @@ body {
     padding: 1.2rem;
     border-radius: 12px;
     border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
 }
 
 .vista-previa h3,
 .ultimas-entradas h3 {
     font-size: 1rem;
+    font-weight: 600;
     margin-top: 0;
     margin-bottom: 0.8rem;
     color: var(--text-muted);
@@ -545,37 +589,8 @@ body {
     margin-top: 0.5rem;
 }
 
-.badge {
-    padding: 0.2rem 0.6rem;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    display: inline-block;
-}
-
-.badge-disponible {
-    background: #22c55e;
-    color: white;
-}
-
-.badge-sin-stock {
-    background: #ef4444;
-    color: white;
-}
-
-.badge-critico {
-    background: #f59e0b;
-    color: white;
-}
-
-.badge-bajo {
-    background: #f97316;
-    color: white;
-}
-
 .placeholder {
-    color: var(--text-muted);
+    color: var(--text-soft);
     font-style: italic;
 }
 
@@ -593,9 +608,7 @@ body {
     gap: 0.2rem;
 }
 
-.lista-entradas li:last-child {
-    border-bottom: none;
-}
+.lista-entradas li:last-child { border-bottom: none; }
 
 .lista-entradas .item-nombre {
     font-weight: 600;
@@ -609,23 +622,73 @@ body {
 
 .lista-entradas .item-cantidad {
     font-weight: 700;
-    color: #22c55e;
+    color: #16a34a;
 }
 
 /* =========================================
-   TABLA DE INVENTARIO GENERAL (wrapper)
+   BADGES (fondos pastel)
+   ========================================= */
+.badge {
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: inline-block;
+}
+
+.badge-disponible {
+    background: #dcfce7;   /* verde pastel */
+    color: #16a34a;
+}
+
+.badge-sin-stock {
+    background: #fee2e2;   /* rojo pastel */
+    color: #dc2626;
+}
+
+.badge-critico {
+    background: #ffedd5;   /* naranja pastel */
+    color: #ea580c;
+}
+
+.badge-bajo {
+    background: #fef3c7;   /* ámbar pastel */
+    color: #d97706;
+}
+
+.badge-categoria {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    display: inline-block;
+}
+
+.stock-numero {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* =========================================
+   TABLA DE INVENTARIO GENERAL
    ========================================= */
 .inventario-tabla-wrapper {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    margin: 1rem 1.5rem;
+    box-shadow: var(--shadow-md);
+    margin: 1rem 0;
+    overflow-x: auto;
 }
+
 .inventario-tabla {
     width: 100%;
-    border-collapse: collapse;
+    min-width: 700px;
+    border-collapse: separate;
+    border-spacing: 0;
     background: transparent;
 }
 
@@ -636,53 +699,140 @@ body {
     border-bottom: 1px solid var(--border);
     color: var(--text);
     font-size: 0.9rem;
+    vertical-align: middle;
 }
 
+/* Encabezado gris claro */
 .inventario-tabla th {
-    background: var(--bg-input);
+    background: #f8fafc;
     font-weight: 700;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.5px;
     color: var(--text-muted);
-}
-
-.inventario-tabla tr:hover td {
-    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
 }
 
 .inventario-tabla td strong {
-    color: #fff;
-}
-
-/* Badges dentro de la tabla */
-.badge-categoria {
-    background: var(--bg-input);
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
     color: var(--text);
-    display: inline-block;
 }
 
-/* Botones de acción dentro de la tabla */
+/* Hover de filas */
+.inventario-tabla tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.inventario-tabla tbody tr:hover td {
+    background: #f1f5f9;
+}
+
+.inventario-tabla tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Esquinas redondeadas */
+.inventario-tabla thead th:first-child { border-top-left-radius: 10px; }
+.inventario-tabla thead th:last-child { border-top-right-radius: 10px; }
+.inventario-tabla tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
+.inventario-tabla tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+
+/* Celda Artículo: imagen + nombre */
+.articulo-celda {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 200px;
+}
+
+.articulo-imagen {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.articulo-imagen img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.articulo-imagen-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: var(--text-soft);
+}
+
+.articulo-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.articulo-nombre {
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+}
+
+.articulo-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Botones de acción */
 .btn-accion {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text-muted);
-    padding: 0.4rem 0.6rem;
     border-radius: 6px;
     cursor: pointer;
     font-size: 1rem;
-    margin-right: 0.3rem;
     transition: all 0.2s;
 }
 
 .btn-accion:hover {
-    background: var(--sidebar-active);
-    color: white;
-    border-color: var(--sidebar-active);
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent-border);
+    transform: translateY(-1px);
 }
+
+/* Scrollbar sutil del wrapper */
+.inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
+.inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
+.inventario-tabla-wrapper::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+}
+
+/* =========================================
+   OVERLAY DEL MENÚ (móvil)
+   ========================================= */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    z-index: 999;
+}
+
+.sidebar-overlay.show { display: block; }
 
 /* =========================================
    RESPONSIVE
@@ -696,14 +846,20 @@ body {
 
     .sidebar {
         position: fixed;
-        z-index: 100;
-        width: 240px;
+        top: 0;
+        left: 0;
+        width: 260px;
+        z-index: 1000;
         transform: translateX(-100%);
-        transition: transform .25s ease;
+        transition: transform 0.3s ease;
+        box-shadow: 0 0 40px rgba(15, 23, 42, 0.15);
     }
 
-    .sidebar.open {
-        transform: translateX(0);
+    .sidebar.open { transform: translateX(0); }
+
+    .sidebar.hidden {
+        transform: translateX(-100%);
+        margin-left: 0;
     }
 
     .topbar {
@@ -711,427 +867,173 @@ body {
         padding: 12px 20px;
     }
 
-    .topbar-menu-btn {
-        display: inline-flex;
-    }
+    .main-content { padding: 1rem; }
 
-    .main-content {
-        padding: 1rem;
-    }
-
-    .entradas-wrapper {
-        padding: 0;
-    }
-
-    .entradas-form {
-        padding: 1rem;
-    }
-
-    .vista-previa,
-    .ultimas-entradas {
-        padding: 1rem;
-    }
-
-    .inventario-tabla-wrapper {
-        margin: 1rem 0;
-    }
-}
-/* =====================================================
-   TABLA DE INVENTARIO — MEJORAS VISUALES (AGREGADO v2)
-   Se agrega al final para sobrescribir los estilos
-   anteriores SIN borrar nada del CSS existente.
-   ===================================================== */
-
-/* ---- Contenedor / wrapper ---- */
-.inventario-tabla-wrapper {
-    margin: 1rem 1.5rem 2rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
-    overflow-x: auto;   /* scroll horizontal solo en pantallas chicas */
-}
-
-/* La tabla ocupa TODO el ancho disponible */
-.inventario-tabla {
-    width: 100%;
-    min-width: 700px;          /* evita celdas apretadas */
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-/* ---- Celdas: buen espaciado ---- */
-.inventario-tabla th,
-.inventario-tabla td {
-    padding: .95rem 1.2rem;
-    vertical-align: middle;
-}
-
-.inventario-tabla td strong {
-    color: var(--text);        /* fix: antes era #fff fijo, rompía en modo claro */
-}
-
-/* ---- Encabezado ---- */
-.inventario-tabla thead th {
-    white-space: nowrap;
-    border-bottom: 2px solid #38bdf8;   /* acento bajo el header */
-}
-
-/* ---- Filas: hover con acento ---- */
-.inventario-tabla tbody tr {
-    transition: background-color .15s ease;
-}
-
-.inventario-tabla tbody tr:hover td {
-    background: rgba(56, 189, 248, .07);
-}
-
-/* Barrita de acento en el borde izquierdo de la fila con hover */
-.inventario-tabla tbody tr:hover td:first-child {
-    box-shadow: inset 3px 0 0 #38bdf8;
-}
-
-/* Última fila sin borde (el wrapper ya tiene borde propio) */
-.inventario-tabla tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* ---- Celda ARTÍCULO: imagen cuadrada + nombre ---- */
-.articulo-celda {
-    display: flex;
-    align-items: center;
-    gap: .85rem;
-    min-width: 200px;
-}
-
-.articulo-imagen {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-}
-
-.articulo-imagen img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;   /* nunca se deforma */
-}
-
-/* Placeholder cuando el artículo no tiene imagen */
-.articulo-imagen-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    font-size: 1.25rem;
-    color: var(--text-muted);
-}
-
-.articulo-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.articulo-nombre {
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.35;
-}
-
-/* opcional: segunda línea chica bajo el nombre */
-.articulo-meta {
-    font-size: .75rem;
-    color: var(--text-muted);
-}
-
-/* ---- Stock destacado ---- */
-.stock-numero {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-/* ---- Badges y botones de acción: retoques ---- */
-.badge {
-    box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
-}
-
-.btn-accion {
-    width: 34px;
-    height: 34px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-}
-
-.btn-accion:hover {
-    transform: translateY(-1px);
-}
-
-/* ---- Scrollbar sutil (Chrome/Edge/Safari) ---- */
-.inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
-.inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
-.inventario-tabla-wrapper::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 999px;
-}
-
-/* ---- Responsive ---- */
-@media (max-width: 768px) {
     .inventario-tabla th,
-    .inventario-tabla td { padding: .7rem .8rem; }
+    .inventario-tabla td { padding: 0.7rem 0.8rem; }
 
     .articulo-imagen { width: 38px; height: 38px; }
     .articulo-celda { min-width: 160px; }
 }
 /* =========================================
-   TABLA DE INVENTARIO GENERAL (UNIFICADO)
+   BOTÓN HAMBURGUESA DENTRO DEL SIDEBAR
    ========================================= */
-.inventario-tabla-wrapper {
+.sidebar .topbar-menu-btn {
+    align-self: flex-end;        /* esquina superior derecha */
+    margin: -6px 0 -18px;        /* compensa el padding y el gap de 28px */
+}
+
+/* Cuando el menú está colapsado a solo íconos, centrado */
+.sidebar.collapsed .topbar-menu-btn {
+    align-self: center;
+    margin: 0;
+}/* FIX: Menú colapsado - ocultar textos y centrar todo */
+.sidebar.collapsed .sidebar-link span,
+.sidebar.collapsed .sidebar-link {
+    font-size: 0 !important; /* Oculta todo texto dentro del enlace */
+    padding: 12px 0 !important;
+    justify-content: center !important;
+}
+
+.sidebar.collapsed .sidebar-link {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* Asegura que los iconos queden perfectamente centrados */
+.sidebar.collapsed .sidebar-link svg {
+    margin: 0 auto;
+    display: block;
+}
+
+/* Oculta también el texto del footer y logo si es necesario */
+.sidebar.collapsed .sidebar-user-info,
+.sidebar.collapsed .theme-toggle span {
+    display: none !important;
+}
+/* =========================================
+   BARRA DE HERRAMIENTAS INVENTARIO
+   ========================================= */
+.toolbar-inventario {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.toolbar-left {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.buscador-inventario {
+    display: flex;
+    align-items: center;
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
-    margin: 1rem 1.5rem 2rem;
-    overflow-x: auto;   /* scroll horizontal solo en pantallas chicas */
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    width: 300px;
 }
-
-.inventario-tabla {
-    width: 100%;
-    min-width: 700px;          /* evita celdas apretadas */
-    border-collapse: separate;
-    border-spacing: 0;
+.buscador-inventario input {
+    border: none;
+    outline: none;
     background: transparent;
-}
-
-.inventario-tabla th,
-.inventario-tabla td {
-    padding: .95rem 1.2rem;
-    vertical-align: middle;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
+    width: 100%;
     color: var(--text);
     font-size: 0.9rem;
 }
-
-.inventario-tabla th {
-    background: var(--bg-input);
-    font-weight: 700;
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    border-bottom: 2px solid #38bdf8;   /* acento bajo el header */
+.buscador-inventario .icono-buscar {
+    color: var(--text-soft);
+    margin-right: 0.5rem;
 }
-
-.inventario-tabla tbody tr {
-    transition: background-color .15s ease;
-}
-
-.inventario-tabla tbody tr:hover td {
-    background: rgba(56, 189, 248, .07);
-}
-
-/* Barrita de acento en el borde izquierdo de la fila con hover */
-.inventario-tabla tbody tr:hover td:first-child {
-    box-shadow: inset 3px 0 0 #38bdf8;
-}
-
-/* Última fila sin borde */
-.inventario-tabla tbody tr:last-child td {
-    border-bottom: none;
-}
-
-/* ---- Celda ARTÍCULO: imagen cuadrada + nombre ---- */
-.articulo-celda {
-    display: flex;
-    align-items: center;
-    gap: .85rem;
-    min-width: 200px;
-}
-
-.articulo-imagen {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--bg-input);
+.select-ubicacion {
+    padding: 0.6rem 1rem;
     border: 1px solid var(--border);
-}
-
-.articulo-imagen img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;   /* nunca se deforma */
-}
-
-/* Placeholder cuando el artículo no tiene imagen */
-.articulo-imagen-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    font-size: 1.25rem;
-    color: var(--text-muted);
-}
-
-.articulo-info {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.articulo-nombre {
-    font-weight: 600;
+    border-radius: 8px;
+    background: var(--bg-card);
     color: var(--text);
-    line-height: 1.35;
+    font-size: 0.9rem;
+}
+.toolbar-right {
+    display: flex;
+    gap: 0.8rem;
+}
+.btn-exportar {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.btn-nuevo {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    background: var(--accent);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
 }
 
-/* opcional: segunda línea chica bajo el nombre */
-.articulo-meta {
-    font-size: .75rem;
-    color: var(--text-muted);
+/* =========================================
+   CHIPS DE CATEGORÍAS (con contador)
+   ========================================= */
+.filtros-chips {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
 }
-
-/* ---- Stock destacado ---- */
-.stock-numero {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-/* ---- Badges y botones de acción: retoques ---- */
-.badge {
-    box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
-}
-
-.btn-accion {
-    width: 34px;
-    height: 34px;
+.chip-categoria {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    padding: 0;
-}
-
-.btn-accion:hover {
-    transform: translateY(-1px);
-}
-
-/* ---- Scrollbar sutil (Chrome/Edge/Safari) ---- */
-.inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
-.inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
-.inventario-tabla-wrapper::-webkit-scrollbar-thumb {
-    background: var(--border);
+    gap: 0.4rem;
+    padding: 0.4rem 1rem;
     border-radius: 999px;
-}
-
-/* ---- Responsive ---- */
-@media (max-width: 768px) {
-    .inventario-tabla th,
-    .inventario-tabla td { padding: .7rem .8rem; }
-    .articulo-imagen { width: 38px; height: 38px; }
-    .articulo-celda { min-width: 160px; }
-}
-/* =========================================
-   VISTA LIBRE Y PROLIJA DE LA TABLA
-   ========================================= */
-
-/* 1. El contenedor principal debe tener padding y centrado */
-.main-content {
-    padding: 2rem !important;
-    max-width: 1300px; /* Ancho máximo cómodo, centrado */
-    margin: 0 auto !important;
-}
-
-/* 2. El contenedor de la tabla (el cuadro) */
-.inventario-tabla-wrapper {
+    border: 1px solid var(--border);
     background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    padding: 0.5rem; /* Un poco de aire dentro del cuadro */
-    overflow-x: auto; /* Permite scroll si es muy angosto */
-    margin: 1rem 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.chip-categoria:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.chip-categoria.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+}
+.chip-categoria .contador {
+    background: var(--bg-hover);
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
 }
 
-/* 3. La tabla en sí */
-.inventario-tabla {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    background: transparent;
-}
-
-/* 4. Celdas y bordes (sin que se "coman" las esquinas) */
-.inventario-tabla th,
-.inventario-tabla td {
-    padding: 1rem 1.2rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-}
-
-/* 5. Esquinas redondeadas para el header y la última fila */
-.inventario-tabla thead th:first-child { border-top-left-radius: 10px; }
-.inventario-tabla thead th:last-child { border-top-right-radius: 10px; }
-.inventario-tabla tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
-.inventario-tabla tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
-
-/* 6. Hover suave */
-.inventario-tabla tbody tr:hover td {
-    background: rgba(56, 189, 248, 0.06);
-}
-
-/* 7. Imagen del artículo (si la tiene) */
-.articulo-imagen {
-    width: 44px;
-    height: 44px;
-    border-radius: 8px;
-    object-fit: cover;
-    border: 1px solid var(--border);
-}
-/* =========================================
-   TABLA BÁSICA (SOLO PARA VER CÓMO QUEDA)
-   ========================================= */
-.main-content {
-    padding: 2rem;
-    max-width: 100%;
-}
-
-.inventario-tabla-wrapper {
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 8px;
-    overflow: hidden;
-    width: 100%;
-}
-
-.inventario-tabla {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.inventario-tabla th,
-.inventario-tabla td {
-    padding: 1rem;
-    border-bottom: 1px solid #334155;
-    color: #e2e8f0;
-    text-align: left;
-}
-
-.inventario-tabla th {
-    background: #0f172a;
-    font-weight: bold;
-}
-
-.inventario-tabla tr:last-child td {
-    border-bottom: none;
+/* Responsive */
+@media (max-width: 768px) {
+    .toolbar-inventario {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .buscador-inventario {
+        width: 100%;
+    }
+    .toolbar-right {
+        justify-content: space-between;
+    }
 }

@@ -753,4 +753,86 @@ function obtenerCeldaArticuloHTML(articulo) {
 
         </div>
     `;
+}// ============================================================
+// MENÚ LATERAL COLAPSABLE (SOLO ICONOS)
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const btnMenu = document.getElementById('btnMenu');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const layout = document.querySelector('.app-layout');
+
+    if (!btnMenu || !sidebar) return;
+
+    // Función para alternar el menú
+    function toggleMenu() {
+        if (window.matchMedia("(max-width: 768px)").matches) {
+            // MODO MÓVIL: usar clase "open" (deslizar)
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+        } else {
+            // MODO PC: alternar clase "collapsed" (solo iconos)
+            sidebar.classList.toggle('collapsed');
+            layout.classList.toggle('sidebar-collapsed');
+        }
+    }
+
+    // Evento de clic en el botón hamburguesa
+    btnMenu.addEventListener('click', toggleMenu);
+
+    // Cerrar menú si se hace clic en el overlay (solo móvil)
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        });
+    }
+
+    // (Opcional) Si la pantalla es muy grande y quieres que arranque expandido, no hagas nada.
+    // Si quieres que arranque colapsado, descomenta la siguiente línea:
+    // if (!window.matchMedia("(max-width: 768px)").matches) {
+    //     sidebar.classList.add('collapsed');
+    //     layout.classList.add('sidebar-collapsed');
+    // }
+});// Generar chips de categorías con contador
+function renderizarFiltrosCategorias() {
+    const contenedor = document.getElementById('filtrosCategorias');
+    if (!contenedor || !articulos.length) return;
+
+    // Contar artículos por categoría
+    const conteo = {};
+    articulos.forEach(item => {
+        const cat = item.categoriaID || 'Sin categoría';
+        conteo[cat] = (conteo[cat] || 0) + 1;
+    });
+
+    // Crear chip "Todos"
+    let html = `<button class="chip-categoria active" data-cat="todos">Todos <span class="contador">${articulos.length}</span></button>`;
+    
+    // Crear chips por categoría
+    for (const [cat, num] of Object.entries(conteo)) {
+        html += `<button class="chip-categoria" data-cat="${cat}">${cat} <span class="contador">${num}</span></button>`;
+    }
+    contenedor.innerHTML = html;
+
+    // Eventos de clic
+    contenedor.querySelectorAll('.chip-categoria').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const cat = chip.dataset.cat;
+            filtroActivo = cat; // Variable global que ya usas
+            contenedor.querySelectorAll('.chip-categoria').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            aplicarFiltroYRender();
+        });
+    });
+}
+
+// Llamar a esta función después de cargar los artículos
+function cargarInventarioCompleto() {
+    cargarArticulos().then(() => {
+        renderizarFiltrosCategorias();
+        // Fecha actual
+        const fechaEl = document.getElementById('fechaInventario');
+        if (fechaEl) fechaEl.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    });
 }
