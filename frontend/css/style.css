@@ -1,10 +1,19 @@
+/* =========================================
+   FUENTE
+   ========================================= */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* =========================================
+   RESET
+   ========================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 /* =========================================
-   VARIABLES — TEMA CLARO (única paleta para
-   dark y light: la app siempre se ve clara)
+   VARIABLES — TEMA CLARO
    ========================================= */
 :root,
 [data-theme="dark"],
@@ -36,6 +45,9 @@
     --shadow-md: 0 1px 3px rgba(15, 23, 42, .06), 0 4px 12px rgba(15, 23, 42, .05);
 }
 
+/* =========================================
+   CUERPO
+   ========================================= */
 body {
     min-height: 100vh;
     font-family: 'Inter', sans-serif;
@@ -53,7 +65,7 @@ body {
     grid-template-rows: 92px minmax(0, 1fr);
     grid-template-areas: 'sidebar topbar' 'sidebar main';
     min-height: 100vh;
-    transition: grid-template-columns 0.3s ease; /* se adapta al ancho del menú */
+    transition: grid-template-columns 0.3s ease;
 }
 
 .app-layout.sidebar-collapsed {
@@ -77,7 +89,6 @@ body {
     transition: background-color 0.3s, transform 0.3s ease, margin-left 0.3s ease;
 }
 
-/* Menú oculto en PC (el JS agrega la clase "hidden") */
 .sidebar.hidden {
     transform: translateX(-100%);
     margin-left: -240px;
@@ -224,7 +235,7 @@ body {
     background: var(--sidebar-hover);
 }
 
-/* ---- Menú colapsado a solo íconos (clase "collapsed" del JS) ---- */
+/* Menú colapsado */
 .sidebar.collapsed {
     width: 70px;
     padding: 24px 8px;
@@ -258,6 +269,39 @@ body {
     margin: 10px 0;
 }
 
+.sidebar.collapsed .sidebar-link span,
+.sidebar.collapsed .sidebar-link {
+    font-size: 0 !important;
+    padding: 12px 0 !important;
+    justify-content: center !important;
+}
+
+.sidebar.collapsed .sidebar-link {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar.collapsed .sidebar-link svg {
+    margin: 0 auto;
+    display: block;
+}
+
+.sidebar.collapsed .sidebar-user-info,
+.sidebar.collapsed .theme-toggle span {
+    display: none !important;
+}
+
+.sidebar .topbar-menu-btn {
+    align-self: flex-end;
+    margin: -6px 0 -18px;
+}
+
+.sidebar.collapsed .topbar-menu-btn {
+    align-self: center;
+    margin: 0;
+}
+
 /* =========================================
    TOPBAR
    ========================================= */
@@ -275,7 +319,7 @@ body {
 }
 
 .topbar-menu-btn {
-    display: inline-flex !important; /* hamburguesa visible en todas las pantallas */
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
     padding: 8px;
@@ -324,7 +368,6 @@ body {
     transition: 0.2s;
 }
 
-/* Secundario: blanco, borde gris, texto gris */
 .btn-ghost {
     color: var(--text-muted);
     background: var(--bg-card);
@@ -337,7 +380,6 @@ body {
     background: var(--accent-soft);
 }
 
-/* Primario: azul #2563eb, texto blanco */
 .btn-primary,
 .btn-submit {
     color: #ffffff;
@@ -367,7 +409,7 @@ body {
 }
 
 /* =========================================
-   BUSCADOR
+   BUSCADOR GLOBAL
    ========================================= */
 .buscador-wrapper {
     width: min(100%, 700px);
@@ -424,7 +466,7 @@ body {
 }
 
 /* =========================================
-   CONTENIDO PRINCIPAL Y PÁGINAS
+   CONTENIDO PRINCIPAL
    ========================================= */
 .main-content {
     grid-area: main;
@@ -434,10 +476,16 @@ body {
     overflow-y: auto;
 }
 
-.pagina { display: none; }
-.pagina.activa { display: block; }
+.pagina {
+    display: none;
+}
+.pagina.activa {
+    display: block;
+}
 
-.page-header { margin-bottom: 2rem; }
+.page-header {
+    margin-bottom: 2rem;
+}
 
 .page-header h1 {
     font-size: 1.8rem;
@@ -452,7 +500,7 @@ body {
 }
 
 /* =========================================
-   ENTRADAS - Layout
+   PÁGINA DE ENTRADAS
    ========================================= */
 .entradas-wrapper {
     display: grid;
@@ -462,7 +510,9 @@ body {
 }
 
 @media (max-width: 992px) {
-    .entradas-wrapper { grid-template-columns: 1fr; }
+    .entradas-wrapper {
+        grid-template-columns: 1fr;
+    }
 }
 
 .entradas-form {
@@ -480,7 +530,9 @@ body {
     font-weight: 700;
 }
 
-.form-group { margin-bottom: 1.2rem; }
+.form-group {
+    margin-bottom: 1.2rem;
+}
 
 .form-group label {
     display: block;
@@ -515,11 +567,8 @@ body {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
 }
 
-.form-group textarea { resize: vertical; }
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-    color: var(--text-soft);
+.form-group textarea {
+    resize: vertical;
 }
 
 .form-group .buscador-wrapper {
@@ -539,6 +588,10 @@ body {
     transform: translateY(-50%);
     color: var(--text-soft);
     pointer-events: none;
+}
+
+input::-webkit-calendar-picker-indicator {
+    display: none;
 }
 
 /* =========================================
@@ -594,6 +647,9 @@ body {
     font-style: italic;
 }
 
+/* =========================================
+   LISTA DE ÚLTIMAS ENTRADAS
+   ========================================= */
 .lista-entradas {
     list-style: none;
     padding: 0;
@@ -608,7 +664,9 @@ body {
     gap: 0.2rem;
 }
 
-.lista-entradas li:last-child { border-bottom: none; }
+.lista-entradas li:last-child {
+    border-bottom: none;
+}
 
 .lista-entradas .item-nombre {
     font-weight: 600;
@@ -626,7 +684,7 @@ body {
 }
 
 /* =========================================
-   BADGES (fondos pastel)
+   BADGES
    ========================================= */
 .badge {
     padding: 0.25rem 0.65rem;
@@ -639,22 +697,22 @@ body {
 }
 
 .badge-disponible {
-    background: #dcfce7;   /* verde pastel */
+    background: #dcfce7;
     color: #16a34a;
 }
 
 .badge-sin-stock {
-    background: #fee2e2;   /* rojo pastel */
+    background: #fee2e2;
     color: #dc2626;
 }
 
 .badge-critico {
-    background: #ffedd5;   /* naranja pastel */
+    background: #ffedd5;
     color: #ea580c;
 }
 
 .badge-bajo {
-    background: #fef3c7;   /* ámbar pastel */
+    background: #fef3c7;
     color: #d97706;
 }
 
@@ -665,11 +723,6 @@ body {
     border-radius: 999px;
     font-size: 0.75rem;
     display: inline-block;
-}
-
-.stock-numero {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
 }
 
 /* =========================================
@@ -702,7 +755,6 @@ body {
     vertical-align: middle;
 }
 
-/* Encabezado gris claro */
 .inventario-tabla th {
     background: #f8fafc;
     font-weight: 700;
@@ -718,7 +770,6 @@ body {
     color: var(--text);
 }
 
-/* Hover de filas */
 .inventario-tabla tbody tr {
     transition: background-color 0.15s ease;
 }
@@ -731,13 +782,20 @@ body {
     border-bottom: none;
 }
 
-/* Esquinas redondeadas */
-.inventario-tabla thead th:first-child { border-top-left-radius: 10px; }
-.inventario-tabla thead th:last-child { border-top-right-radius: 10px; }
-.inventario-tabla tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
-.inventario-tabla tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+.inventario-tabla thead th:first-child {
+    border-top-left-radius: 10px;
+}
+.inventario-tabla thead th:last-child {
+    border-top-right-radius: 10px;
+}
+.inventario-tabla tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 10px;
+}
+.inventario-tabla tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 10px;
+}
 
-/* Celda Artículo: imagen + nombre */
+/* Celda Artículo */
 .articulo-celda {
     display: flex;
     align-items: center;
@@ -813,12 +871,139 @@ body {
     transform: translateY(-1px);
 }
 
-/* Scrollbar sutil del wrapper */
-.inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
-.inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
+.inventario-tabla-wrapper::-webkit-scrollbar {
+    height: 8px;
+}
+.inventario-tabla-wrapper::-webkit-scrollbar-track {
+    background: transparent;
+}
 .inventario-tabla-wrapper::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 999px;
+}
+
+/* =========================================
+   HERRAMIENTAS INVENTARIO
+   ========================================= */
+.toolbar-inventario {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.toolbar-left {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.buscador-inventario {
+    display: flex;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    width: 300px;
+}
+
+.buscador-inventario input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.buscador-inventario .icono-buscar {
+    color: var(--text-soft);
+    margin-right: 0.5rem;
+}
+
+.select-ubicacion {
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.toolbar-right {
+    display: flex;
+    gap: 0.8rem;
+}
+
+.btn-exportar {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-nuevo {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    background: var(--accent);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* =========================================
+   FILTROS (CHIPS)
+   ========================================= */
+.filtros-chips {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.chip-categoria {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.chip-categoria:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.chip-categoria.active {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.chip-categoria .contador {
+    background: var(--bg-hover);
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 700;
 }
 
 /* =========================================
@@ -832,7 +1017,9 @@ body {
     z-index: 999;
 }
 
-.sidebar-overlay.show { display: block; }
+.sidebar-overlay.show {
+    display: block;
+}
 
 /* =========================================
    RESPONSIVE
@@ -855,7 +1042,9 @@ body {
         box-shadow: 0 0 40px rgba(15, 23, 42, 0.15);
     }
 
-    .sidebar.open { transform: translateX(0); }
+    .sidebar.open {
+        transform: translateX(0);
+    }
 
     .sidebar.hidden {
         transform: translateX(-100%);
@@ -867,173 +1056,190 @@ body {
         padding: 12px 20px;
     }
 
-    .main-content { padding: 1rem; }
+    .main-content {
+        padding: 1rem;
+    }
 
     .inventario-tabla th,
-    .inventario-tabla td { padding: 0.7rem 0.8rem; }
+    .inventario-tabla td {
+        padding: 0.7rem 0.8rem;
+    }
 
-    .articulo-imagen { width: 38px; height: 38px; }
-    .articulo-celda { min-width: 160px; }
-}
-/* =========================================
-   BOTÓN HAMBURGUESA DENTRO DEL SIDEBAR
-   ========================================= */
-.sidebar .topbar-menu-btn {
-    align-self: flex-end;        /* esquina superior derecha */
-    margin: -6px 0 -18px;        /* compensa el padding y el gap de 28px */
-}
+    .articulo-imagen {
+        width: 38px;
+        height: 38px;
+    }
 
-/* Cuando el menú está colapsado a solo íconos, centrado */
-.sidebar.collapsed .topbar-menu-btn {
-    align-self: center;
-    margin: 0;
-}/* FIX: Menú colapsado - ocultar textos y centrar todo */
-.sidebar.collapsed .sidebar-link span,
-.sidebar.collapsed .sidebar-link {
-    font-size: 0 !important; /* Oculta todo texto dentro del enlace */
-    padding: 12px 0 !important;
-    justify-content: center !important;
-}
+    .articulo-celda {
+        min-width: 160px;
+    }
 
-.sidebar.collapsed .sidebar-link {
-    width: 100%;
-    display: flex;
-    align-items: center;
-}
-
-/* Asegura que los iconos queden perfectamente centrados */
-.sidebar.collapsed .sidebar-link svg {
-    margin: 0 auto;
-    display: block;
-}
-
-/* Oculta también el texto del footer y logo si es necesario */
-.sidebar.collapsed .sidebar-user-info,
-.sidebar.collapsed .theme-toggle span {
-    display: none !important;
-}
-/* =========================================
-   BARRA DE HERRAMIENTAS INVENTARIO
-   ========================================= */
-.toolbar-inventario {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-}
-.toolbar-left {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    flex-wrap: wrap;
-}
-.buscador-inventario {
-    display: flex;
-    align-items: center;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.4rem 0.8rem;
-    width: 300px;
-}
-.buscador-inventario input {
-    border: none;
-    outline: none;
-    background: transparent;
-    width: 100%;
-    color: var(--text);
-    font-size: 0.9rem;
-}
-.buscador-inventario .icono-buscar {
-    color: var(--text-soft);
-    margin-right: 0.5rem;
-}
-.select-ubicacion {
-    padding: 0.6rem 1rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg-card);
-    color: var(--text);
-    font-size: 0.9rem;
-}
-.toolbar-right {
-    display: flex;
-    gap: 0.8rem;
-}
-.btn-exportar {
-    padding: 0.6rem 1.2rem;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    color: var(--text);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-.btn-nuevo {
-    padding: 0.6rem 1.2rem;
-    border: none;
-    background: var(--accent);
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-/* =========================================
-   CHIPS DE CATEGORÍAS (con contador)
-   ========================================= */
-.filtros-chips {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-}
-.chip-categoria {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 1rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-}
-.chip-categoria:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-}
-.chip-categoria.active {
-    background: var(--accent-soft);
-    border-color: var(--accent);
-    color: var(--accent);
-    font-weight: 600;
-}
-.chip-categoria .contador {
-    background: var(--bg-hover);
-    border-radius: 999px;
-    padding: 0.1rem 0.5rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
     .toolbar-inventario {
         flex-direction: column;
         align-items: stretch;
     }
+
     .buscador-inventario {
         width: 100%;
     }
+
     .toolbar-right {
         justify-content: space-between;
     }
+}/* =========================================
+   BUSCADOR DE ARTÍCULOS CON DROPDOWN PERSONALIZADO
+   ========================================= */
+.buscador-articulo-group .buscador-wrapper {
+    position: relative;
+}
+
+.buscador-articulo-group .buscador-wrapper input {
+    padding-right: 2.5rem;
+}
+
+/* Lista desplegable personalizada */
+.dropdown-lista {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    z-index: 1000;
+    display: none;
+}
+
+.dropdown-lista.visible {
+    display: block;
+}
+
+.dropdown-lista li {
+    padding: 0.6rem 0.8rem;
+    cursor: pointer;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+}
+
+.dropdown-lista li:last-child {
+    border-bottom: none;
+}
+
+.dropdown-lista li:hover,
+.dropdown-lista li.seleccionado {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.dropdown-lista li .id-articulo {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+}
+
+/* =========================================
+   FORMULARIO - MEJORAS VISUALES
+   ========================================= */
+.entradas-form {
+    background: var(--bg-card);
+    padding: 2rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+}
+
+.entradas-form h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.8rem;
+    color: var(--text);
+}
+
+.form-group {
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+}
+
+.btn-submit {
+    border-radius: 10px;
+    padding: 0.8rem 1.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* =========================================
+   VISTA PREVIA MEJORADA
+   ========================================= */
+.vista-previa {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.vista-previa h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.articulo-preview .nombre {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.articulo-preview .stock-grande {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.articulo-preview .detalle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+}
+
+/* Últimas entradas */
+.ultimas-entradas {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+}
+
+.ultimas-entradas h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
 }

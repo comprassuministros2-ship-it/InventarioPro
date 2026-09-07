@@ -9,19 +9,10 @@
 <body>
 <div class="app-layout">
 
-    <!-- SIDEBAR -->
+    <!-- ========================================== -->
+    <!-- SIDEBAR                                     -->
+    <!-- ========================================== -->
     <aside class="sidebar" id="sidebar">
-        <!-- Botón hamburguesa DENTRO del menú -->
-        <button class="topbar-menu-btn" id="btnMenu" aria-label="Abrir menú" aria-controls="sidebar"
-                aria-expanded="false" type="button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                 aria-hidden="true">
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-        </button>
-
         <div class="sidebar-brand">
             <div class="sidebar-logo">
                 <span class="sidebar-logo-dot"></span>
@@ -63,14 +54,12 @@
         </div>
     </aside>
 
-    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    <!-- ========================================== -->
+    <!-- CONTENIDO PRINCIPAL                        -->
+    <!-- ========================================== -->
+    <main class="main-content" style="padding: 0;">
 
-    <header class="topbar">
-        <!-- El botón hamburguesa se movió dentro del sidebar -->
-    </header>
-
-    <!-- CONTENIDO -->
-    <main class="main-content">
+        <!-- ============ PÁGINA: ENTRADAS ============ -->
         <div id="pagina-entradas" class="pagina activa">
             <div class="page-header">
                 <h1>Entradas de stock</h1>
@@ -78,54 +67,66 @@
             </div>
 
             <div class="entradas-wrapper">
+
+                <!-- COLUMNA IZQUIERDA: FORMULARIO -->
                 <div class="entradas-form">
                     <h2>Registrar entrada de stock</h2>
                     <form id="formEntrada">
-                        <div class="form-group">
+
+                        <!-- Artículo con buscador MEJORADO -->
+                        <div class="form-group buscador-articulo-group">
                             <label for="inputArticulo">ARTÍCULO *</label>
                             <div class="buscador-wrapper">
-                                <input type="text" id="inputArticulo" list="listaArticulos"
+                                <input type="text" id="inputArticulo"
                                        placeholder="Escribí para buscar..." autocomplete="off" required>
                                 <span class="icono-lupa">🔍</span>
+                                <!-- Lista desplegable personalizada -->
+                                <ul id="listaArticulosCustom" class="dropdown-lista"></ul>
                             </div>
-                            <datalist id="listaArticulos"></datalist>
                             <input type="hidden" id="articuloId" value="">
                         </div>
 
+                        <!-- Cantidad -->
                         <div class="form-group">
                             <label for="cantidad">CANTIDAD *</label>
                             <input type="number" id="cantidad" min="1" value="1" required>
                         </div>
 
+                        <!-- Fecha -->
                         <div class="form-group">
                             <label for="fechaEntrada">FECHA *</label>
                             <input type="date" id="fechaEntrada" required>
                         </div>
 
+                        <!-- Proveedor -->
                         <div class="form-group">
                             <label for="proveedor">PROVEEDOR *</label>
                             <input type="text" id="proveedor" placeholder="Nombre del proveedor" required>
                         </div>
 
+                        <!-- Factura -->
                         <div class="form-group">
                             <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
                             <input type="text" id="factura" placeholder="Ej: FAC-00234">
                         </div>
 
+                        <!-- Observaciones -->
                         <div class="form-group">
                             <label for="observaciones">OBSERVACIONES</label>
                             <textarea id="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
                         </div>
 
+                        <!-- Registrado por -->
                         <div class="form-group">
                             <label for="registradoPor">REGISTRADO POR *</label>
-                            <input type="text" id="registradoPor" value="Juan Rodríguez" required>
+                            <input type="text" id="registradoPor" value="Samuel Steves" required>
                         </div>
 
                         <button type="submit" class="btn-submit" id="btnRegistrar">Registrar entrada</button>
                     </form>
                 </div>
 
+                <!-- COLUMNA DERECHA: VISTA PREVIA + ÚLTIMAS -->
                 <div class="entradas-sidebar">
                     <div class="vista-previa">
                         <h3>Artículo seleccionado</h3>
@@ -143,61 +144,37 @@
             </div>
         </div>
 
+        <!-- ============ PÁGINA: INVENTARIO GENERAL ============ -->
         <div id="pagina-inventario" class="pagina">
             <div class="page-header">
                 <h1>Inventario General</h1>
-                <p class="fecha-hoy">Panel de control - <span id="fechaInventario"></span></p>
+                <p class="fecha-hoy">Gestión de artículos y stock</p>
             </div>
-
-            <!-- Barra de herramientas superior -->
-            <div class="toolbar-inventario">
-                <div class="toolbar-left">
-                    <div class="buscador-inventario">
-                        <svg class="icono-buscar" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                             stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input type="text" id="buscarInventario" placeholder="Buscar artículo, categoría...">
-                    </div>
-                    <select id="filtroUbicacion" class="select-ubicacion">
-                        <option value="todas">Todas las ubicaciones</option>
-                        <option value="Depósito A">Depósito A</option>
-                        <option value="Depósito B">Depósito B</option>
-                    </select>
-                </div>
-                <div class="toolbar-right">
-                    <button class="btn-exportar" onclick="exportarCSV()">Exportar CSV</button>
-                    <button class="btn-nuevo" onclick="abrirNuevoArticulo()">+ Nuevo artículo</button>
-                </div>
+            <div style="padding: 0 1.5rem;">
+                <div id="contenedorInventario"><p class="placeholder">Cargando artículos...</p></div>
             </div>
-
-            <!-- Filtros por categoría con contador -->
-            <div class="filtros-chips" id="filtrosCategorias">
-                <!-- Los chips se generan dinámicamente con JS -->
-            </div>
-
-            <!-- Contenedor de la tabla -->
-            <div id="contenedorInventario"><p class="placeholder">Cargando artículos...</p></div>
         </div>
 
         <!-- Otras páginas (placeholder) -->
-        <div id="pagina-dashboard" class="pagina"><div class="page-header"><h1>Dashboard</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-salidas" class="pagina"><div class="page-header"><h1>Salidas</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-pedidos" class="pagina"><div class="page-header"><h1>Pedidos</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-relevamiento" class="pagina"><div class="page-header"><h1>Relevamiento</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-movimientos" class="pagina"><div class="page-header"><h1>Movimientos</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-direcciones" class="pagina"><div class="page-header"><h1>Direcciones</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-estadisticas" class="pagina"><div class="page-header"><h1>Estadísticas</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-reportes" class="pagina"><div class="page-header"><h1>Reportes</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-configuracion" class="pagina"><div class="page-header"><h1>Configuración</h1></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-dashboard" class="pagina"><div class="page-header"><h1>Dashboard</h1><p class="fecha-hoy">Resumen</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-salidas" class="pagina"><div class="page-header"><h1>Salidas</h1><p class="fecha-hoy">Registro</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-pedidos" class="pagina"><div class="page-header"><h1>Pedidos</h1><p class="fecha-hoy">Gestión</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-relevamiento" class="pagina"><div class="page-header"><h1>Relevamiento</h1><p class="fecha-hoy">Ajuste</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-movimientos" class="pagina"><div class="page-header"><h1>Movimientos</h1><p class="fecha-hoy">Historial</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-direcciones" class="pagina"><div class="page-header"><h1>Direcciones</h1><p class="fecha-hoy">Ubicaciones</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-estadisticas" class="pagina"><div class="page-header"><h1>Estadísticas</h1><p class="fecha-hoy">Análisis</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-reportes" class="pagina"><div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-configuracion" class="pagina"><div class="page-header"><h1>Configuración</h1><p class="fecha-hoy">Ajustes</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+
     </main>
 </div>
 
+<!-- ================ SCRIPTS ================ -->
 <script src="js/Config.js"></script>
 <script src="js/services/ApiService.js"></script>
 <script src="js/services/ArticulosService.js"></script>
 <script src="js/sidebar.js"></script>
 <script src="js/script.js"></script>
+
 </body>
 </html>
