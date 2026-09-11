@@ -1,7 +1,6 @@
 /**
  * ============================================================
  * INVENTARIO PRO - SCRIPT PRINCIPAL
- * Maneja: Navegación, Renderizado, Búsqueda, Filtros y Entradas
  * ============================================================
  */
 
@@ -22,7 +21,6 @@ function navegarAPagina(nombre) {
     const activo = document.querySelector(`.sidebar-link[data-page="${nombre}"]`);
     if (activo) activo.classList.add('is-active');
     if (nombre === 'inventario') cargarArticulos();
-    // Cerrar menú en móvil
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     if (window.matchMedia("(max-width: 768px)").matches) {
@@ -51,7 +49,7 @@ async function cargarArticulos() {
         const datos = await articulosService.obtenerArticulos();
         articulos = Array.isArray(datos) ? datos : [];
         renderizarArticulos(aplicarFiltro(articulos));
-        renderizarFiltrosCategorias();
+        renderizarSelectCategorias();
         return articulos;
     } catch (error) {
         console.error("Error cargando artículos:", error);
@@ -65,27 +63,32 @@ async function cargarArticulos() {
 
 // ============================================================
 // 4. RENDERIZADO DE TABLA DE INVENTARIO
+//    (con las columnas: Artículo | Stock | Estado | Categoría | Ubicación | Tipo | Acciones)
 // ============================================================
 function renderizarArticulos(datos) {
     const contenedor = document.getElementById("contenedorInventario");
     if (!contenedor) return;
+
     if (!datos || datos.length === 0) {
         contenedor.innerHTML = `<p class="placeholder">No se encontraron artículos que coincidan con la búsqueda.</p>`;
         return;
     }
+
     let filas = "";
+
     datos.forEach(item => {
         const stock = obtenerStock(item);
         const estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
         const estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
         const celdaArticulo = obtenerCeldaArticuloHTML(item);
+
         filas += `
             <tr>
                 <td>${celdaArticulo}</td>
-                <td><span class="badge-categoria">${item.categoriaID || '—'}</span></td>
-                <td class="td-centrado">—</td>
                 <td><span class="stock-numero">${stock}</span></td>
                 <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
+                <td><span class="badge-categoria">${item.categoriaID || '—'}</span></td>
+                <td class="td-centrado">—</td>
                 <td class="td-centrado">—</td>
                 <td>
                     <div class="acciones-celda">
@@ -105,16 +108,17 @@ function renderizarArticulos(datos) {
             </tr>
         `;
     });
+
     contenedor.innerHTML = `
         <div class="inventario-tabla-wrapper">
             <table class="inventario-tabla">
                 <thead>
                     <tr>
                         <th>Artículo</th>
-                        <th>Categoría</th>
-                        <th>Ubicación</th>
                         <th>Stock</th>
                         <th>Estado</th>
+                        <th>Categoría</th>
+                        <th>Ubicación</th>
                         <th>Tipo</th>
                         <th>Acciones</th>
                     </tr>
@@ -126,7 +130,7 @@ function renderizarArticulos(datos) {
 }
 
 function obtenerCeldaArticuloHTML(articulo) {
-    const tieneImagen = articulo.imagen && articulo.imagen.trim() !== '';
+    const tieneImagen = articulo.imagen && /^https?:\/\//i.test(articulo.imagen.trim());
     const imgHTML = tieneImagen
         ? `<img src="${articulo.imagen}" alt="${articulo.articulo}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
         : '';
@@ -139,12 +143,10 @@ function obtenerCeldaArticuloHTML(articulo) {
             </div>
             <div class="articulo-info">
                 <span class="articulo-nombre">${articulo.articulo}</span>
-                <span class="articulo-meta">ID ${articulo.id}</span>
             </div>
         </div>
     `;
 }
-
 // ============================================================
 // 5. UTILIDADES DE BÚSQUEDA Y FILTROS
 // ============================================================
@@ -195,60 +197,66 @@ function configurarBuscador() {
 }
 
 // ============================================================
-// 6. FILTROS DE CATEGORÍAS CON CONTADOR
+// 6. SELECT DE CATEGORÍAS
 // ============================================================
-function renderizarFiltrosCategorias() {
-    const contenedor = document.getElementById('filtrosCategorias');
-    if (!contenedor) return;
-    if (!articulos.length) { contenedor.innerHTML = ''; return; }
-    const conteo = {};
+function renderizarSelectCategorias() {
+    const select = document.getElementById('selectUbicacion');
+    if (!select) return;
+
+    const valorActual = select.value || 'todos';
+    select.innerHTML = '<option value="todos">Todas las categorías</option>';
+
+    const categorias = new Set();
     articulos.forEach(item => {
-        const cat = item.categoriaID || 'Sin categoría';
-        conteo[cat] = (conteo[cat] || 0) + 1;
-    });
-    let html = `<button class="chip-categoria active" data-cat="todos">Todos <span class="contador">${articulos.length}</span></button>`;
-    for (const [cat, num] of Object.entries(conteo)) {
-        html += `<button class="chip-categoria" data-cat="${cat}">${cat} <span class="contador">${num}</span></button>`;
-    }
-    contenedor.innerHTML = html;
-    contenedor.querySelectorAll('.chip-categoria').forEach(chip => {
-        chip.addEventListener('click', () => {
-            const cat = chip.dataset.cat;
-            filtroActivo = cat;
-            contenedor.querySelectorAll('.chip-categoria').forEach(c => c.classList.remove('active'));
-            chip.classList.add('active');
-            const resultados = aplicarFiltro(articulos);
-            renderizarArticulos(resultados);
-        });
-    });
-}
-
-// ============================================================
-// 7. BUSCADOR DE ENTRADAS CON DROPDOWN PERSONALIZADO
-// ============================================================
-function configurarBuscadorEntradas() {
-    const inputArticulo = document.getElementById("inputArticulo");
-    const hiddenId = document.getElementById("articuloId");
-    const dropdown = document.getElementById("listaArticulosCustom");
-
-    if (!inputArticulo || !hiddenId || !dropdown) return;
-
-    inputArticulo.addEventListener("focus", function() {
-        if (this.value.trim().length >= 1) {
-            filtrarDropdown(this.value.trim());
+        if (item.categoriaID && item.categoriaID.trim() !== '') {
+            categorias.add(item.categoriaID.trim());
         }
     });
 
-    inputArticulo.addEventListener("input", function() {
+    Array.from(categorias).sort().forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+    });
+
+    if (Array.from(select.options).some(o => o.value === valorActual)) {
+        select.value = valorActual;
+    }
+
+    if (!select.dataset.listener) {
+        select.addEventListener('change', () => {
+            filtroActivo = select.value;
+            const resultados = aplicarFiltro(articulos);
+            renderizarArticulos(resultados);
+        });
+        select.dataset.listener = 'true';
+    }
+}
+
+// ============================================================
+// 7. BUSCADOR GENÉRICO CON DROPDOWN
+// ============================================================
+function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
+    const input = document.getElementById(inputId);
+    const hidden = document.getElementById(hiddenId);
+    const dropdown = document.getElementById(dropdownId);
+    if (!input || !hidden || !dropdown) return;
+
+    input.addEventListener("focus", function() {
+        if (this.value.trim().length >= 1) filtrar(this.value.trim());
+    });
+
+    input.addEventListener("input", function() {
         const valor = this.value.trim();
         if (valor.length >= 1) {
-            filtrarDropdown(valor);
+            filtrar(valor);
             dropdown.classList.add("visible");
         } else {
             dropdown.classList.remove("visible");
-            hiddenId.value = "";
-            document.getElementById('vistaPreviaContenido').innerHTML =
-                '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+            hidden.value = "";
+            const preview = document.getElementById(previewId);
+            if (preview) preview.innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         }
     });
 
@@ -258,10 +266,10 @@ function configurarBuscadorEntradas() {
         }
     });
 
-    function filtrarDropdown(texto) {
-        const termino = texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    function filtrar(texto) {
+        const termino = normalizarTexto(texto);
         const resultados = articulos.filter(item =>
-            item.articulo.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(termino) ||
+            normalizarTexto(item.articulo).includes(termino) ||
             String(item.id).includes(termino)
         );
         dropdown.innerHTML = "";
@@ -280,10 +288,10 @@ function configurarBuscadorEntradas() {
             li.innerHTML = `${item.articulo} <span class="id-articulo">ID ${item.id}</span>`;
             li.dataset.id = item.id;
             li.addEventListener("click", function() {
-                inputArticulo.value = `${item.articulo} (ID ${item.id})`;
-                hiddenId.value = item.id;
+                input.value = `${item.articulo} (ID ${item.id})`;
+                hidden.value = item.id;
                 dropdown.classList.remove("visible");
-                mostrarVistaPrevia(item.id);
+                mostrarVistaPrevia(item.id, previewId);
             });
             dropdown.appendChild(li);
         });
@@ -291,7 +299,7 @@ function configurarBuscadorEntradas() {
     }
 
     let selectedIndex = -1;
-    inputArticulo.addEventListener("keydown", function(e) {
+    input.addEventListener("keydown", function(e) {
         const items = dropdown.querySelectorAll("li");
         if (items.length === 0) return;
         if (e.key === "ArrowDown") {
@@ -304,31 +312,15 @@ function configurarBuscadorEntradas() {
             items.forEach((li, i) => li.classList.toggle("seleccionado", i === selectedIndex));
         } else if (e.key === "Enter") {
             e.preventDefault();
-            if (selectedIndex >= 0 && items[selectedIndex]) {
-                items[selectedIndex].click();
-            }
+            if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
         }
     });
-
-    cargarArticulosParaBuscador();
 }
 
 // ============================================================
-// 8. CARGA DE ARTÍCULOS PARA EL BUSCADOR (dropdown)
+// 8. VISTA PREVIA DEL ARTÍCULO
 // ============================================================
-async function cargarArticulosParaBuscador() {
-    try {
-        const datos = await articulosService.obtenerArticulos();
-        articulos = Array.isArray(datos) ? datos : [];
-    } catch (e) {
-        console.error('Error cargando artículos para buscador:', e);
-    }
-}
-
-// ============================================================
-// 9. VISTA PREVIA DEL ARTÍCULO
-// ============================================================
-function mostrarVistaPrevia(id) {
+function mostrarVistaPrevia(id, contenedorId) {
     const item = articulos.find(a => String(a.id) === String(id));
     if (!item) return;
     const stock = obtenerStock(item);
@@ -337,7 +329,9 @@ function mostrarVistaPrevia(id) {
     if (stock === 0) { estadoClase = 'badge-sin-stock'; estadoTexto = 'Sin stock'; }
     else if (stock <= 5) { estadoClase = 'badge-critico'; estadoTexto = 'Crítico'; }
     else if (stock <= 10) { estadoClase = 'badge-bajo'; estadoTexto = 'Bajo'; }
-    document.getElementById('vistaPreviaContenido').innerHTML = `
+    const contenedor = document.getElementById(contenedorId);
+    if (!contenedor) return;
+    contenedor.innerHTML = `
         <div class="articulo-preview">
             <div class="nombre">${item.articulo}</div>
             <div class="stock-grande">${stock}</div>
@@ -351,7 +345,7 @@ function mostrarVistaPrevia(id) {
 }
 
 // ============================================================
-// 10. REGISTRAR ENTRADA
+// 9. REGISTRAR ENTRADA
 // ============================================================
 async function registrarEntrada(e) {
     e.preventDefault();
@@ -371,7 +365,7 @@ async function registrarEntrada(e) {
     btn.textContent = 'Registrando...';
     try {
         const payload = {
-            accion: 'entrada',
+            accion: 'registrarEntrada',
             id: id,
             cantidad: cantidad,
             proveedor: proveedor,
@@ -390,8 +384,8 @@ async function registrarEntrada(e) {
         document.getElementById('vistaPreviaContenido').innerHTML =
             '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         document.getElementById('registradoPor').value = 'Samuel Steves';
-        await cargarArticulosParaBuscador();
         await cargarArticulos();
+        await cargarUltimasEntradas();
     } catch (error) {
         alert(`❌ Error: ${error.message}`);
         console.error(error);
@@ -402,35 +396,81 @@ async function registrarEntrada(e) {
 }
 
 // ============================================================
-// 11. ÚLTIMAS ENTRADAS (SOLO UNA VEZ, CON MENSAJE CORRECTO)
+// 10. REGISTRAR SALIDA
+// ============================================================
+async function registrarSalida(e) {
+    e.preventDefault();
+    const id = document.getElementById("articuloIdSalida").value;
+    const cantidad = parseInt(document.getElementById("cantidadSalida").value);
+    const destino = document.getElementById("destinoSalida").value.trim();
+    const factura = document.getElementById("facturaSalida").value.trim();
+    const observaciones = document.getElementById("observacionesSalida").value.trim();
+    const fecha = document.getElementById("fechaSalida").value;
+
+    if (!id) { alert('❌ Seleccioná un artículo'); return; }
+    if (isNaN(cantidad) || cantidad <= 0) { alert('❌ Cantidad inválida'); return; }
+    if (!destino) { alert('❌ Ingresá el destino o cliente'); return; }
+
+    const btn = document.getElementById('btnRegistrarSalida');
+    btn.disabled = true;
+    btn.textContent = 'Registrando...';
+    try {
+        const payload = {
+            accion: 'registrarSalida',
+            id: id,
+            cantidad: cantidad,
+            destino: destino,
+            factura: factura,
+            observacion: observaciones,
+            fecha: fecha
+        };
+        const resultado = await apiService.post(payload);
+        if (resultado && resultado.exito === false) {
+            if (resultado.error && resultado.error.toLowerCase().includes('stock insuficiente')) {
+                alert(`❌ ${resultado.error}`);
+            } else {
+                throw new Error(resultado.error || 'Error desconocido');
+            }
+            return;
+        }
+        alert('✅ Salida registrada correctamente');
+        document.getElementById('formSalida').reset();
+        document.getElementById('articuloIdSalida').value = '';
+        document.getElementById('vistaPreviaContenidoSalida').innerHTML =
+            '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+        document.getElementById('registradoPorSalida').value = 'Samuel Steves';
+        await cargarArticulos();
+        await cargarUltimasSalidas();
+    } catch (error) {
+        alert(`❌ Error: ${error.message}`);
+        console.error(error);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Registrar salida';
+    }
+}
+
+// ============================================================
+// 11. ÚLTIMAS ENTRADAS Y SALIDAS
 // ============================================================
 async function cargarUltimasEntradas() {
     const contenedor = document.getElementById('ultimasEntradasContenido');
     if (!contenedor) return;
-
     try {
-        const payload = { accion: 'ultimasEntradas', cantidad: 5 };
-        const resultado = await apiService.post(payload);
-
-        if (resultado && resultado.exito === false) {
-            throw new Error(resultado.error || 'Error al obtener últimas entradas');
-        }
-
+        const resultado = await apiService.post({ accion: 'ultimasEntradas', cantidad: 5 });
+        if (resultado && resultado.exito === false) throw new Error(resultado.error);
         const datos = Array.isArray(resultado) ? resultado : [];
-
         if (datos.length === 0) {
             contenedor.innerHTML = '<p class="placeholder">Sin movimientos recientes</p>';
             return;
         }
-
         let html = '<ul class="lista-entradas">';
         datos.forEach(mov => {
             const fecha = mov.fecha ? new Date(mov.fecha).toLocaleDateString('es-AR') : '';
             const proveedor = mov.proveedor || '—';
             const orden = mov.orden || '';
             const cantidad = mov.cantidad || 0;
-            const nombre = mov.articulo || `ID ${mov.id}`;
-
+            const nombre = mov.nombre || mov.articulo || `ID ${mov.id}`;
             html += `
                 <li>
                     <div class="item-nombre">${nombre}</div>
@@ -441,9 +481,42 @@ async function cargarUltimasEntradas() {
         });
         html += '</ul>';
         contenedor.innerHTML = html;
-
     } catch (error) {
         console.error('Error cargando últimas entradas:', error);
+        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
+    }
+}
+
+async function cargarUltimasSalidas() {
+    const contenedor = document.getElementById('ultimasSalidasContenido');
+    if (!contenedor) return;
+    try {
+        const resultado = await apiService.post({ accion: 'ultimasSalidas', cantidad: 5 });
+        if (resultado && resultado.exito === false) throw new Error(resultado.error);
+        const datos = Array.isArray(resultado) ? resultado : [];
+        if (datos.length === 0) {
+            contenedor.innerHTML = '<p class="placeholder">Sin movimientos recientes</p>';
+            return;
+        }
+        let html = '<ul class="lista-salidas">';
+        datos.forEach(mov => {
+            const fecha = mov.fecha ? new Date(mov.fecha).toLocaleDateString('es-AR') : '';
+            const destino = mov.destino || '—';
+            const factura = mov.factura || '';
+            const cantidad = mov.cantidad || 0;
+            const nombre = mov.nombre || mov.articulo || `ID ${mov.id}`;
+            html += `
+                <li>
+                    <div class="item-nombre">${nombre}</div>
+                    <div class="item-detalle">${fecha} · ${destino} ${factura ? '· '+factura : ''}</div>
+                    <div class="item-cantidad" style="color: #dc2626;">-${cantidad}</div>
+                </li>
+            `;
+        });
+        html += '</ul>';
+        contenedor.innerHTML = html;
+    } catch (error) {
+        console.error('Error cargando últimas salidas:', error);
         contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
     }
 }
@@ -476,32 +549,39 @@ function configurarMenu() {
 }
 
 // ============================================================
-// 13. INICIALIZACIÓN (SOLO UNA VEZ)
+// 13. INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     configurarNavegacion();
     configurarMenu();
 
-    const fechaInput = document.getElementById('fechaEntrada');
-    if (fechaInput) fechaInput.value = new Date().toISOString().split('T')[0];
+    const fechaEntrada = document.getElementById('fechaEntrada');
+    if (fechaEntrada) fechaEntrada.value = new Date().toISOString().split('T')[0];
+    const fechaSalida = document.getElementById('fechaSalida');
+    if (fechaSalida) fechaSalida.value = new Date().toISOString().split('T')[0];
 
+    const fechaHoy = new Date().toLocaleDateString('es-AR', {
+        weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
+    });
     const fechaEl = document.getElementById('fechaActual');
-    if (fechaEl) {
-        const ahora = new Date();
-        fechaEl.textContent = ahora.toLocaleDateString('es-AR', {
-            weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
-        });
-    }
+    if (fechaEl) fechaEl.textContent = fechaHoy;
+    const fechaElSalida = document.getElementById('fechaActualSalidas');
+    if (fechaElSalida) fechaElSalida.textContent = fechaHoy;
 
     cargarArticulos();
-    cargarArticulosParaBuscador();
-    configurarBuscadorEntradas();
+
+    configurarBuscadorDropdown('inputArticulo', 'articuloId', 'listaArticulosCustom', 'vistaPreviaContenido');
+    configurarBuscadorDropdown('inputArticuloSalida', 'articuloIdSalida', 'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida');
+
     configurarBuscador();
 
     const formEntrada = document.getElementById('formEntrada');
     if (formEntrada) formEntrada.addEventListener('submit', registrarEntrada);
+    const formSalida = document.getElementById('formSalida');
+    if (formSalida) formSalida.addEventListener('submit', registrarSalida);
 
     cargarUltimasEntradas();
+    cargarUltimasSalidas();
 
     console.log('✅ InventarioPro - Aplicación inicializada.');
 });

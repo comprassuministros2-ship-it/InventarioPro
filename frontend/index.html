@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InventarioPro - Entradas</title>
+    <title>InventarioPro</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -28,7 +28,7 @@
             </section>
             <section class="sidebar-nav-group">
                 <h2 class="sidebar-section-title">Operaciones</h2>
-                <a href="#" class="sidebar-link is-active" data-page="entradas">Entradas</a>
+                <a href="#" class="sidebar-link" data-page="entradas">Entradas</a>
                 <a href="#" class="sidebar-link" data-page="salidas">Salidas</a>
                 <a href="#" class="sidebar-link" data-page="pedidos">Pedidos</a>
             </section>
@@ -59,74 +59,87 @@
     <!-- ========================================== -->
     <main class="main-content" style="padding: 0;">
 
+        <!-- ============ PÁGINA: INVENTARIO GENERAL ============ -->
+        <div id="pagina-inventario" class="pagina">
+            <div class="page-header">
+                <h1>Inventario General</h1>
+                <p class="fecha-hoy">Gestión de artículos y stock</p>
+            </div>
+
+            <div style="padding: 0 1.5rem;">
+
+                <!-- TOOLBAR -->
+                <div class="toolbar-inventario">
+                    <div class="toolbar-left">
+                        <div class="buscador-inventario">
+                            <span class="icono-buscar">🔍</span>
+                            <input type="text" id="inputBusqueda" placeholder="Buscar por nombre, ID, categoría o patrimonio...">
+                        </div>
+                        <select id="selectUbicacion" class="select-ubicacion">
+                            <option value="todos">Seleccionar categoría</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn-exportar" type="button">Exportar</button>
+                        <button class="btn-nuevo" type="button">+ Nuevo artículo</button>
+                    </div>
+                </div>
+
+                <!-- TABLA -->
+                <div id="contenedorInventario">
+                    <p class="placeholder">Cargando artículos...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- ============ PÁGINA: ENTRADAS ============ -->
-        <div id="pagina-entradas" class="pagina activa">
+        <div id="pagina-entradas" class="pagina">
             <div class="page-header">
                 <h1>Entradas de stock</h1>
                 <p class="fecha-hoy">Panel de control - <span id="fechaActual"></span></p>
             </div>
 
             <div class="entradas-wrapper">
-
-                <!-- COLUMNA IZQUIERDA: FORMULARIO -->
                 <div class="entradas-form">
                     <h2>Registrar entrada de stock</h2>
                     <form id="formEntrada">
-
-                        <!-- Artículo con buscador MEJORADO -->
                         <div class="form-group buscador-articulo-group">
                             <label for="inputArticulo">ARTÍCULO *</label>
                             <div class="buscador-wrapper">
-                                <input type="text" id="inputArticulo"
-                                       placeholder="Escribí para buscar..." autocomplete="off" required>
+                                <input type="text" id="inputArticulo" placeholder="Escribí para buscar..." autocomplete="off" required>
                                 <span class="icono-lupa">🔍</span>
-                                <!-- Lista desplegable personalizada -->
                                 <ul id="listaArticulosCustom" class="dropdown-lista"></ul>
                             </div>
                             <input type="hidden" id="articuloId" value="">
                         </div>
-
-                        <!-- Cantidad -->
                         <div class="form-group">
                             <label for="cantidad">CANTIDAD *</label>
                             <input type="number" id="cantidad" min="1" value="1" required>
                         </div>
-
-                        <!-- Fecha -->
                         <div class="form-group">
                             <label for="fechaEntrada">FECHA *</label>
                             <input type="date" id="fechaEntrada" required>
                         </div>
-
-                        <!-- Proveedor -->
                         <div class="form-group">
                             <label for="proveedor">PROVEEDOR *</label>
                             <input type="text" id="proveedor" placeholder="Nombre del proveedor" required>
                         </div>
-
-                        <!-- Factura -->
                         <div class="form-group">
                             <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
                             <input type="text" id="factura" placeholder="Ej: FAC-00234">
                         </div>
-
-                        <!-- Observaciones -->
                         <div class="form-group">
                             <label for="observaciones">OBSERVACIONES</label>
                             <textarea id="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
                         </div>
-
-                        <!-- Registrado por -->
                         <div class="form-group">
                             <label for="registradoPor">REGISTRADO POR *</label>
                             <input type="text" id="registradoPor" value="Samuel Steves" required>
                         </div>
-
                         <button type="submit" class="btn-submit" id="btnRegistrar">Registrar entrada</button>
                     </form>
                 </div>
 
-                <!-- COLUMNA DERECHA: VISTA PREVIA + ÚLTIMAS -->
                 <div class="entradas-sidebar">
                     <div class="vista-previa">
                         <h3>Artículo seleccionado</h3>
@@ -144,20 +157,73 @@
             </div>
         </div>
 
-        <!-- ============ PÁGINA: INVENTARIO GENERAL ============ -->
-        <div id="pagina-inventario" class="pagina">
+        <!-- ============ PÁGINA: SALIDAS ============ -->
+        <div id="pagina-salidas" class="pagina">
             <div class="page-header">
-                <h1>Inventario General</h1>
-                <p class="fecha-hoy">Gestión de artículos y stock</p>
+                <h1>Salidas de stock</h1>
+                <p class="fecha-hoy">Panel de control - <span id="fechaActualSalidas"></span></p>
             </div>
-            <div style="padding: 0 1.5rem;">
-                <div id="contenedorInventario"><p class="placeholder">Cargando artículos...</p></div>
+
+            <div class="salidas-wrapper">
+                <div class="salidas-form">
+                    <h2>Registrar salida de stock</h2>
+                    <form id="formSalida">
+                        <div class="form-group buscador-articulo-group">
+                            <label for="inputArticuloSalida">ARTÍCULO *</label>
+                            <div class="buscador-wrapper">
+                                <input type="text" id="inputArticuloSalida" placeholder="Escribí para buscar..." autocomplete="off" required>
+                                <span class="icono-lupa">🔍</span>
+                                <ul id="listaArticulosCustomSalida" class="dropdown-lista"></ul>
+                            </div>
+                            <input type="hidden" id="articuloIdSalida" value="">
+                        </div>
+                        <div class="form-group">
+                            <label for="cantidadSalida">CANTIDAD *</label>
+                            <input type="number" id="cantidadSalida" min="1" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fechaSalida">FECHA *</label>
+                            <input type="date" id="fechaSalida" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="destinoSalida">DESTINO / CLIENTE *</label>
+                            <input type="text" id="destinoSalida" placeholder="Nombre del destino o cliente" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="facturaSalida">N° FACTURA / REMITO</label>
+                            <input type="text" id="facturaSalida" placeholder="Ej: FAC-00234">
+                        </div>
+                        <div class="form-group">
+                            <label for="observacionesSalida">OBSERVACIONES</label>
+                            <textarea id="observacionesSalida" rows="3" placeholder="Notas adicionales..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="registradoPorSalida">REGISTRADO POR *</label>
+                            <input type="text" id="registradoPorSalida" value="Samuel Steves" required>
+                        </div>
+                        <button type="submit" class="btn-submit" id="btnRegistrarSalida">Registrar salida</button>
+                    </form>
+                </div>
+
+                <div class="salidas-sidebar">
+                    <div class="vista-previa">
+                        <h3>Artículo seleccionado</h3>
+                        <div id="vistaPreviaContenidoSalida">
+                            <p class="placeholder">Seleccioná un artículo para ver su stock actual</p>
+                        </div>
+                    </div>
+                    <div class="ultimas-salidas">
+                        <h3>Últimas salidas</h3>
+                        <div id="ultimasSalidasContenido">
+                            <p class="placeholder">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Otras páginas (placeholder) -->
         <div id="pagina-dashboard" class="pagina"><div class="page-header"><h1>Dashboard</h1><p class="fecha-hoy">Resumen</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-salidas" class="pagina"><div class="page-header"><h1>Salidas</h1><p class="fecha-hoy">Registro</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-pedidos" class="pagina"><div class="page-header"><h1>Pedidos</h1><p class="fecha-hoy">Gestión</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-relevamiento" class="pagina"><div class="page-header"><h1>Relevamiento</h1><p class="fecha-hoy">Ajuste</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-movimientos" class="pagina"><div class="page-header"><h1>Movimientos</h1><p class="fecha-hoy">Historial</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
