@@ -63,7 +63,6 @@ async function cargarArticulos() {
 
 // ============================================================
 // 4. RENDERIZADO DE TABLA DE INVENTARIO
-//    (con las columnas: Artículo | Stock | Estado | Categoría | Ubicación | Tipo | Acciones)
 // ============================================================
 function renderizarArticulos(datos) {
     const contenedor = document.getElementById("contenedorInventario");
@@ -130,16 +129,11 @@ function renderizarArticulos(datos) {
 }
 
 function obtenerCeldaArticuloHTML(articulo) {
-    const tieneImagen = articulo.imagen && /^https?:\/\//i.test(articulo.imagen.trim());
-    const imgHTML = tieneImagen
-        ? `<img src="${articulo.imagen}" alt="${articulo.articulo}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
-        : '';
-    const placeholderHTML = `<span class="articulo-imagen-placeholder" ${tieneImagen ? 'style="display:none;"' : ''}>📦</span>`;
+    const emoji = (articulo.imagen || '').trim() || '📦';
     return `
         <div class="articulo-celda">
             <div class="articulo-imagen">
-                ${imgHTML}
-                ${placeholderHTML}
+                <span class="emoji-articulo">${emoji}</span>
             </div>
             <div class="articulo-info">
                 <span class="articulo-nombre">${articulo.articulo}</span>
@@ -147,6 +141,7 @@ function obtenerCeldaArticuloHTML(articulo) {
         </div>
     `;
 }
+
 // ============================================================
 // 5. UTILIDADES DE BÚSQUEDA Y FILTROS
 // ============================================================
