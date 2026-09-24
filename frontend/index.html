@@ -23,7 +23,6 @@
         <nav class="sidebar-nav">
             <section class="sidebar-nav-group">
                 <h2 class="sidebar-section-title">Principal</h2>
-                <a href="#" class="sidebar-link" data-page="dashboard">Dashboard</a>
                 <a href="#" class="sidebar-link is-active" data-page="inventario">Inventario General</a>
             </section>
             <section class="sidebar-nav-group">
@@ -59,7 +58,7 @@
     <!-- ========================================== -->
     <main class="main-content" style="padding: 0;">
 
-        <!-- ============ PÁGINA: INVENTARIO GENERAL (activa por defecto) ============ -->
+        <!-- ============ PÁGINA: INVENTARIO GENERAL ============ -->
         <div id="pagina-inventario" class="pagina activa">
             <div class="page-header">
                 <h1>Inventario General</h1>
@@ -67,16 +66,14 @@
             </div>
 
             <div style="padding: 0 1.5rem;">
-
-                <!-- TOOLBAR -->
                 <div class="toolbar-inventario">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
                             <span class="icono-buscar">🔍</span>
-                            <input type="text" id="inputBusqueda" placeholder="Buscar por nombre, ID, categoría o patrimonio...">
+                            <input type="text" id="inputBusqueda" placeholder="Buscar por nombre, categoría o patrimonio...">
                         </div>
                         <select id="selectUbicacion" class="select-ubicacion">
-                            <option value="todos">Seleccionar categoría</option>
+                            <option value="todos">Todas las categorías</option>
                         </select>
                     </div>
                     <div class="toolbar-right">
@@ -85,7 +82,6 @@
                     </div>
                 </div>
 
-                <!-- TABLA -->
                 <div id="contenedorInventario">
                     <p class="placeholder">Cargando artículos...</p>
                 </div>
@@ -186,12 +182,12 @@
                             <input type="date" id="fechaSalida" required>
                         </div>
                         <div class="form-group">
-                            <label for="destinoSalida">DESTINO / CLIENTE *</label>
-                            <input type="text" id="destinoSalida" placeholder="Nombre del destino o cliente" required>
+                            <label for="destinoSalida">DESTINO / DIRECCIÓN *</label>
+                            <input type="text" id="destinoSalida" placeholder="Ej: Subsecretaría de Transporte" required>
                         </div>
                         <div class="form-group">
-                            <label for="facturaSalida">N° FACTURA / REMITO</label>
-                            <input type="text" id="facturaSalida" placeholder="Ej: FAC-00234">
+                            <label for="facturaSalida">N° NOTA / REMITO</label>
+                            <input type="text" id="facturaSalida" placeholder="Ej: NOTA-00234">
                         </div>
                         <div class="form-group">
                             <label for="observacionesSalida">OBSERVACIONES</label>
@@ -222,11 +218,44 @@
             </div>
         </div>
 
+        <!-- ============ PÁGINA: MOVIMIENTOS ============ -->
+        <div id="pagina-movimientos" class="pagina">
+            <div class="page-header">
+                <h1>Movimientos</h1>
+                <p class="fecha-hoy">Historial de entradas y salidas</p>
+            </div>
+
+            <div style="padding: 0 1.5rem;">
+
+                <!-- TOOLBAR MOVIMIENTOS -->
+                <div class="toolbar-movimientos">
+                    <div class="toolbar-left">
+                        <div class="buscador-inventario">
+                            <span class="icono-buscar">🔍</span>
+                            <input type="text" id="inputBusquedaMov" placeholder="Buscar por artículo, proveedor, destino...">
+                        </div>
+                        <select id="selectTipoMov" class="select-ubicacion">
+                            <option value="todos">Todos</option>
+                            <option value="Entrada">Entradas</option>
+                            <option value="Salida">Salidas</option>
+                        </select>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn-exportar" id="btnActualizarMov" type="button">🔄 Actualizar</button>
+                    </div>
+                </div>
+
+                <!-- TABLA MOVIMIENTOS -->
+                <div id="contenedorMovimientos">
+                    <p class="placeholder">Cargando movimientos...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Otras páginas (placeholder) -->
         <div id="pagina-dashboard" class="pagina"><div class="page-header"><h1>Dashboard</h1><p class="fecha-hoy">Resumen</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-pedidos" class="pagina"><div class="page-header"><h1>Pedidos</h1><p class="fecha-hoy">Gestión</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-relevamiento" class="pagina"><div class="page-header"><h1>Relevamiento</h1><p class="fecha-hoy">Ajuste</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-movimientos" class="pagina"><div class="page-header"><h1>Movimientos</h1><p class="fecha-hoy">Historial</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-direcciones" class="pagina"><div class="page-header"><h1>Direcciones</h1><p class="fecha-hoy">Ubicaciones</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-estadisticas" class="pagina"><div class="page-header"><h1>Estadísticas</h1><p class="fecha-hoy">Análisis</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-reportes" class="pagina"><div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>

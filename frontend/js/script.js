@@ -9,6 +9,7 @@
 // ============================================================
 let articulos = [];
 let filtroActivo = "todos";
+let movimientos = [];
 
 // ============================================================
 // 2. NAVEGACIÓN ENTRE PÁGINAS
@@ -20,7 +21,10 @@ function navegarAPagina(nombre) {
     document.querySelectorAll('.sidebar-link').forEach(e => e.classList.remove('is-active'));
     const activo = document.querySelector(`.sidebar-link[data-page="${nombre}"]`);
     if (activo) activo.classList.add('is-active');
+
     if (nombre === 'inventario') cargarArticulos();
+    if (nombre === 'movimientos') cargarMovimientos();
+
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
     if (window.matchMedia("(max-width: 768px)").matches) {
@@ -381,6 +385,7 @@ async function registrarEntrada(e) {
         document.getElementById('registradoPor').value = 'Samuel Steves';
         await cargarArticulos();
         await cargarUltimasEntradas();
+        movimientos = [];
     } catch (error) {
         alert(`❌ Error: ${error.message}`);
         console.error(error);
@@ -404,7 +409,7 @@ async function registrarSalida(e) {
 
     if (!id) { alert('❌ Seleccioná un artículo'); return; }
     if (isNaN(cantidad) || cantidad <= 0) { alert('❌ Cantidad inválida'); return; }
-    if (!destino) { alert('❌ Ingresá el destino o cliente'); return; }
+    if (!destino) { alert('❌ Ingresá el destino o dirección'); return; }
 
     const btn = document.getElementById('btnRegistrarSalida');
     btn.disabled = true;
@@ -436,6 +441,7 @@ async function registrarSalida(e) {
         document.getElementById('registradoPorSalida').value = 'Samuel Steves';
         await cargarArticulos();
         await cargarUltimasSalidas();
+        movimientos = [];
     } catch (error) {
         alert(`❌ Error: ${error.message}`);
         console.error(error);
@@ -517,7 +523,146 @@ async function cargarUltimasSalidas() {
 }
 
 // ============================================================
-// 12. MENÚ LATERAL COLAPSABLE
+// 12. MOVIMIENTOS - Carga y filtros
+// ============================================================
+async function cargarMovimientos() {
+    const contenedor = document.getElementById('contenedorMovimientos');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '<p class="placeholder">Cargando movimientos...</p>';
+
+    try {
+        const resultado = await apiService.post({ accion: 'listarMovimientos' });
+        if (resultado && resultado.exito === false) {
+            throw new Error(resultado.error || 'Error al obtener movimientos');
+        }
+        movimientos = Array.isArray(resultado) ? resultado : [];
+        renderizarMovimientos(movimientos);
+    } catch (error) {
+        console.error('Error cargando movimientos:', error);
+        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
+    }
+}
+
+function renderizarMovimientos(datos) {
+    const contenedor = document.getElementById('contenedorMovimientos');
+    if (!contenedor) return;
+
+    // Aplicar filtros
+    const texto = (document.getElementById('inputBusquedaMov')?.value || '').trim().toLowerCase();
+    const tipo = document.getElementById('selectTipoMov')?.value || 'todos';
+
+    let filtrados = datos;
+
+    if (tipo !== 'todos') {
+        filtrados = filtrados.filter(m => m.tipo === tipo);
+    }
+
+    if (texto) {
+        const t = normalizarTexto(texto);
+        filtrados = filtrados.filter(m => {
+            const campos = [
+                m.nombre,
+                m.proveedor,
+                m.destino,
+                m.observacion,
+                m.ordenCompra,
+                m.factura
+            ].filter(Boolean);
+            return campos.some(c => normalizarTexto(c).includes(t));
+        });
+    }
+
+    // Ordenar del más reciente al más viejo
+    filtrados.sort((a, b) => {
+        const fa = a.fecha ? new Date(a.fecha) : new Date(0);
+        const fb = b.fecha ? new Date(b.fecha) : new Date(0);
+        return fb - fa;
+    });
+
+    if (filtrados.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">No hay movimientos para mostrar.</p>';
+        return;
+    }
+
+    let filas = '';
+    filtrados.forEach(m => {
+        const fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        }) : '—';
+
+        const esEntrada = m.tipo === 'Entrada';
+        const tipoClase = esEntrada ? 'badge-disponible' : 'badge-sin-stock';
+        const tipoTexto = m.tipo || '—';
+
+        // Origen/Destino según tipo
+        const origenDestino = esEntrada
+            ? (m.proveedor || '—')
+            : (m.destino || m.proveedor || '—');
+
+        // Número de nota/factura/orden
+        const nota = m.ordenCompra || m.factura || '—';
+
+        // Detalle: observación
+        const detalle = m.observacion || '—';
+
+        // Cantidad con signo
+        const cantTexto = esEntrada ? `+${m.cantidad}` : `-${m.cantidad}`;
+        const cantColor = esEntrada ? '#16a34a' : '#dc2626';
+
+        filas += `
+            <tr>
+                <td>${fecha}</td>
+                <td><span class="badge ${tipoClase}">${tipoTexto}</span></td>
+                <td><strong>${m.nombre || m.idArticulo || '—'}</strong></td>
+                <td style="font-weight:700;color:${cantColor};">${cantTexto}</td>
+                <td>${origenDestino}</td>
+                <td>${nota}${detalle !== '—' ? ' · ' + detalle : ''}</td>
+            </tr>
+        `;
+    });
+
+    contenedor.innerHTML = `
+        <div class="inventario-tabla-wrapper">
+            <table class="inventario-tabla">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Artículo</th>
+                        <th>Cantidad</th>
+                        <th>Origen / Destino</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+function configurarMovimientos() {
+    const inputBusqueda = document.getElementById('inputBusquedaMov');
+    const selectTipo = document.getElementById('selectTipoMov');
+    const btnActualizar = document.getElementById('btnActualizarMov');
+
+    if (inputBusqueda) {
+        inputBusqueda.addEventListener('input', () => renderizarMovimientos(movimientos));
+    }
+    if (selectTipo) {
+        selectTipo.addEventListener('change', () => renderizarMovimientos(movimientos));
+    }
+    if (btnActualizar) {
+        btnActualizar.addEventListener('click', () => {
+            movimientos = [];
+            cargarMovimientos();
+        });
+    }
+}
+
+// ============================================================
+// 13. MENÚ LATERAL COLAPSABLE
 // ============================================================
 function configurarMenu() {
     const btnMenu = document.getElementById('btnMenu');
@@ -544,7 +689,7 @@ function configurarMenu() {
 }
 
 // ============================================================
-// 13. INICIALIZACIÓN
+// 14. INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     configurarNavegacion();
@@ -569,6 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
     configurarBuscadorDropdown('inputArticuloSalida', 'articuloIdSalida', 'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida');
 
     configurarBuscador();
+    configurarMovimientos();
 
     const formEntrada = document.getElementById('formEntrada');
     if (formEntrada) formEntrada.addEventListener('submit', registrarEntrada);

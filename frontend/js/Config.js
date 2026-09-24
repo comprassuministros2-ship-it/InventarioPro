@@ -1,6 +1,6 @@
 const CONFIG = {
   API: {
-    BASE_URL: "https://script.google.com/macros/s/AKfycbxxExw90rgs1pR4sm2lzE9X07UMGc-oUFZkolfC0qu-26BNU_3-k4ICdqFQJoChm4cK/exec",
+    BASE_URL: "https://script.google.com/macros/s/AKfycbytmpMCWCQnOPXjWU9Kd8X57meVwv1syU2zQxLgwuocNDYpeca7SQxESGPaUAcY307Z/exec",
     TIMEOUT_MS: 30000
   },
   APP: {
