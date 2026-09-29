@@ -5,6 +5,37 @@
  */
 
 // ============================================================
+// 0. TOAST - Notificación flotante (FUNCIÓN GLOBAL)
+// ============================================================
+// Se usa desde cualquier acción de la app:
+//   mostrarToast('Mensaje de éxito')            → verde
+//   mostrarToast('Mensaje de error', 'error')   → rojo
+// Debe estar FUERA del DOMContentLoaded para ser accesible
+// desde cualquier función.
+function mostrarToast(mensaje, tipo = 'exito') {
+    const toast = document.getElementById('toast');
+    if (!toast) return;
+
+    // Actualizar mensaje e ícono
+    toast.querySelector('.toast-mensaje').textContent = mensaje;
+    toast.querySelector('.toast-icono').textContent = tipo === 'error' ? '✕' : '✓';
+
+    // Cambiar estilo según tipo
+    toast.classList.toggle('toast-error', tipo === 'error');
+
+    // Mostrar
+    toast.classList.add('visible');
+
+    // Ocultar después de 3 segundos
+    // (el timeout se guarda en window para que toasts seguidos
+    // no se superpongan: se reinicia el contador)
+    clearTimeout(window._toastTimeout);
+    window._toastTimeout = setTimeout(() => {
+        toast.classList.remove('visible');
+    }, 3000);
+}
+
+// ============================================================
 // 1. ESTADO GLOBAL
 // ============================================================
 let articulos = [];
@@ -95,17 +126,19 @@ function renderizarArticulos(datos) {
                 <td class="td-centrado">—</td>
                 <td>
                     <div class="acciones-celda">
-                        <button class="btn-accion" type="button" aria-label="Ver detalle" title="Detalle">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
+                        <button class="btn-accion btn-menu" type="button" data-id="${item.id}" aria-label="Opciones" title="Opciones">
+                            ➡️
                         </button>
-                        <button class="btn-accion" type="button" aria-label="Registrar salida" title="Salida">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </button>
+                        <div class="menu-desplegable" data-id="${item.id}">
+                            <button class="menu-item" data-action="detalles" data-id="${item.id}">
+                                <span class="menu-item-icono">👁️</span>
+                                <span class="menu-item-texto">Detalles</span>
+                            </button>
+                            <button class="menu-item" data-action="relevamiento" data-id="${item.id}">
+                                <span class="menu-item-icono">✏️</span>
+                                <span class="menu-item-texto">Relevamiento</span>
+                            </button>
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -130,6 +163,47 @@ function renderizarArticulos(datos) {
             </table>
         </div>
     `;
+
+    // Listener para los botones de menú
+    contenedor.querySelectorAll('.btn-menu').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const id = this.dataset.id;
+            const menu = contenedor.querySelector(`.menu-desplegable[data-id="${id}"]`);
+
+            // Cerrar todos los demás menús
+            contenedor.querySelectorAll('.menu-desplegable').forEach(m => {
+                if (m !== menu) m.classList.remove('visible');
+            });
+
+            // Toggle este menú
+            menu.classList.toggle('visible');
+        });
+    });
+
+    // Listener para las opciones del menú
+    contenedor.querySelectorAll('.menu-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const accion = this.dataset.action;
+            const id = this.dataset.id;
+
+            // Cerrar el menú
+            contenedor.querySelectorAll('.menu-desplegable').forEach(m => m.classList.remove('visible'));
+
+            // Ejecutar la acción
+            if (accion === 'relevamiento') {
+                irARelevamientoConArticulo(id);
+            } else if (accion === 'detalles') {
+                mostrarToast('Próximamente: página de detalles', 'exito');
+            }
+        });
+    });
+
+    // Cerrar menú al hacer clic afuera
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.menu-desplegable').forEach(m => m.classList.remove('visible'));
+    });
 }
 
 function obtenerCeldaArticuloHTML(articulo) {
@@ -316,6 +390,99 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
     });
 }
 
+/**
+ * ------------------------------------------------------------
+ * Buscador específico para Relevamiento
+ * ------------------------------------------------------------
+ * Igual al buscador genérico, pero al seleccionar un artículo:
+ * - Muestra el stock del sistema en el input readonly.
+ * - Muestra la vista previa del artículo.
+ * - Recalcula la diferencia.
+ * ------------------------------------------------------------
+ */
+function configurarBuscadorDropdownRelevamiento() {
+    const input = document.getElementById('inputArticuloRelevamiento');
+    const hidden = document.getElementById('articuloIdRelevamiento');
+    const dropdown = document.getElementById('listaArticulosCustomRelevamiento');
+    if (!input || !hidden || !dropdown) return;
+
+    input.addEventListener("focus", function() {
+        if (this.value.trim().length >= 1) filtrar(this.value.trim());
+    });
+
+    input.addEventListener("input", function() {
+        const valor = this.value.trim();
+        if (valor.length >= 1) {
+            filtrar(valor);
+            dropdown.classList.add("visible");
+        } else {
+            dropdown.classList.remove("visible");
+            hidden.value = "";
+            document.getElementById('stockSistema').value = '—';
+            document.getElementById('diferencia').value = '—';
+            document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML =
+                '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+        }
+    });
+
+    document.addEventListener("click", function(e) {
+        if (!e.target.closest(".buscador-articulo-group")) {
+            dropdown.classList.remove("visible");
+        }
+    });
+
+    function filtrar(texto) {
+        const termino = normalizarTexto(texto);
+        const resultados = articulos.filter(item =>
+            normalizarTexto(item.articulo).includes(termino) ||
+            String(item.id).includes(termino)
+        );
+        dropdown.innerHTML = "";
+        if (resultados.length === 0) {
+            const li = document.createElement("li");
+            li.textContent = "No se encontraron artículos";
+            li.style.color = "var(--text-muted)";
+            li.style.fontStyle = "italic";
+            li.style.cursor = "default";
+            dropdown.appendChild(li);
+            dropdown.classList.add("visible");
+            return;
+        }
+        resultados.forEach(item => {
+            const li = document.createElement("li");
+            li.innerHTML = `${item.articulo} <span class="id-articulo">ID ${item.id}</span>`;
+            li.dataset.id = item.id;
+            li.addEventListener("click", function() {
+                input.value = `${item.articulo} (ID ${item.id})`;
+                hidden.value = item.id;
+                dropdown.classList.remove("visible");
+                mostrarStockSistemaRelevamiento(item.id);
+            });
+            dropdown.appendChild(li);
+        });
+        dropdown.classList.add("visible");
+    }
+
+    // Navegación con teclado
+    let selectedIndex = -1;
+    input.addEventListener("keydown", function(e) {
+        const items = dropdown.querySelectorAll("li");
+        if (items.length === 0) return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            selectedIndex = (selectedIndex + 1) % items.length;
+            items.forEach((li, i) => li.classList.toggle("seleccionado", i === selectedIndex));
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+            items.forEach((li, i) => li.classList.toggle("seleccionado", i === selectedIndex));
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
+        }
+    });
+}
+
 // ============================================================
 // 8. VISTA PREVIA DEL ARTÍCULO
 // ============================================================
@@ -355,9 +522,9 @@ async function registrarEntrada(e) {
     const observaciones = document.getElementById("observaciones").value.trim();
     const fecha = document.getElementById("fechaEntrada").value;
 
-    if (!id) { alert('❌ Seleccioná un artículo'); return; }
-    if (isNaN(cantidad) || cantidad <= 0) { alert('❌ Cantidad inválida'); return; }
-    if (!proveedor) { alert('❌ Ingresá el proveedor'); return; }
+    if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
+    if (isNaN(cantidad) || cantidad <= 0) { mostrarToast('Cantidad inválida', 'error'); return; }
+    if (!proveedor) { mostrarToast('Ingresá el proveedor', 'error'); return; }
 
     const btn = document.getElementById('btnRegistrar');
     btn.disabled = true;
@@ -377,7 +544,7 @@ async function registrarEntrada(e) {
         if (resultado && resultado.exito === false) {
             throw new Error(resultado.error || 'Error desconocido');
         }
-        alert('✅ Entrada registrada correctamente');
+        mostrarToast('Entrada registrada correctamente', 'exito');
         document.getElementById('formEntrada').reset();
         document.getElementById('articuloId').value = '';
         document.getElementById('vistaPreviaContenido').innerHTML =
@@ -387,7 +554,7 @@ async function registrarEntrada(e) {
         await cargarUltimasEntradas();
         movimientos = [];
     } catch (error) {
-        alert(`❌ Error: ${error.message}`);
+        mostrarToast(`Error: ${error.message}`, 'error');
         console.error(error);
     } finally {
         btn.disabled = false;
@@ -407,9 +574,9 @@ async function registrarSalida(e) {
     const observaciones = document.getElementById("observacionesSalida").value.trim();
     const fecha = document.getElementById("fechaSalida").value;
 
-    if (!id) { alert('❌ Seleccioná un artículo'); return; }
-    if (isNaN(cantidad) || cantidad <= 0) { alert('❌ Cantidad inválida'); return; }
-    if (!destino) { alert('❌ Ingresá el destino o dirección'); return; }
+    if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
+    if (isNaN(cantidad) || cantidad <= 0) { mostrarToast('Cantidad inválida', 'error'); return; }
+    if (!destino) { mostrarToast('Ingresá el destino o dirección', 'error'); return; }
 
     const btn = document.getElementById('btnRegistrarSalida');
     btn.disabled = true;
@@ -427,13 +594,13 @@ async function registrarSalida(e) {
         const resultado = await apiService.post(payload);
         if (resultado && resultado.exito === false) {
             if (resultado.error && resultado.error.toLowerCase().includes('stock insuficiente')) {
-                alert(`❌ ${resultado.error}`);
+                mostrarToast(resultado.error, 'error');
             } else {
                 throw new Error(resultado.error || 'Error desconocido');
             }
             return;
         }
-        alert('✅ Salida registrada correctamente');
+        mostrarToast('Salida registrada correctamente', 'exito');
         document.getElementById('formSalida').reset();
         document.getElementById('articuloIdSalida').value = '';
         document.getElementById('vistaPreviaContenidoSalida').innerHTML =
@@ -443,7 +610,7 @@ async function registrarSalida(e) {
         await cargarUltimasSalidas();
         movimientos = [];
     } catch (error) {
-        alert(`❌ Error: ${error.message}`);
+        mostrarToast(`Error: ${error.message}`, 'error');
         console.error(error);
     } finally {
         btn.disabled = false;
@@ -607,9 +774,24 @@ function renderizarMovimientos(datos) {
         // Detalle: observación
         const detalle = m.observacion || '—';
 
-        // Cantidad con signo
-        const cantTexto = esEntrada ? `+${m.cantidad}` : `-${m.cantidad}`;
-        const cantColor = esEntrada ? '#16a34a' : '#dc2626';
+        // Cantidad con signo (según tipo)
+        let cantTexto = '';
+        let cantColor = '#dc2626';
+
+        if (m.tipo === 'Entrada') {
+            cantTexto = `+${m.cantidad}`;
+            cantColor = '#16a34a';
+        } else if (m.tipo === 'Salida') {
+            cantTexto = `-${m.cantidad}`;
+            cantColor = '#dc2626';
+        } else if (m.tipo === 'Relevamiento') {
+            // El relevamiento ya viene con signo (positivo o negativo)
+            const dif = Number(m.cantidad) || 0;
+            cantTexto = dif > 0 ? `+${dif}` : `${dif}`;
+            cantColor = dif > 0 ? '#16a34a' : '#dc2626';
+        } else {
+            cantTexto = String(m.cantidad);
+        }
 
         filas += `
             <tr>
@@ -689,6 +871,155 @@ function configurarMenu() {
 }
 
 // ============================================================
+// 15. REGISTRAR RELEVAMIENTO
+// ============================================================
+async function registrarRelevamiento(e) {
+    e.preventDefault();
+
+    const id = document.getElementById("articuloIdRelevamiento").value;
+    const stockReal = parseFloat(document.getElementById("stockReal").value);
+    const observaciones = document.getElementById("observacionesRelevamiento").value.trim();
+    const fecha = new Date().toISOString().split('T')[0];
+
+    if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
+    if (isNaN(stockReal) || stockReal < 0) { mostrarToast('El stock real debe ser un número mayor o igual a 0', 'error'); return; }
+
+    const btn = document.getElementById('btnRegistrarRelevamiento');
+    btn.disabled = true;
+    btn.textContent = 'Registrando...';
+
+    try {
+        const payload = {
+            accion: 'registrarRelevamiento',
+            id: id,
+            stockReal: stockReal,
+            observacion: observaciones,
+            fecha: fecha
+        };
+
+        const resultado = await apiService.post(payload);
+
+        if (resultado && resultado.exito === false) {
+            throw new Error(resultado.error || 'Error desconocido');
+        }
+
+        // Toast según diferencia
+        const dif = resultado.diferencia || 0;
+        if (dif === 0) {
+            mostrarToast('El stock ya estaba correcto. Sin cambios.', 'exito');
+        } else {
+            const signo = dif > 0 ? '+' : '';
+            mostrarToast(`Relevamiento registrado. Ajuste: ${signo}${dif}`, 'exito');
+        }
+
+        // Resetear formulario
+        document.getElementById('formRelevamiento').reset();
+        document.getElementById('articuloIdRelevamiento').value = '';
+        document.getElementById('stockSistema').value = '—';
+        document.getElementById('diferencia').value = '—';
+        document.getElementById('registradoPorRelevamiento').value = 'Samuel Steves';
+        document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML =
+            '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+
+        // Recargar artículos y limpiar caché de movimientos
+        await cargarArticulos();
+        movimientos = [];
+
+    } catch (error) {
+        mostrarToast(`Error: ${error.message}`, 'error');
+        console.error(error);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Registrar relevamiento';
+    }
+}
+
+/**
+ * ------------------------------------------------------------
+ * Calcular diferencia en vivo (mientras el usuario escribe)
+ * ------------------------------------------------------------
+ */
+function actualizarDiferencia() {
+    const stockSistemaInput = document.getElementById('stockSistema');
+    const stockRealInput = document.getElementById('stockReal');
+    const diferenciaInput = document.getElementById('diferencia');
+    if (!stockSistemaInput || !stockRealInput || !diferenciaInput) return;
+
+    const sistema = parseFloat(stockSistemaInput.value);
+    const real = parseFloat(stockRealInput.value);
+
+    // Si alguno no es número, mostrar "—"
+    if (isNaN(sistema) || isNaN(real)) {
+        diferenciaInput.value = '—';
+        diferenciaInput.style.color = 'var(--text-muted)';
+        return;
+    }
+
+    const dif = real - sistema;
+    const signo = dif > 0 ? '+' : '';
+
+    diferenciaInput.value = `${signo}${dif}`;
+
+    if (dif > 0) {
+        diferenciaInput.style.color = '#16a34a';
+    } else if (dif < 0) {
+        diferenciaInput.style.color = '#dc2626';
+    } else {
+        diferenciaInput.style.color = 'var(--text-muted)';
+    }
+}
+
+/**
+ * ------------------------------------------------------------
+ * Mostrar stock del sistema al seleccionar un artículo
+ * ------------------------------------------------------------
+ */
+function mostrarStockSistemaRelevamiento(id) {
+    const item = articulos.find(a => String(a.id) === String(id));
+    if (!item) return;
+
+    const stock = obtenerStock(item);
+    const input = document.getElementById('stockSistema');
+    if (input) input.value = stock;
+
+    // Vista previa
+    mostrarVistaPrevia(id, 'vistaPreviaContenidoRelevamiento');
+
+    // Recalcular diferencia (por si ya hay un valor escrito)
+    actualizarDiferencia();
+}
+
+/**
+ * ------------------------------------------------------------
+ * Ir a Relevamiento con un artículo pre-seleccionado
+ * ------------------------------------------------------------
+ * Se llama desde el botón ✏️ de la tabla de Inventario General.
+ * Navega a la página Relevamiento y pre-carga el artículo.
+ * ------------------------------------------------------------
+ */
+function irARelevamientoConArticulo(id) {
+    navegarAPagina('relevamiento');
+
+    setTimeout(() => {
+        const item = articulos.find(a => String(a.id) === String(id));
+        if (!item) return;
+
+        const input = document.getElementById('inputArticuloRelevamiento');
+        const hidden = document.getElementById('articuloIdRelevamiento');
+        if (input) input.value = `${item.articulo} (ID ${item.id})`;
+        if (hidden) hidden.value = item.id;
+
+        mostrarStockSistemaRelevamiento(item.id);
+
+        const stockReal = document.getElementById('stockReal');
+        if (stockReal) {
+            stockReal.focus();
+            stockReal.value = '';
+        }
+    }, 100);
+}
+
+// ============================================================
 // 14. INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -712,6 +1043,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     configurarBuscadorDropdown('inputArticulo', 'articuloId', 'listaArticulosCustom', 'vistaPreviaContenido');
     configurarBuscadorDropdown('inputArticuloSalida', 'articuloIdSalida', 'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida');
+
+    // Buscador de artículos para Relevamiento
+    configurarBuscadorDropdownRelevamiento();
+
+    // Evento del formulario de Relevamiento
+    const formRelevamiento = document.getElementById('formRelevamiento');
+    if (formRelevamiento) formRelevamiento.addEventListener('submit', registrarRelevamiento);
+
+    // Evento en vivo para calcular la diferencia
+    const stockRealInput = document.getElementById('stockReal');
+    if (stockRealInput) stockRealInput.addEventListener('input', actualizarDiferencia);
+
+    // Fecha de relevamiento
+    const fechaElRel = document.getElementById('fechaActualRelevamiento');
+    if (fechaElRel) fechaElRel.textContent = fechaHoy;
 
     configurarBuscador();
     configurarMovimientos();

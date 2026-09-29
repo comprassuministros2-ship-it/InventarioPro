@@ -252,16 +252,93 @@
             </div>
         </div>
 
+        <!-- ============ PÁGINA: RELEVAMIENTO ============ -->
+        <div id="pagina-relevamiento" class="pagina">
+            <div class="page-header">
+                <h1>Relevamiento de stock</h1>
+                <p class="fecha-hoy">Ajuste de inventario físico - <span id="fechaActualRelevamiento"></span></p>
+            </div>
+
+            <div class="relevamiento-wrapper">
+                <!-- COLUMNA IZQUIERDA: FORMULARIO -->
+                <div class="relevamiento-form">
+                    <h2>Registrar relevamiento</h2>
+                    <form id="formRelevamiento">
+
+                        <!-- Artículo con buscador -->
+                        <div class="form-group buscador-articulo-group">
+                            <label for="inputArticuloRelevamiento">ARTÍCULO *</label>
+                            <div class="buscador-wrapper">
+                                <input type="text" id="inputArticuloRelevamiento" placeholder="Escribí para buscar..." autocomplete="off" required>
+                                <span class="icono-lupa">🔍</span>
+                                <ul id="listaArticulosCustomRelevamiento" class="dropdown-lista"></ul>
+                            </div>
+                            <input type="hidden" id="articuloIdRelevamiento" value="">
+                        </div>
+
+                        <!-- Stock del sistema (solo lectura) -->
+                        <div class="form-group">
+                            <label for="stockSistema">STOCK DEL SISTEMA</label>
+                            <input type="text" id="stockSistema" value="—" readonly style="background: var(--bg-hover); cursor: not-allowed;">
+                        </div>
+
+                        <!-- Stock real contado (input) -->
+                        <div class="form-group">
+                            <label for="stockReal">STOCK REAL CONTADO *</label>
+                            <input type="number" id="stockReal" min="0" value="" placeholder="Ingresá el stock contado físicamente" required>
+                        </div>
+
+                        <!-- Diferencia (se calcula en vivo) -->
+                        <div class="form-group">
+                            <label for="diferencia">DIFERENCIA</label>
+                            <input type="text" id="diferencia" value="—" readonly style="background: var(--bg-hover); cursor: not-allowed; font-weight: 700;">
+                        </div>
+
+                        <!-- Observación -->
+                        <div class="form-group">
+                            <label for="observacionesRelevamiento">OBSERVACIÓN</label>
+                            <textarea id="observacionesRelevamiento" rows="3" placeholder="Motivo del ajuste (opcional)..."></textarea>
+                        </div>
+
+                        <!-- Registrado por -->
+                        <div class="form-group">
+                            <label for="registradoPorRelevamiento">REGISTRADO POR *</label>
+                            <input type="text" id="registradoPorRelevamiento" value="Samuel Steves" required>
+                        </div>
+
+                        <button type="submit" class="btn-submit" id="btnRegistrarRelevamiento">Registrar relevamiento</button>
+                    </form>
+                </div>
+
+                <!-- COLUMNA DERECHA: VISTA PREVIA -->
+                <div class="relevamiento-sidebar">
+                    <div class="vista-previa">
+                        <h3>Artículo seleccionado</h3>
+                        <div id="vistaPreviaContenidoRelevamiento">
+                            <p class="placeholder">Seleccioná un artículo para ver su stock actual</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Otras páginas (placeholder) -->
         <div id="pagina-dashboard" class="pagina"><div class="page-header"><h1>Dashboard</h1><p class="fecha-hoy">Resumen</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-pedidos" class="pagina"><div class="page-header"><h1>Pedidos</h1><p class="fecha-hoy">Gestión</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-relevamiento" class="pagina"><div class="page-header"><h1>Relevamiento</h1><p class="fecha-hoy">Ajuste</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-direcciones" class="pagina"><div class="page-header"><h1>Direcciones</h1><p class="fecha-hoy">Ubicaciones</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-estadisticas" class="pagina"><div class="page-header"><h1>Estadísticas</h1><p class="fecha-hoy">Análisis</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-reportes" class="pagina"><div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-configuracion" class="pagina"><div class="page-header"><h1>Configuración</h1><p class="fecha-hoy">Ajustes</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
 
     </main>
+</div>
+
+<!-- ========================================== -->
+<!-- TOAST - NOTIFICACIÓN FLOTANTE              -->
+<!-- ========================================== -->
+<div id="toast" class="toast" role="alert" aria-live="polite">
+    <div class="toast-icono">✓</div>
+    <div class="toast-mensaje"></div>
 </div>
 
 <!-- ================ SCRIPTS ================ -->

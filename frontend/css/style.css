@@ -1,10 +1,45 @@
+/* ============================================================
+   INVENTARIO PRO — HOJA DE ESTILOS
+   ============================================================
+   ÍNDICE DE CONTENIDO:
+
+   01. FUENTE
+   02. RESET
+   03. VARIABLES — TEMA CLARO
+   04. CUERPO
+   05. LAYOUT PRINCIPAL (grid sidebar + contenido)
+   06. SIDEBAR (navegación lateral + versión colapsada)
+   07. TOPBAR (barra superior)
+   08. BOTONES GENERALES
+   09. CONTENIDO PRINCIPAL Y PÁGINAS
+   10. CABECERA DE PÁGINA
+   11. ENTRADAS Y SALIDAS — LAYOUT (2 columnas)
+   12. PANELES LATERALES (vista previa, últimas entradas/salidas)
+   13. FORMULARIOS
+   14. BUSCADOR DE ARTÍCULOS CON DROPDOWN (formularios)
+   15. BADGES (etiquetas de estado)
+   16. TABLA DE INVENTARIO GENERAL
+   17. BOTONES DE ACCIÓN DE LA TABLA
+   18. TOOLBAR DE INVENTARIO
+   19. BUSCADOR DE INVENTARIO (con brillo animado)
+   20. SELECT DE CATEGORÍAS
+   21. BOTONES DE TOOLBAR (exportar / nuevo)
+   22. MOVIMIENTOS — COLUMNAS PROPORCIONALES
+   23. OVERLAY DEL MENÚ (móvil)
+   24. UTILIDADES
+   25. RESPONSIVE GENERAL (móvil ≤768px)
+   26. TOAST — NOTIFICACIONES FLOTANTES
+   27. RELEVAMIENTO — LAYOUT (2 columnas)
+   28. MENÚ DESPLEGABLE DE ACCIONES (tabla inventario)
+   ============================================================ */
+
 /* =========================================
-   FUENTE
+   01. FUENTE
    ========================================= */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 /* =========================================
-   RESET
+   02. RESET
    ========================================= */
 * {
     margin: 0;
@@ -13,7 +48,7 @@
 }
 
 /* =========================================
-   VARIABLES — TEMA CLARO
+   03. VARIABLES — TEMA CLARO
    ========================================= */
 :root,
 [data-theme="dark"],
@@ -61,7 +96,7 @@
 }
 
 /* =========================================
-   CUERPO
+   04. CUERPO
    ========================================= */
 body {
     min-height: 100vh;
@@ -72,7 +107,7 @@ body {
 }
 
 /* =========================================
-   LAYOUT PRINCIPAL
+   05. LAYOUT PRINCIPAL
    ========================================= */
 .app-layout {
     display: grid;
@@ -88,7 +123,7 @@ body {
 }
 
 /* =========================================
-   SIDEBAR
+   06. SIDEBAR
    ========================================= */
 .sidebar {
     grid-area: sidebar;
@@ -250,7 +285,7 @@ body {
     background: var(--sidebar-hover);
 }
 
-/* Menú colapsado */
+/* Sidebar — versión colapsada (desktop) */
 .sidebar.collapsed {
     width: 70px;
     padding: 24px 8px;
@@ -318,7 +353,7 @@ body {
 }
 
 /* =========================================
-   TOPBAR
+   07. TOPBAR
    ========================================= */
 .topbar {
     grid-area: topbar;
@@ -370,7 +405,7 @@ body {
 }
 
 /* =========================================
-   BOTONES
+   08. BOTONES GENERALES
    ========================================= */
 .btn {
     padding: 9px 16px;
@@ -424,7 +459,7 @@ body {
 }
 
 /* =========================================
-   CONTENIDO PRINCIPAL
+   09. CONTENIDO PRINCIPAL Y PÁGINAS
    ========================================= */
 .main-content {
     grid-area: main;
@@ -443,7 +478,7 @@ body {
 }
 
 /* =========================================
-   CABECERA DE PÁGINA
+   10. CABECERA DE PÁGINA
    ========================================= */
 .page-header {
     margin-bottom: var(--space-lg);
@@ -463,7 +498,7 @@ body {
 }
 
 /* =========================================
-   ENTRADAS Y SALIDAS - Layout
+   11. ENTRADAS Y SALIDAS — LAYOUT
    ========================================= */
 .entradas-wrapper,
 .salidas-wrapper {
@@ -505,7 +540,8 @@ body {
 }
 
 /* =========================================
-   PANELES LATERALES
+   12. PANELES LATERALES
+   (vista previa + últimas entradas/salidas)
    ========================================= */
 .vista-previa,
 .ultimas-entradas,
@@ -547,7 +583,7 @@ body {
     margin-top: 0.8rem;
 }
 
-/* Listas de movimientos */
+/* Listas de movimientos (dentro de los paneles) */
 .lista-entradas,
 .lista-salidas {
     list-style: none;
@@ -585,7 +621,7 @@ body {
 .lista-salidas .item-cantidad { font-weight: 700; color: #dc2626; }
 
 /* =========================================
-   FORMULARIOS
+   13. FORMULARIOS
    ========================================= */
 .form-group {
     margin-bottom: 1.2rem;
@@ -627,7 +663,8 @@ body {
 .form-group textarea { resize: vertical; }
 
 /* =========================================
-   BUSCADOR DE ARTÍCULOS CON DROPDOWN
+   14. BUSCADOR DE ARTÍCULOS CON DROPDOWN
+   (inputs de búsqueda dentro de formularios)
    ========================================= */
 .buscador-articulo-group .buscador-wrapper {
     position: relative;
@@ -689,7 +726,7 @@ body {
 }
 
 /* =========================================
-   BADGES
+   15. BADGES (etiquetas de estado)
    ========================================= */
 .badge {
     padding: 0.35rem 0.8rem;
@@ -739,7 +776,7 @@ body {
 }
 
 /* =========================================
-   TABLA DE INVENTARIO GENERAL
+   16. TABLA DE INVENTARIO GENERAL
    ========================================= */
 .inventario-tabla-wrapper {
     background: var(--bg-card);
@@ -789,7 +826,7 @@ body {
 .inventario-tabla tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
 .inventario-tabla tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
 
-/* Celda Artículo */
+/* Tabla — celda de artículo (imagen + nombre) */
 .articulo-celda {
     display: flex;
     align-items: center;
@@ -850,7 +887,7 @@ body {
     color: var(--text-muted);
 }
 
-/* Emoji del artículo */
+/* Tabla — emoji del artículo (cuando no hay imagen) */
 .emoji-articulo {
     font-size: 1.6rem;
     line-height: 1;
@@ -864,8 +901,16 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+/* Tabla — scrollbar horizontal */
+.inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
+.inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
+.inventario-tabla-wrapper::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 999px;
+}
+
 /* =========================================
-   BOTONES DE ACCIÓN
+   17. BOTONES DE ACCIÓN DE LA TABLA
    ========================================= */
 .btn-accion {
     width: 34px;
@@ -900,15 +945,8 @@ body {
     transform: translateY(0);
 }
 
-.inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
-.inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
-.inventario-tabla-wrapper::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 999px;
-}
-
 /* =========================================
-   TOOLBAR INVENTARIO
+   18. TOOLBAR DE INVENTARIO
    ========================================= */
 .toolbar-inventario {
     display: flex;
@@ -927,7 +965,8 @@ body {
 }
 
 /* =========================================
-   BUSCADOR DE INVENTARIO CON BRILLO ANIMADO
+   19. BUSCADOR DE INVENTARIO
+   (píldora con brillo animado)
    ========================================= */
 .buscador-inventario {
     position: relative;
@@ -995,7 +1034,7 @@ body {
 }
 
 /* =========================================
-   SELECT DE CATEGORÍAS
+   20. SELECT DE CATEGORÍAS
    ========================================= */
 .select-ubicacion {
     padding: 0.65rem 2.5rem 0.65rem 1rem;
@@ -1020,7 +1059,7 @@ body {
 }
 
 /* =========================================
-   BOTONES TOOLBAR
+   21. BOTONES DE TOOLBAR
    ========================================= */
 .toolbar-right { display: flex; gap: 0.8rem; }
 
@@ -1057,7 +1096,7 @@ body {
 .btn-nuevo:hover { background: var(--accent-hover); }
 
 /* =========================================
-   MOVIMIENTOS - Columnas proporcionales
+   22. MOVIMIENTOS — COLUMNAS PROPORCIONALES
    ========================================= */
 #pagina-movimientos .inventario-tabla-wrapper {
     width: 100%;
@@ -1115,7 +1154,7 @@ body {
 }
 
 /* =========================================
-   OVERLAY DEL MENÚ (móvil)
+   23. OVERLAY DEL MENÚ (móvil)
    ========================================= */
 .sidebar-overlay {
     display: none;
@@ -1128,7 +1167,7 @@ body {
 .sidebar-overlay.show { display: block; }
 
 /* =========================================
-   UTILIDADES
+   24. UTILIDADES
    ========================================= */
 .placeholder {
     color: var(--text-soft);
@@ -1136,7 +1175,7 @@ body {
 }
 
 /* =========================================
-   RESPONSIVE
+   25. RESPONSIVE GENERAL (móvil ≤768px)
    ========================================= */
 @media (max-width: 768px) {
     .app-layout {
@@ -1184,4 +1223,305 @@ body {
 
     .entradas-form,
     .salidas-form { padding: 1.2rem; }
+}
+
+/* ============================================================
+   26. TOAST — NOTIFICACIONES FLOTANTES
+   ============================================================
+   HTML requerido al final del <body>:
+
+   <div id="toast" class="toast" role="alert" aria-live="polite">
+       <div class="toast-icono">✓</div>
+       <div class="toast-mensaje"></div>
+   </div>
+
+   Contrato con el JS:
+   - .visible     → mostrar   |  sin .visible → oculto
+   - .toast-error → variante error
+   ============================================================ */
+
+/* Toast — variables locales (mismos colores que ya usa la app) */
+:root {
+    --toast-success: #16a34a;      /* verde de .lista-entradas .item-cantidad */
+    --toast-success-bg: #dcfce7;   /* fondo de .badge-disponible */
+    --toast-error: #dc2626;        /* rojo de .lista-salidas .item-cantidad */
+    --toast-error-bg: #fee2e2;     /* fondo de .badge-sin-stock */
+
+    /* Misma familia de tono que --shadow-md, más elevada
+       porque el toast "flota" sobre todo el contenido */
+    --toast-shadow:
+        0 2px 4px rgba(15, 23, 42, .06),
+        0 12px 24px rgba(15, 23, 42, .12),
+        0 20px 48px rgba(15, 23, 42, .10);
+}
+
+/* Toast — contenedor en estado oculto (base) */
+.toast {
+    position: fixed;
+    right: 24px;
+    bottom: 24px; /* fallback si el navegador no soporta env() */
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    z-index: 1200; /* encima de dropdowns (1000) y overlay (999) */
+
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+
+    min-width: 280px;
+    max-width: 380px;
+    padding: var(--space-sm) 1.25rem;
+
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--toast-shadow);
+    overflow: hidden; /* recorta el acento y la barra al radio */
+
+    /* Estado oculto: opacity + transform (contrato con el JS)
+       + micro-escala para una entrada con más "cuerpo" */
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+    pointer-events: none; /* invisible = no bloquea clics */
+
+    /* Transición de SALIDA: rápida, se retira sin molestar */
+    transition:
+        opacity 0.25s ease,
+        transform 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Toast — estado visible (animación de entrada con curva "expo") */
+.toast.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+
+    transition:
+        opacity 0.35s ease-out,
+        transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Toast — borde izquierdo de estado (::before)
+   Verde por defecto (éxito) · rojo con .toast-error */
+.toast::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--toast-success);
+}
+
+.toast-error::before {
+    background: var(--toast-error);
+}
+
+/* Toast — ícono circular (el anillo replica el estilo del logo) */
+.toast-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+
+    font-size: 0.875rem;
+    font-weight: 800;
+    line-height: 1;
+
+    background: var(--toast-success-bg);
+    color: var(--toast-success);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+.toast-error .toast-icono {
+    background: var(--toast-error-bg);
+    color: var(--toast-error);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+/* Toast — mensaje */
+.toast-mensaje {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--text);
+    overflow-wrap: anywhere; /* textos largos no rompen el layout */
+}
+
+/* Toast — barra de progreso (::after)
+   Se vacía en 3s, sincronizada con el setTimeout del JS */
+.toast::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--toast-success);
+    transform: scaleX(0); /* oculta fuera del estado visible (evita flash en la salida) */
+    transform-origin: left;
+}
+
+.toast-error::after {
+    background: var(--toast-error);
+}
+
+.toast.visible::after {
+    animation: toast-progreso 3s linear forwards;
+}
+
+@keyframes toast-progreso {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+/* Toast — responsive (móvil: ancho completo abajo) */
+@media (max-width: 768px) {
+    .toast {
+        left: 16px;
+        right: 16px;
+        bottom: 16px; /* fallback si el navegador no soporta env() */
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        min-width: 0;
+        max-width: none;
+    }
+}
+
+/* Toast — accesibilidad (respetar "reducir movimiento") */
+@media (prefers-reduced-motion: reduce) {
+    .toast,
+    .toast.visible {
+        transition: opacity 0.2s ease;
+        transform: none;
+    }
+
+    .toast.visible::after {
+        animation: none;
+    }
+}
+
+/* =========================================
+   27. RELEVAMIENTO — LAYOUT
+   ========================================= */
+.relevamiento-wrapper {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-lg);
+    max-width: 100%;
+}
+
+@media (max-width: 992px) {
+    .relevamiento-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+.relevamiento-form {
+    background: var(--bg-card);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+}
+
+.relevamiento-form h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1.8rem;
+    color: var(--text);
+}
+
+.relevamiento-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* Relevamiento — responsive (afinaciones menores en móvil;
+   el paso a 1 columna ya lo cubre el @media de 992px) */
+@media (max-width: 768px) {
+    .relevamiento-wrapper {
+        gap: 1rem;
+    }
+    .relevamiento-form {
+        padding: 1.2rem;
+    }
+}
+
+/* =========================================
+   28. MENÚ DESPLEGABLE DE ACCIONES
+   (botón ➡️ en la tabla de inventario:
+   Detalles / Relevamiento)
+   ========================================= */
+.acciones-celda {
+    position: relative; /* ancla del menú desplegable */
+    display: inline-block;
+}
+
+/* Botón que abre el menú */
+.btn-menu {
+    font-size: 0.9rem;
+    line-height: 1;
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+.btn-menu:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* Panel flotante con las opciones */
+.menu-desplegable {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 180px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    padding: 0.4rem;
+    z-index: 100;
+    display: none; /* oculto por defecto; .visible lo muestra */
+}
+
+.menu-desplegable.visible {
+    display: block;
+}
+
+/* Cada opción del menú */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: var(--text);
+    text-align: left;
+    transition: background 0.15s;
+}
+
+.menu-item:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.menu-item-icono {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.menu-item-texto {
+    font-weight: 500;
 }
