@@ -1373,3 +1373,155 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('✅ InventarioPro - Aplicación inicializada.');
 });
+/**
+ * ============================================================
+ * ESTADÍSTICAS DIRECCIONES - Ranking + detalle por dirección
+ * ------------------------------------------------------------
+ * Lee la hoja "Estructura" (lista oficial de direcciones activas)
+ * y la cruza con las Salidas de "Movimientos".
+ * 
+ * Devuelve:
+ * [
+ *   {
+ *     direccion: "Seguridad Vial",
+ *     total: 245,
+ *     articulos: [
+ *       { articulo: "Lápiz Negro", categoria: "Librería", cantidad: 200 },
+ *       ...
+ *     ]
+ *   },
+ *   ...
+ * ]
+ * ============================================================
+ */
+function obtenerEstadisticasDirecciones() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  // --- 1. Leer hoja Estructura (direcciones oficiales) ---
+  const hojaDir = ss.getSheetByName("Estructura");
+  if (!hojaDir) return { exito: false, error: "No se encontró la hoja Estructura" };
+
+  const datosDir = hojaDir.getDataRange().getValues();
+  const direccionesOficiales = {};
+
+  // Fila 1 = encabezados. Desde fila 2.
+  // A=ID | B=Nombre_Area | C=Tipo_Dependencia | D=Dependencia_Superior | E=Activa | F=Carpeta_Remitos
+  for (let i = 1; i < datosDir.length; i++) {
+    const nombre = String(datosDir[i][1] || "").trim(); // Columna B
+    const activa = String(datosDir[i][4] || "").trim().toUpperCase(); // Columna E
+
+    if (nombre && activa === "SI") {
+      // Normalizar para comparar
+      const clave = normalizarNombreDireccion(nombre);
+      direccionesOficiales[clave] = {
+        nombre: nombre,
+        total: 0,
+        articulos: {} // { "Lápiz Negro|Librería": { articulo, categoria, cantidad } }
+      };
+    }
+  }
+
+  // --- 2. Leer hoja Movimientos (Salidas) ---
+  const hojaMov = ss.getSheetByName("Movimientos");
+  if (!hojaMov) return { exito: false, error: "No se encontró la hoja Movimientos" };
+
+  const datosMov = hojaMov.getDataRange().getValues();
+
+  // Fila 1 = encabezados. Desde fila 2.
+  // A=Fecha | B=ID_Articulo | C=Nombre_Articulo | D=Tipo | E=Cantidad | F=Proveedor/Destino | G=Orden | H=Tipo_Compra | I=Observación
+  // También necesitamos la categoría del artículo → la leemos de API_Prueba
+
+  // --- 3. Leer API_Prueba para obtener categorías ---
+  const hojaArt = ss.getSheetByName("API_Prueba");
+  const categoriasPorID = {};
+  if (hojaArt) {
+    const datosArt = hojaArt.getDataRange().getValues();
+    for (let i = 1; i < datosArt.length; i++) {
+      const idArt = String(datosArt[i][0]).trim();
+      const cat = String(datosArt[i][3] || "").trim(); // Columna D = categoriaID
+      categoriasPorID[idArt] = cat;
+    }
+  }
+
+  // --- 4. Procesar solo las Salidas ---
+  for (let i = 1; i < datosMov.length; i++) {
+    const tipo = String(datosMov[i][3] || "").trim();
+    if (tipo !== "Salida") continue;
+
+    const idArt = String(datosMov[i][1]).trim();
+    const nombreArt = String(datosMov[i][2] || "").trim();
+    const cantidad = Number(datosMov[i][4]) || 0;
+    const destino = String(datosMov[i][5] || "").trim();
+
+    if (!destino || cantidad <= 0) continue;
+
+    // Normalizar el destino
+    const claveDestino = normalizarNombreDireccion(destino);
+
+    // ¿Coincide con alguna dirección oficial?
+    if (direccionesOficiales[claveDestino]) {
+      const dir = direccionesOficiales[claveDestino];
+
+      // Sumar total
+      dir.total += cantidad;
+
+      // Sumar artículo (agrupando por nombre + categoría)
+      const categoria = categoriasPorID[idArt] || "Sin categoría";
+      const claveArt = nombreArt + "|" + categoria;
+
+      if (!dir.articulos[claveArt]) {
+        dir.articulos[claveArt] = {
+          articulo: nombreArt,
+          categoria: categoria,
+          cantidad: 0
+        };
+      }
+      dir.articulos[claveArt].cantidad += cantidad;
+    }
+  }
+
+  // --- 5. Convertir a array y ordenar ---
+  const resultado = [];
+
+  for (const clave in direccionesOficiales) {
+    const dir = direccionesOficiales[clave];
+
+    // Convertir el objeto de artículos a array y ordenar por cantidad desc
+    const articulosArr = Object.values(dir.articulos).sort((a, b) => b.cantidad - a.cantidad);
+
+    resultado.push({
+      direccion: dir.nombre,
+      total: dir.total,
+      articulos: articulosArr
+    });
+  }
+
+  // Ordenar direcciones por total desc, filtrar las que tienen 0
+  resultado.sort((a, b) => b.total - a.total);
+  const soloConMovimientos = resultado.filter(d => d.total > 0);
+
+  return soloConMovimientos;
+}
+
+/**
+ * ------------------------------------------------------------
+ * Normalizar nombre de dirección para comparar
+ * ------------------------------------------------------------
+ * Convierte a minúsculas, quita tildes, quita espacios dobles,
+ * y arregla el error común "direcion" → "direccion".
+ * ------------------------------------------------------------
+ */
+function normalizarNombreDireccion(nombre) {
+  let n = String(nombre || "").trim().toLowerCase();
+
+  // Quitar tildes
+  n = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  // Arreglar errores comunes
+  n = n.replace(/direcion/g, "direccion");
+
+  // Quitar espacios múltiples
+  n = n.replace(/\s+/g, " ");
+
+  return n;
+}
