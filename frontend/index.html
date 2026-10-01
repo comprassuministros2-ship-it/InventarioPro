@@ -252,6 +252,56 @@
             </div>
         </div>
 
+        <!-- ============ PÁGINA: DIRECCIONES ============ -->
+        <div id="pagina-direcciones" class="pagina">
+            <div class="page-header">
+                <h1>Direcciones</h1>
+                <p class="fecha-hoy">Destinos que más reciben - <span id="fechaActualDirecciones"></span></p>
+            </div>
+
+            <div style="padding: 0 1.5rem;">
+
+                <!-- TOOLBAR -->
+                <div class="toolbar-inventario">
+                    <div class="toolbar-left">
+                        <div class="buscador-inventario">
+                            <span class="icono-buscar">🔍</span>
+                            <input type="text" id="inputBusquedaDireccion" placeholder="Buscar dirección...">
+                        </div>
+                        <select id="selectPeriodoDireccion" class="select-ubicacion">
+                            <option value="todo">Todo el historial</option>
+                            <option value="30dias">Últimos 30 días</option>
+                            <option value="3meses">Últimos 3 meses</option>
+                            <option value="6meses">Últimos 6 meses</option>
+                            <option value="año">Último año</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- RANKING TOP 10 -->
+                <div class="estadistica-seccion">
+                    <h2 class="estadistica-titulo">Ranking Top 10 direcciones</h2>
+                    <div id="contenedorRankingDirecciones">
+                        <!-- Se llena con JS -->
+                        <p class="placeholder">Cargando ranking...</p>
+                    </div>
+                </div>
+
+                <!-- DETALLE POR DIRECCIÓN -->
+                <div class="estadistica-seccion" style="margin-top: 2rem;">
+                    <h2 class="estadistica-titulo">Detalle por dirección</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                        Hacé clic en una dirección para ver el detalle de los artículos entregados.
+                    </p>
+                    <div id="contenedorDetalleDirecciones">
+                        <!-- Se llena con JS -->
+                        <p class="placeholder">Seleccioná una dirección del ranking</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
         <!-- ============ PÁGINA: RELEVAMIENTO ============ -->
         <div id="pagina-relevamiento" class="pagina">
             <div class="page-header">
@@ -325,7 +375,6 @@
         <!-- Otras páginas (placeholder) -->
         <div id="pagina-dashboard" class="pagina"><div class="page-header"><h1>Dashboard</h1><p class="fecha-hoy">Resumen</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-pedidos" class="pagina"><div class="page-header"><h1>Pedidos</h1><p class="fecha-hoy">Gestión</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-direcciones" class="pagina"><div class="page-header"><h1>Direcciones</h1><p class="fecha-hoy">Ubicaciones</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-estadisticas" class="pagina"><div class="page-header"><h1>Estadísticas</h1><p class="fecha-hoy">Análisis</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-reportes" class="pagina"><div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-configuracion" class="pagina"><div class="page-header"><h1>Configuración</h1><p class="fecha-hoy">Ajustes</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>

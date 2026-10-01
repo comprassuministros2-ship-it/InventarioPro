@@ -690,11 +690,48 @@ async function cargarUltimasSalidas() {
 }
 
 // ============================================================
-// 12. MOVIMIENTOS - Carga y filtros
+// 12. MOVIMIENTOS - Carga con caché y render por lotes
 // ============================================================
+// OPTIMIZACIÓN DE RENDIMIENTO (100% frontend, sin cambios de API):
+//   a) CACHÉ EN MEMORIA: si `movimientos` ya tiene datos, se renderiza
+//      al instante sin volver a pedir al backend. La invalidación usa
+//      el mecanismo que ya existía: `movimientos = []` después de
+//      registrar un movimiento, y el botón 🔄 Actualizar.
+//   b) RENDER POR LOTES: se muestran de a MOV_POR_LOTE filas y un
+//      botón "Ver más" agrega el siguiente lote sin re-render total.
+//   c) TIMESTAMP PRECOMPUTADO: cada movimiento guarda `_ts` una sola
+//      vez al llegar del backend (el orden por fecha deja de crear
+//      objetos Date en cada comparación).
+//   d) DEBOUNCE EN BÚSQUEDA: evita re-renderizar en cada tecla.
+// ============================================================
+
+// Cantidad de filas por lote (cambiar a 200 acá si se prefiere)
+const MOV_POR_LOTE = 100;
+
+// Copia filtrada + ordenada del último render (para el botón "Ver más")
+let movimientosFiltrados = [];
+
+// Cantidad de filas mostradas actualmente
+let movimientosVisibles = 0;
+
+/**
+ * ------------------------------------------------------------
+ * Cargar movimientos (con caché)
+ * ------------------------------------------------------------
+ * Si hay datos en memoria, renderiza directo (instantáneo).
+ * Solo hace fetch la primera vez, después de un registro
+ * (que limpia `movimientos`) o al presionar Actualizar.
+ * ------------------------------------------------------------
+ */
 async function cargarMovimientos() {
     const contenedor = document.getElementById('contenedorMovimientos');
     if (!contenedor) return;
+
+    // CACHÉ: datos ya en memoria → render al instante, sin fetch
+    if (movimientos.length > 0) {
+        renderizarMovimientos(movimientos);
+        return;
+    }
 
     contenedor.innerHTML = '<p class="placeholder">Cargando movimientos...</p>';
 
@@ -704,6 +741,10 @@ async function cargarMovimientos() {
             throw new Error(resultado.error || 'Error al obtener movimientos');
         }
         movimientos = Array.isArray(resultado) ? resultado : [];
+
+        // Precomputar timestamps una sola vez (acelera el orden posterior)
+        prepararTimestampsMovimientos(movimientos);
+
         renderizarMovimientos(movimientos);
     } catch (error) {
         console.error('Error cargando movimientos:', error);
@@ -711,6 +752,29 @@ async function cargarMovimientos() {
     }
 }
 
+/**
+ * ------------------------------------------------------------
+ * Precomputar timestamp de cada movimiento (una sola vez)
+ * ------------------------------------------------------------
+ * Guarda `_ts` (milisegundos) para que el orden por fecha no
+ * tenga que crear objetos Date en cada comparación del sort.
+ * ------------------------------------------------------------
+ */
+function prepararTimestampsMovimientos(datos) {
+    datos.forEach(m => {
+        m._ts = m.fecha ? new Date(m.fecha).getTime() : 0;
+    });
+}
+
+/**
+ * ------------------------------------------------------------
+ * Renderizar movimientos (filtros + orden + primer lote)
+ * ------------------------------------------------------------
+ * Filtra y ordena TODO en memoria (rápido), pero solo renderiza
+ * el primer lote de MOV_POR_LOTE filas. Si hay más, agrega el
+ * contador y el botón "Ver más".
+ * ------------------------------------------------------------
+ */
 function renderizarMovimientos(datos) {
     const contenedor = document.getElementById('contenedorMovimientos');
     if (!contenedor) return;
@@ -741,19 +805,66 @@ function renderizarMovimientos(datos) {
     }
 
     // Ordenar del más reciente al más viejo
-    filtrados.sort((a, b) => {
-        const fa = a.fecha ? new Date(a.fecha) : new Date(0);
-        const fb = b.fecha ? new Date(b.fecha) : new Date(0);
-        return fb - fa;
-    });
+    // (usa `_ts` precomputado para no parsear fechas por comparación)
+    filtrados.sort((a, b) => (b._ts ?? 0) - (a._ts ?? 0));
 
     if (filtrados.length === 0) {
+        movimientosFiltrados = [];
+        movimientosVisibles = 0;
         contenedor.innerHTML = '<p class="placeholder">No hay movimientos para mostrar.</p>';
         return;
     }
 
+    // Guardar para el botón "Ver más" y calcular el primer lote
+    movimientosFiltrados = filtrados;
+    movimientosVisibles = Math.min(MOV_POR_LOTE, filtrados.length);
+
+    const filas = generarFilasMovimientos(filtrados.slice(0, movimientosVisibles));
+    const hayMas = filtrados.length > movimientosVisibles;
+
+    contenedor.innerHTML = `
+        <p class="placeholder" style="margin: 0.5rem 0;">Mostrando ${movimientosVisibles} de ${filtrados.length} movimientos</p>
+        <div class="inventario-tabla-wrapper">
+            <table class="inventario-tabla">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Artículo</th>
+                        <th>Cantidad</th>
+                        <th>Origen / Destino</th>
+                        <th>Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>
+        ${hayMas ? `
+        <div style="text-align: center; margin: 1rem 0;">
+            <button class="btn-exportar" id="btnVerMasMov" type="button">Ver más (${filtrados.length - movimientosVisibles} restantes)</button>
+        </div>` : ''}
+    `;
+
+    // Listener del botón "Ver más" (solo si existe)
+    const btnVerMas = document.getElementById('btnVerMasMov');
+    if (btnVerMas) {
+        btnVerMas.addEventListener('click', verMasMovimientos);
+    }
+}
+
+/**
+ * ------------------------------------------------------------
+ * Generar HTML de filas de movimientos
+ * ------------------------------------------------------------
+ * Extraído de renderizarMovimientos para reutilizarlo tanto en
+ * el render inicial como al agregar el siguiente lote.
+ * La lógica de cada fila es idéntica a la original (incluye el
+ * manejo de signo para Entrada / Salida / Relevamiento).
+ * ------------------------------------------------------------
+ */
+function generarFilasMovimientos(datos) {
     let filas = '';
-    filtrados.forEach(m => {
+    datos.forEach(m => {
         const fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', {
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
@@ -804,33 +915,70 @@ function renderizarMovimientos(datos) {
             </tr>
         `;
     });
-
-    contenedor.innerHTML = `
-        <div class="inventario-tabla-wrapper">
-            <table class="inventario-tabla">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th>Artículo</th>
-                        <th>Cantidad</th>
-                        <th>Origen / Destino</th>
-                        <th>Detalle</th>
-                    </tr>
-                </thead>
-                <tbody>${filas}</tbody>
-            </table>
-        </div>
-    `;
+    return filas;
 }
 
+/**
+ * ------------------------------------------------------------
+ * "Ver más": agrega el siguiente lote al final de la tabla
+ * ------------------------------------------------------------
+ * No re-renderiza la tabla completa: solo agrega filas al tbody
+ * existente (insertAdjacentHTML, mucho más barato) y actualiza
+ * el contador y el botón.
+ * ------------------------------------------------------------
+ */
+function verMasMovimientos() {
+    const contenedor = document.getElementById('contenedorMovimientos');
+    if (!contenedor) return;
+
+    const total = movimientosFiltrados.length;
+
+    // Siguiente lote de filas
+    const nuevos = movimientosFiltrados.slice(movimientosVisibles, movimientosVisibles + MOV_POR_LOTE);
+    if (nuevos.length === 0) return;
+
+    const tbody = contenedor.querySelector('.inventario-tabla tbody');
+    if (!tbody) return;
+
+    // Agregar las filas nuevas al final de la tabla existente
+    tbody.insertAdjacentHTML('beforeend', generarFilasMovimientos(nuevos));
+    movimientosVisibles += nuevos.length;
+
+    // Actualizar el contador
+    const contador = contenedor.querySelector('.placeholder');
+    if (contador) contador.textContent = `Mostrando ${movimientosVisibles} de ${total} movimientos`;
+
+    // Actualizar o quitar el botón "Ver más"
+    const btn = document.getElementById('btnVerMasMov');
+    if (btn) {
+        if (movimientosVisibles >= total) {
+            btn.closest('div').remove();
+        } else {
+            btn.textContent = `Ver más (${total - movimientosVisibles} restantes)`;
+        }
+    }
+}
+
+/**
+ * ------------------------------------------------------------
+ * Configurar listeners de la página Movimientos
+ * ------------------------------------------------------------
+ * La búsqueda usa debounce de 300ms: el re-render solo se
+ * dispara cuando el usuario deja de escribir, no en cada tecla.
+ * ------------------------------------------------------------
+ */
 function configurarMovimientos() {
     const inputBusqueda = document.getElementById('inputBusquedaMov');
     const selectTipo = document.getElementById('selectTipoMov');
     const btnActualizar = document.getElementById('btnActualizarMov');
 
     if (inputBusqueda) {
-        inputBusqueda.addEventListener('input', () => renderizarMovimientos(movimientos));
+        inputBusqueda.addEventListener('input', () => {
+            clearTimeout(window._movBusquedaTimeout);
+            window._movBusquedaTimeout = setTimeout(() => {
+                renderizarMovimientos(movimientos);
+            }, 300);
+        });
     }
     if (selectTipo) {
         selectTipo.addEventListener('change', () => renderizarMovimientos(movimientos));
@@ -842,7 +990,6 @@ function configurarMovimientos() {
         });
     }
 }
-
 // ============================================================
 // 13. MENÚ LATERAL COLAPSABLE
 // ============================================================
@@ -1020,6 +1167,157 @@ function irARelevamientoConArticulo(id) {
 }
 
 // ============================================================
+// 16. DIRECCIONES - Ranking y detalle (MAQUETA con datos fake)
+// ============================================================
+// ⚠️ TEMPORAL: datos de ejemplo. Cuando conectemos el backend,
+//     esta función va a pedir los datos reales.
+
+function cargarDirecciones() {
+    const contenedor = document.getElementById('contenedorRankingDirecciones');
+    if (!contenedor) return;
+
+    // 🔧 DATOS DE EJEMPLO (fake, para ver el diseño)
+    const direccionesFake = [
+        { nombre: 'Seguridad Vial',        total: 245, articulos: [
+            { articulo: 'Lápiz Negro',     cantidad: 200, categoria: 'Librería' },
+            { articulo: 'Cuaderno A4',     cantidad: 150, categoria: 'Librería' },
+            { articulo: 'Remera Azul',     cantidad: 50,  categoria: 'Indumentaria' }
+        ]},
+        { nombre: 'Emergencias',           total: 198, articulos: [
+            { articulo: 'Botiquín',        cantidad: 80,  categoria: 'Emergencias' },
+            { articulo: 'Venda',           cantidad: 60,  categoria: 'Emergencias' }
+        ]},
+        { nombre: 'Sistemas e Informática', total: 150, articulos: [
+            { articulo: 'Mouse Óptico',    cantidad: 40,  categoria: 'PDA' },
+            { articulo: 'Teclado USB',     cantidad: 30,  categoria: 'PDA' }
+        ]},
+        { nombre: 'Administración',         total: 120, articulos: [
+            { articulo: 'Resma A4',        cantidad: 80,  categoria: 'Librería' }
+        ]},
+        { nombre: 'Recursos Humanos',       total: 95,  articulos: [
+            { articulo: 'Carpeta',         cantidad: 50,  categoria: 'Librería' }
+        ]},
+        { nombre: 'Ceremonial',             total: 80,  articulos: [
+            { articulo: 'Bandera Argentina', cantidad: 20, categoria: 'Ceremonial' }
+        ]},
+        { nombre: 'Prensa',                 total: 65,  articulos: [
+            { articulo: 'Micrófono',       cantidad: 15,  categoria: 'PDA' }
+        ]},
+        { nombre: 'Contaduría',             total: 55,  articulos: [
+            { articulo: 'Calculadora',     cantidad: 10,  categoria: 'PDA' }
+        ]},
+        { nombre: 'Legal y Técnica',        total: 40,  articulos: [
+            { articulo: 'Sello',           cantidad: 15,  categoria: 'Librería' }
+        ]},
+        { nombre: 'Despacho',               total: 30,  articulos: [
+            { articulo: 'Carpeta Colgante', cantidad: 20, categoria: 'Librería' }
+        ]}
+    ];
+
+    const maxTotal = Math.max(...direccionesFake.map(d => d.total));
+
+    let filas = '';
+    direccionesFake.forEach((dir, index) => {
+        const porcentaje = (dir.total / maxTotal) * 100;
+        filas += `
+            <tr data-direccion="${dir.nombre}">
+                <td><span class="ranking-numero">${index + 1}</span></td>
+                <td><strong>${dir.nombre}</strong></td>
+                <td>
+                    <div class="ranking-barra-wrapper">
+                        <div class="ranking-barra">
+                            <div class="ranking-barra-relleno" style="width: ${porcentaje}%"></div>
+                        </div>
+                        <span class="ranking-valor">${dir.total}</span>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    contenedor.innerHTML = `
+        <table class="ranking-tabla">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Dirección</th>
+                    <th>Unidades recibidas</th>
+                </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+        </table>
+    `;
+
+    // Listener: al hacer clic en una fila, mostrar el detalle
+    contenedor.querySelectorAll('tbody tr').forEach(tr => {
+        tr.addEventListener('click', function() {
+            const nombre = this.dataset.direccion;
+            const dir = direccionesFake.find(d => d.nombre === nombre);
+
+            // Marcar fila activa
+            contenedor.querySelectorAll('tbody tr').forEach(r => r.classList.remove('activo'));
+            this.classList.add('activo');
+
+            // Mostrar detalle
+            mostrarDetalleDireccion(dir);
+        });
+    });
+
+    // Mostrar el detalle de la primera dirección por defecto
+    mostrarDetalleDireccion(direccionesFake[0]);
+
+    // Fecha
+    const fechaEl = document.getElementById('fechaActualDirecciones');
+    if (fechaEl) {
+        fechaEl.textContent = new Date().toLocaleDateString('es-AR', {
+            weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
+        });
+    }
+}
+
+function mostrarDetalleDireccion(dir) {
+    const contenedor = document.getElementById('contenedorDetalleDirecciones');
+    if (!contenedor || !dir) return;
+
+    let filas = '';
+    dir.articulos.forEach(a => {
+        filas += `
+            <tr>
+                <td><strong>${a.articulo}</strong></td>
+                <td><span class="badge-categoria">${a.categoria}</span></td>
+                <td style="font-weight: 700; color: var(--accent);">${a.cantidad}</td>
+            </tr>
+        `;
+    });
+
+    contenedor.innerHTML = `
+        <div class="detalle-direccion">
+            <div class="detalle-direccion-header activo">
+                <div class="detalle-direccion-nombre">
+                    <span class="detalle-direccion-flecha">▶</span>
+                    ${dir.nombre}
+                </div>
+                <div class="detalle-direccion-total">
+                    ${dir.total} unidades entregadas
+                </div>
+            </div>
+            <div class="detalle-direccion-body visible">
+                <table class="detalle-articulo-tabla">
+                    <thead>
+                        <tr>
+                            <th>Artículo</th>
+                            <th>Categoría</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+// ============================================================
 // 14. INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -1069,6 +1367,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     cargarUltimasEntradas();
     cargarUltimasSalidas();
+
+    // Cargar Direcciones (maqueta con datos de ejemplo)
+    cargarDirecciones();
 
     console.log('✅ InventarioPro - Aplicación inicializada.');
 });

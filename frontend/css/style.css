@@ -31,6 +31,9 @@
    26. TOAST — NOTIFICACIONES FLOTANTES
    27. RELEVAMIENTO — LAYOUT (2 columnas)
    28. MENÚ DESPLEGABLE DE ACCIONES (tabla inventario)
+   29. ESTADÍSTICAS — SECCIONES Y TÍTULOS
+   30. DIRECCIONES — RANKING TOP 10 (tabla con barras y medallas)
+   31. DIRECCIONES — DETALLE (acordeón)
    ============================================================ */
 
 /* =========================================
@@ -1524,4 +1527,234 @@ body {
 
 .menu-item-texto {
     font-weight: 500;
+}
+
+/* =========================================
+   29. ESTADÍSTICAS — SECCIONES Y TÍTULOS
+   (contenedores panel de páginas tipo
+   Estadísticas / Direcciones)
+   ========================================= */
+.estadistica-seccion {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.estadistica-titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+/* =========================================
+   30. DIRECCIONES — RANKING TOP 10
+   (tabla con barras de progreso y medallas
+   para los 3 primeros puestos)
+   ========================================= */
+.ranking-tabla {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.ranking-tabla thead th {
+    text-align: left;
+    padding: 0.6rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-hover);
+}
+
+.ranking-tabla thead th:first-child { border-top-left-radius: 8px; }
+.ranking-tabla thead th:last-child { border-top-right-radius: 8px; }
+
+.ranking-tabla tbody tr {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.ranking-tabla tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+/* Fila activa (seleccionada)
+   NOTA: border-left no se pinta en <tr> con border-collapse: separate;
+   box-shadow inset logra la misma barra lateral azul */
+.ranking-tabla tbody tr.activo {
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 0 var(--accent);
+}
+
+.ranking-tabla tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.9rem;
+    vertical-align: middle;
+}
+
+.ranking-tabla tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Número de posición (círculo) */
+.ranking-numero {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.75rem;
+}
+
+/* Medallas: oro (1°), plata (2°), bronce (3°) */
+.ranking-tabla tbody tr:nth-child(1) .ranking-numero {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.ranking-tabla tbody tr:nth-child(2) .ranking-numero {
+    background: #e5e7eb;
+    color: #4b5563;
+}
+
+.ranking-tabla tbody tr:nth-child(3) .ranking-numero {
+    background: #fed7aa;
+    color: #c2410c;
+}
+
+/* Barra de progreso */
+.ranking-barra-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.ranking-barra {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-hover);
+    border-radius: 999px;
+    overflow: hidden;
+    min-width: 80px;
+}
+
+.ranking-barra-relleno {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.ranking-valor {
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    min-width: 60px;
+    text-align: right;
+}
+
+/* =========================================
+   31. DIRECCIONES — DETALLE (acordeón)
+   ========================================= */
+.detalle-direccion {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.detalle-direccion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.2rem;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.detalle-direccion-header:hover {
+    background: var(--bg-hover);
+}
+
+.detalle-direccion-header.activo {
+    background: var(--accent-soft);
+    border-bottom: 1px solid var(--border);
+}
+
+.detalle-direccion-nombre {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.detalle-direccion-flecha {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+}
+
+.detalle-direccion-header.activo .detalle-direccion-flecha {
+    transform: rotate(90deg);
+}
+
+.detalle-direccion-total {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.detalle-direccion-body {
+    display: none;
+    padding: 0;
+    background: var(--bg);
+}
+
+.detalle-direccion-body.visible {
+    display: block;
+}
+
+.detalle-articulo-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.detalle-articulo-tabla th {
+    text-align: left;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-hover);
+}
+
+.detalle-articulo-tabla td {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+}
+
+.detalle-articulo-tabla tr:last-child td {
+    border-bottom: none;
 }
