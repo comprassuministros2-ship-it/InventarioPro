@@ -1757,4 +1757,193 @@ body {
 
 .detalle-articulo-tabla tr:last-child td {
     border-bottom: none;
+}/* =========================================
+   FORMULARIO SALIDAS - Campo Destino con buscador
+   ========================================= */
+.destino-wrapper {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+
+.destino-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.destino-input-wrapper input {
+    width: 100%;
+    padding-right: 2.5rem;
+}
+
+.destino-input-wrapper .icono-lupa {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-soft);
+    pointer-events: none;
+}
+
+.btn-agregar-direccion {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.7rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    height: fit-content;
+}
+
+.btn-agregar-direccion:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+/* =========================================
+   MODAL - Overlay
+   ========================================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* =========================================
+   MODAL - Contenido
+   ========================================= */
+.modal-contenido {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+}
+
+.modal-cerrar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.modal-cerrar:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+}
+
+.btn-cancelar {
+    padding: 0.6rem 1.2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-cancelar:hover {
+    background: var(--bg-hover);
+}
+
+.btn-guardar {
+    padding: 0.6rem 1.2rem;
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-guardar:hover {
+    background: var(--accent-hover);
+}
+
+.btn-guardar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.modal-error {
+    color: #dc2626;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    min-height: 1rem;
 }

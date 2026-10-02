@@ -569,6 +569,11 @@ async function registrarSalida(e) {
     e.preventDefault();
     const id = document.getElementById("articuloIdSalida").value;
     const cantidad = parseInt(document.getElementById("cantidadSalida").value);
+    // Validar y tomar el destino (buscador + texto libre)
+    if (!validarDestinoSalida()) {
+        mostrarToast('Ingresá el destino o dirección', 'error');
+        return;
+    }
     const destino = document.getElementById("destinoSalida").value.trim();
     const factura = document.getElementById("facturaSalida").value.trim();
     const observaciones = document.getElementById("observacionesSalida").value.trim();
@@ -576,7 +581,6 @@ async function registrarSalida(e) {
 
     if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
     if (isNaN(cantidad) || cantidad <= 0) { mostrarToast('Cantidad inválida', 'error'); return; }
-    if (!destino) { mostrarToast('Ingresá el destino o dirección', 'error'); return; }
 
     const btn = document.getElementById('btnRegistrarSalida');
     btn.disabled = true;
@@ -989,8 +993,7 @@ function configurarMovimientos() {
             cargarMovimientos();
         });
     }
-}
-// ============================================================
+}// ============================================================
 // 13. MENÚ LATERAL COLAPSABLE
 // ============================================================
 function configurarMenu() {
@@ -1318,6 +1321,257 @@ function mostrarDetalleDireccion(dir) {
 }
 
 // ============================================================
+// 17. SALIDAS - Buscador de direcciones + modal nueva dirección
+// ============================================================
+
+// Estado global
+let direccionesOficiales = [];
+
+/**
+ * ------------------------------------------------------------
+ * Cargar la lista de direcciones oficiales desde el backend
+ * ------------------------------------------------------------
+ */
+async function cargarDireccionesOficiales() {
+    try {
+        const resultado = await apiService.post({ accion: 'listarDirecciones' });
+        if (resultado && resultado.exito === false) {
+            throw new Error(resultado.error || 'Error al listar direcciones');
+        }
+        direccionesOficiales = Array.isArray(resultado) ? resultado : [];
+    } catch (error) {
+        console.error('Error cargando direcciones:', error);
+        direccionesOficiales = [];
+    }
+}
+
+/**
+ * ------------------------------------------------------------
+ * Configurar el buscador de destino para el formulario de Salidas
+ * ------------------------------------------------------------
+ */
+function configurarBuscadorDestino() {
+    const input = document.getElementById('inputDestinoSalida');
+    const hidden = document.getElementById('destinoSalida');
+    const dropdown = document.getElementById('listaDestinosCustom');
+    if (!input || !hidden || !dropdown) return;
+
+    // Al hacer foco: mostrar todas las direcciones
+    input.addEventListener('focus', function() {
+        filtrarDirecciones(this.value.trim());
+        dropdown.classList.add('visible');
+    });
+
+    // Al escribir: filtrar
+    input.addEventListener('input', function() {
+        const valor = this.value.trim();
+        filtrarDirecciones(valor);
+        dropdown.classList.add('visible');
+        // Al cambiar el texto, limpiar el hidden (por si era una selección previa)
+        hidden.value = '';
+    });
+
+    // Cerrar al hacer clic afuera
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.destino-wrapper')) {
+            dropdown.classList.remove('visible');
+        }
+    });
+
+    // Navegación con teclado
+    let selectedIndex = -1;
+    input.addEventListener('keydown', function(e) {
+        const items = dropdown.querySelectorAll('li');
+        if (items.length === 0) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex + 1) % items.length;
+            items.forEach((li, i) => li.classList.toggle('seleccionado', i === selectedIndex));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+            items.forEach((li, i) => li.classList.toggle('seleccionado', i === selectedIndex));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
+        }
+    });
+}
+
+/**
+ * ------------------------------------------------------------
+ * Filtrar direcciones y mostrar en el dropdown
+ * ------------------------------------------------------------
+ */
+function filtrarDirecciones(texto) {
+    const dropdown = document.getElementById('listaDestinosCustom');
+    if (!dropdown) return;
+
+    const termino = normalizarTexto(texto);
+
+    const resultados = direccionesOficiales.filter(dir => {
+        if (!termino) return true;
+        const campos = [dir.nombre, dir.tipo, dir.dependenciaSuperior].filter(Boolean);
+        return campos.some(c => normalizarTexto(c).includes(termino));
+    });
+
+    dropdown.innerHTML = '';
+
+    if (resultados.length === 0) {
+        const li = document.createElement('li');
+        li.textContent = 'No se encontraron direcciones. Usá "+ Nueva" para agregar una.';
+        li.style.color = 'var(--text-muted)';
+        li.style.fontStyle = 'italic';
+        li.style.cursor = 'default';
+        dropdown.appendChild(li);
+        dropdown.classList.add('visible');
+        return;
+    }
+
+    resultados.forEach(dir => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            ${dir.nombre}
+            <span class="id-articulo">${dir.tipo || ''}</span>
+        `;
+        li.dataset.nombre = dir.nombre;
+        li.addEventListener('click', function() {
+            inputDestinoSeleccionado(dir.nombre);
+        });
+        dropdown.appendChild(li);
+    });
+
+    dropdown.classList.add('visible');
+}
+
+/**
+ * ------------------------------------------------------------
+ * Al elegir una dirección del dropdown
+ * ------------------------------------------------------------
+ */
+function inputDestinoSeleccionado(nombre) {
+    const input = document.getElementById('inputDestinoSalida');
+    const hidden = document.getElementById('destinoSalida');
+    const dropdown = document.getElementById('listaDestinosCustom');
+
+    if (input) input.value = nombre;
+    if (hidden) hidden.value = nombre;
+    if (dropdown) dropdown.classList.remove('visible');
+}
+
+/**
+ * ------------------------------------------------------------
+ * Configurar el modal "Agregar nueva dirección"
+ * ------------------------------------------------------------
+ */
+function configurarModalNuevaDireccion() {
+    const btnAbrir = document.getElementById('btnAgregarDireccion');
+    const modal = document.getElementById('modalNuevaDireccion');
+    const btnCerrar = document.getElementById('cerrarModalDireccion');
+    const btnCancelar = document.getElementById('cancelarModalDireccion');
+    const btnGuardar = document.getElementById('guardarModalDireccion');
+
+    if (!btnAbrir || !modal) return;
+
+    // Abrir modal
+    btnAbrir.addEventListener('click', () => {
+        document.getElementById('nuevaDireccionNombre').value = '';
+        document.getElementById('nuevaDireccionTipo').value = 'Dirección';
+        document.getElementById('nuevaDireccionSuperior').value = '';
+        document.getElementById('modalDireccionError').textContent = '';
+        modal.style.display = 'flex';
+        setTimeout(() => document.getElementById('nuevaDireccionNombre').focus(), 100);
+    });
+
+    // Cerrar modal
+    const cerrar = () => { modal.style.display = 'none'; };
+    btnCerrar.addEventListener('click', cerrar);
+    btnCancelar.addEventListener('click', cerrar);
+
+    // Cerrar al hacer clic afuera del modal
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) cerrar();
+    });
+
+    // Cerrar con Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') cerrar();
+    });
+
+    // Guardar dirección
+    btnGuardar.addEventListener('click', async () => {
+        const nombre = document.getElementById('nuevaDireccionNombre').value.trim();
+        const tipo = document.getElementById('nuevaDireccionTipo').value;
+        const dependenciaSuperior = document.getElementById('nuevaDireccionSuperior').value.trim();
+        const errorEl = document.getElementById('modalDireccionError');
+
+        if (!nombre) {
+            errorEl.textContent = 'El nombre es obligatorio';
+            return;
+        }
+
+        btnGuardar.disabled = true;
+        btnGuardar.textContent = 'Guardando...';
+        errorEl.textContent = '';
+
+        try {
+            const resultado = await apiService.post({
+                accion: 'guardarDireccion',
+                nombre: nombre,
+                tipo: tipo,
+                dependenciaSuperior: dependenciaSuperior
+            });
+
+            if (resultado && resultado.exito === false) {
+                throw new Error(resultado.error || 'Error al guardar');
+            }
+
+            // Recargar lista de direcciones
+            await cargarDireccionesOficiales();
+
+            // Seleccionar automáticamente la nueva
+            inputDestinoSeleccionado(nombre);
+
+            // Cerrar modal
+            cerrar();
+
+            // Toast
+            mostrarToast(`Dirección "${nombre}" agregada`, 'exito');
+
+        } catch (error) {
+            errorEl.textContent = error.message;
+        } finally {
+            btnGuardar.disabled = false;
+            btn.textContent = 'Guardar dirección';
+        }
+    });
+}
+
+/**
+ * ------------------------------------------------------------
+ * Validar al enviar el formulario de Salida
+ * ------------------------------------------------------------
+ * Si el usuario escribió algo pero no lo seleccionó del dropdown,
+ * igual lo usamos (escribir libre).
+ */
+function validarDestinoSalida() {
+    const input = document.getElementById('inputDestinoSalida');
+    const hidden = document.getElementById('destinoSalida');
+
+    if (!input || !hidden) return true;
+
+    const valor = input.value.trim();
+    if (!valor) return false;
+
+    // Si el hidden no tiene valor, usar el texto libre del input
+    if (!hidden.value) {
+        hidden.value = valor;
+    }
+
+    return true;
+}
+
+// ============================================================
 // 14. INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -1360,6 +1614,13 @@ document.addEventListener('DOMContentLoaded', function() {
     configurarBuscador();
     configurarMovimientos();
 
+    // Cargar direcciones oficiales para el buscador de Salidas
+    cargarDireccionesOficiales();
+
+    // Configurar el buscador de destino y el modal
+    configurarBuscadorDestino();
+    configurarModalNuevaDireccion();
+
     const formEntrada = document.getElementById('formEntrada');
     if (formEntrada) formEntrada.addEventListener('submit', registrarEntrada);
     const formSalida = document.getElementById('formSalida');
@@ -1373,155 +1634,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('✅ InventarioPro - Aplicación inicializada.');
 });
-/**
- * ============================================================
- * ESTADÍSTICAS DIRECCIONES - Ranking + detalle por dirección
- * ------------------------------------------------------------
- * Lee la hoja "Estructura" (lista oficial de direcciones activas)
- * y la cruza con las Salidas de "Movimientos".
- * 
- * Devuelve:
- * [
- *   {
- *     direccion: "Seguridad Vial",
- *     total: 245,
- *     articulos: [
- *       { articulo: "Lápiz Negro", categoria: "Librería", cantidad: 200 },
- *       ...
- *     ]
- *   },
- *   ...
- * ]
- * ============================================================
- */
-function obtenerEstadisticasDirecciones() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-
-  // --- 1. Leer hoja Estructura (direcciones oficiales) ---
-  const hojaDir = ss.getSheetByName("Estructura");
-  if (!hojaDir) return { exito: false, error: "No se encontró la hoja Estructura" };
-
-  const datosDir = hojaDir.getDataRange().getValues();
-  const direccionesOficiales = {};
-
-  // Fila 1 = encabezados. Desde fila 2.
-  // A=ID | B=Nombre_Area | C=Tipo_Dependencia | D=Dependencia_Superior | E=Activa | F=Carpeta_Remitos
-  for (let i = 1; i < datosDir.length; i++) {
-    const nombre = String(datosDir[i][1] || "").trim(); // Columna B
-    const activa = String(datosDir[i][4] || "").trim().toUpperCase(); // Columna E
-
-    if (nombre && activa === "SI") {
-      // Normalizar para comparar
-      const clave = normalizarNombreDireccion(nombre);
-      direccionesOficiales[clave] = {
-        nombre: nombre,
-        total: 0,
-        articulos: {} // { "Lápiz Negro|Librería": { articulo, categoria, cantidad } }
-      };
-    }
-  }
-
-  // --- 2. Leer hoja Movimientos (Salidas) ---
-  const hojaMov = ss.getSheetByName("Movimientos");
-  if (!hojaMov) return { exito: false, error: "No se encontró la hoja Movimientos" };
-
-  const datosMov = hojaMov.getDataRange().getValues();
-
-  // Fila 1 = encabezados. Desde fila 2.
-  // A=Fecha | B=ID_Articulo | C=Nombre_Articulo | D=Tipo | E=Cantidad | F=Proveedor/Destino | G=Orden | H=Tipo_Compra | I=Observación
-  // También necesitamos la categoría del artículo → la leemos de API_Prueba
-
-  // --- 3. Leer API_Prueba para obtener categorías ---
-  const hojaArt = ss.getSheetByName("API_Prueba");
-  const categoriasPorID = {};
-  if (hojaArt) {
-    const datosArt = hojaArt.getDataRange().getValues();
-    for (let i = 1; i < datosArt.length; i++) {
-      const idArt = String(datosArt[i][0]).trim();
-      const cat = String(datosArt[i][3] || "").trim(); // Columna D = categoriaID
-      categoriasPorID[idArt] = cat;
-    }
-  }
-
-  // --- 4. Procesar solo las Salidas ---
-  for (let i = 1; i < datosMov.length; i++) {
-    const tipo = String(datosMov[i][3] || "").trim();
-    if (tipo !== "Salida") continue;
-
-    const idArt = String(datosMov[i][1]).trim();
-    const nombreArt = String(datosMov[i][2] || "").trim();
-    const cantidad = Number(datosMov[i][4]) || 0;
-    const destino = String(datosMov[i][5] || "").trim();
-
-    if (!destino || cantidad <= 0) continue;
-
-    // Normalizar el destino
-    const claveDestino = normalizarNombreDireccion(destino);
-
-    // ¿Coincide con alguna dirección oficial?
-    if (direccionesOficiales[claveDestino]) {
-      const dir = direccionesOficiales[claveDestino];
-
-      // Sumar total
-      dir.total += cantidad;
-
-      // Sumar artículo (agrupando por nombre + categoría)
-      const categoria = categoriasPorID[idArt] || "Sin categoría";
-      const claveArt = nombreArt + "|" + categoria;
-
-      if (!dir.articulos[claveArt]) {
-        dir.articulos[claveArt] = {
-          articulo: nombreArt,
-          categoria: categoria,
-          cantidad: 0
-        };
-      }
-      dir.articulos[claveArt].cantidad += cantidad;
-    }
-  }
-
-  // --- 5. Convertir a array y ordenar ---
-  const resultado = [];
-
-  for (const clave in direccionesOficiales) {
-    const dir = direccionesOficiales[clave];
-
-    // Convertir el objeto de artículos a array y ordenar por cantidad desc
-    const articulosArr = Object.values(dir.articulos).sort((a, b) => b.cantidad - a.cantidad);
-
-    resultado.push({
-      direccion: dir.nombre,
-      total: dir.total,
-      articulos: articulosArr
-    });
-  }
-
-  // Ordenar direcciones por total desc, filtrar las que tienen 0
-  resultado.sort((a, b) => b.total - a.total);
-  const soloConMovimientos = resultado.filter(d => d.total > 0);
-
-  return soloConMovimientos;
-}
-
-/**
- * ------------------------------------------------------------
- * Normalizar nombre de dirección para comparar
- * ------------------------------------------------------------
- * Convierte a minúsculas, quita tildes, quita espacios dobles,
- * y arregla el error común "direcion" → "direccion".
- * ------------------------------------------------------------
- */
-function normalizarNombreDireccion(nombre) {
-  let n = String(nombre || "").trim().toLowerCase();
-
-  // Quitar tildes
-  n = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  // Arreglar errores comunes
-  n = n.replace(/direcion/g, "direccion");
-
-  // Quitar espacios múltiples
-  n = n.replace(/\s+/g, " ");
-
-  return n;
-}

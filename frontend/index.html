@@ -182,8 +182,19 @@
                             <input type="date" id="fechaSalida" required>
                         </div>
                         <div class="form-group">
-                            <label for="destinoSalida">DESTINO / DIRECCIÓN *</label>
-                            <input type="text" id="destinoSalida" placeholder="Ej: Subsecretaría de Transporte" required>
+                            <label for="inputDestinoSalida">DESTINO / DIRECCIÓN *</label>
+                            <div class="destino-wrapper">
+                                <div class="destino-input-wrapper">
+                                    <input type="text" id="inputDestinoSalida"
+                                           placeholder="Buscar dirección..." autocomplete="off" required>
+                                    <span class="icono-lupa">🔍</span>
+                                    <ul id="listaDestinosCustom" class="dropdown-lista"></ul>
+                                </div>
+                                <button type="button" class="btn-agregar-direccion" id="btnAgregarDireccion" title="Agregar nueva dirección">
+                                    + Nueva
+                                </button>
+                            </div>
+                            <input type="hidden" id="destinoSalida" value="">
                         </div>
                         <div class="form-group">
                             <label for="facturaSalida">N° NOTA / REMITO</label>
@@ -388,6 +399,44 @@
 <div id="toast" class="toast" role="alert" aria-live="polite">
     <div class="toast-icono">✓</div>
     <div class="toast-mensaje"></div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: AGREGAR NUEVA DIRECCIÓN             -->
+<!-- ========================================== -->
+<div id="modalNuevaDireccion" class="modal-overlay" style="display: none;">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3>Agregar nueva dirección</h3>
+            <button type="button" class="modal-cerrar" id="cerrarModalDireccion">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="nuevaDireccionNombre">NOMBRE *</label>
+                <input type="text" id="nuevaDireccionNombre" placeholder="Ej: Dirección de Sistemas">
+            </div>
+            <div class="form-group">
+                <label for="nuevaDireccionTipo">TIPO</label>
+                <select id="nuevaDireccionTipo">
+                    <option value="Dirección">Dirección</option>
+                    <option value="Dirección Provincial">Dirección Provincial</option>
+                    <option value="Dirección General">Dirección General</option>
+                    <option value="Subsecretaría">Subsecretaría</option>
+                    <option value="Ministerio">Ministerio</option>
+                    <option value="Unidad">Unidad</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="nuevaDireccionSuperior">DEPENDENCIA SUPERIOR</label>
+                <input type="text" id="nuevaDireccionSuperior" placeholder="Ej: Subsecretaría de Transporte Terrestre">
+            </div>
+            <p class="modal-error" id="modalDireccionError"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="cancelarModalDireccion">Cancelar</button>
+            <button type="button" class="btn-guardar" id="guardarModalDireccion">Guardar dirección</button>
+        </div>
+    </div>
 </div>
 
 <!-- ================ SCRIPTS ================ -->
