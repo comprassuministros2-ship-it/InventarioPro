@@ -313,6 +313,110 @@
             </div>
         </div>
 
+        <!-- ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ -->
+        <!-- ★ NUEVO: PÁGINA: DASHBOARD (reemplaza el placeholder) -->
+        <!-- ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ -->
+        <div id="pagina-dashboard" class="pagina">
+            <div class="page-header">
+                <h1>Dashboard</h1>
+                <p class="fecha-hoy">Panel de control - <span id="fechaActualDashboard"></span></p>
+            </div>
+
+            <div style="padding: 0 1.5rem;">
+
+                <!-- TARJETAS DE RESUMEN -->
+                <div class="dashboard-tarjetas">
+                    <div class="dashboard-tarjeta">
+                        <div class="dashboard-tarjeta-icono">📦</div>
+                        <div class="dashboard-tarjeta-info">
+                            <span class="dashboard-tarjeta-label">ARTÍCULOS</span>
+                            <span class="dashboard-tarjeta-valor" id="dashTotalArticulos">—</span>
+                            <span class="dashboard-tarjeta-sub" id="dashCategorias">—</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-tarjeta">
+                        <div class="dashboard-tarjeta-icono">⚠️</div>
+                        <div class="dashboard-tarjeta-info">
+                            <span class="dashboard-tarjeta-label">STOCK CRÍTICO</span>
+                            <span class="dashboard-tarjeta-valor" id="dashCriticos">—</span>
+                            <span class="dashboard-tarjeta-sub">Requieren reposición</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-tarjeta">
+                        <div class="dashboard-tarjeta-icono">⬆️</div>
+                        <div class="dashboard-tarjeta-info">
+                            <span class="dashboard-tarjeta-label">ENTRADAS DEL MES</span>
+                            <span class="dashboard-tarjeta-valor" id="dashEntradasMes">—</span>
+                            <span class="dashboard-tarjeta-sub">Total acumulado</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-tarjeta">
+                        <div class="dashboard-tarjeta-icono">⬇️</div>
+                        <div class="dashboard-tarjeta-info">
+                            <span class="dashboard-tarjeta-label">SALIDAS DEL MES</span>
+                            <span class="dashboard-tarjeta-valor" id="dashSalidasMes">—</span>
+                            <span class="dashboard-tarjeta-sub">Total acumulado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACCIONES RÁPIDAS -->
+                <div class="estadistica-seccion" style="margin-top: 1.5rem;">
+                    <h2 class="estadistica-titulo">Acciones rápidas</h2>
+                    <div class="dashboard-acciones">
+                        <button class="dashboard-btn-accion" data-nav="entradas">
+                            <span class="dashboard-btn-icono">⬆️</span>
+                            <span>Nueva entrada</span>
+                        </button>
+                        <button class="dashboard-btn-accion" data-nav="salidas">
+                            <span class="dashboard-btn-icono">⬇️</span>
+                            <span>Nueva salida</span>
+                        </button>
+                        <button class="dashboard-btn-accion" data-nav="pedidos">
+                            <span class="dashboard-btn-icono">🛒</span>
+                            <span>Nuevo pedido</span>
+                        </button>
+                        <button class="dashboard-btn-accion" data-nav="relevamiento">
+                            <span class="dashboard-btn-icono">📋</span>
+                            <span>Relevar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- DOS COLUMNAS: ÚLTIMOS MOVIMIENTOS + ARTÍCULOS CRÍTICOS -->
+                <div class="dashboard-grid-2">
+                    <!-- Últimos movimientos -->
+                    <div class="estadistica-seccion">
+                        <h2 class="estadistica-titulo">Últimos movimientos del día</h2>
+                        <div id="dashUltimosMovimientos">
+                            <p class="placeholder">Cargando...</p>
+                        </div>
+                    </div>
+
+                    <!-- Artículos críticos -->
+                    <div class="estadistica-seccion">
+                        <h2 class="estadistica-titulo">Artículos críticos</h2>
+                        <div id="dashArticulosCriticos">
+                            <p class="placeholder">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PEDIDOS RECIENTES (últimas salidas con remito) -->
+                <div class="estadistica-seccion" style="margin-top: 1.5rem;">
+                    <h2 class="estadistica-titulo">Últimas salidas con remito</h2>
+                    <div id="dashSalidasConRemito">
+                        <p class="placeholder">Cargando...</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <!-- ★ FIN NUEVO: DASHBOARD -->
+
         <!-- ============ PÁGINA: RELEVAMIENTO ============ -->
         <div id="pagina-relevamiento" class="pagina">
             <div class="page-header">
@@ -384,7 +488,6 @@
         </div>
 
         <!-- Otras páginas (placeholder) -->
-        <div id="pagina-dashboard" class="pagina"><div class="page-header"><h1>Dashboard</h1><p class="fecha-hoy">Resumen</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-pedidos" class="pagina"><div class="page-header"><h1>Pedidos</h1><p class="fecha-hoy">Gestión</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-estadisticas" class="pagina"><div class="page-header"><h1>Estadísticas</h1><p class="fecha-hoy">Análisis</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
         <div id="pagina-reportes" class="pagina"><div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
