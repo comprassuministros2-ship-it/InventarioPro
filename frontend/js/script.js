@@ -17,8 +17,11 @@ function mostrarToast(mensaje, tipo = 'exito') {
     if (!toast) return;
 
     // Actualizar mensaje e ícono
-    toast.querySelector('.toast-mensaje').textContent = mensaje;
-    toast.querySelector('.toast-icono').textContent = tipo === 'error' ? '✕' : '✓';
+    const mensajeEl = toast.querySelector('.toast-mensaje');
+    const iconoEl = toast.querySelector('.toast-icono');
+    if (!mensajeEl || !iconoEl) return;
+    mensajeEl.textContent = mensaje;
+    iconoEl.textContent = tipo === 'error' ? '✕' : '✓';
 
     // Cambiar estilo según tipo
     toast.classList.toggle('toast-error', tipo === 'error');
@@ -41,6 +44,24 @@ function mostrarToast(mensaje, tipo = 'exito') {
 let articulos = [];
 let filtroActivo = "todos";
 let movimientos = [];
+
+function escapeHtml(texto) {
+    return String(texto ?? '').replace(/[&<>"']/g, caracter => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[caracter]));
+}
+
+function obtenerFechaLocal() {
+    const hoy = new Date();
+    const anio = hoy.getFullYear();
+    const mes = String(hoy.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoy.getDate()).padStart(2, '0');
+    return `${anio}-${mes}-${dia}`;
+}
 
 // ============================================================
 // 2. NAVEGACIÓN ENTRE PÁGINAS
@@ -121,7 +142,7 @@ function renderizarArticulos(datos) {
                 <td>${celdaArticulo}</td>
                 <td><span class="stock-numero">${stock}</span></td>
                 <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
-                <td><span class="badge-categoria">${item.categoriaID || '—'}</span></td>
+                <td><span class="badge-categoria">${escapeHtml(item.categoriaID || '—')}</span></td>
                 <td class="td-centrado">—</td>
                 <td class="td-centrado">—</td>
                 <td>
@@ -200,10 +221,7 @@ function renderizarArticulos(datos) {
         });
     });
 
-    // Cerrar menú al hacer clic afuera
-    document.addEventListener('click', function() {
-        document.querySelectorAll('.menu-desplegable').forEach(m => m.classList.remove('visible'));
-    });
+
 }
 
 function obtenerCeldaArticuloHTML(articulo) {
@@ -214,7 +232,7 @@ function obtenerCeldaArticuloHTML(articulo) {
                 <span class="emoji-articulo">${emoji}</span>
             </div>
             <div class="articulo-info">
-                <span class="articulo-nombre">${articulo.articulo}</span>
+                <span class="articulo-nombre">${escapeHtml(articulo.articulo)}</span>
             </div>
         </div>
     `;
@@ -262,10 +280,14 @@ function aplicarFiltro(datos) {
 function configurarBuscador() {
     const input = document.getElementById("inputBusqueda");
     if (!input) return;
+    let timeoutBusqueda = null;
     input.addEventListener("input", () => {
-        const valor = input.value;
-        const resultados = aplicarFiltro(filtrarArticulos(valor));
-        renderizarArticulos(resultados);
+        clearTimeout(timeoutBusqueda);
+        timeoutBusqueda = setTimeout(() => {
+            const valor = input.value;
+            const resultados = aplicarFiltro(filtrarArticulos(valor));
+            renderizarArticulos(resultados);
+        }, 300);
     });
 }
 
@@ -645,8 +667,8 @@ async function cargarUltimasEntradas() {
             const nombre = mov.nombre || mov.articulo || `ID ${mov.id}`;
             html += `
                 <li>
-                    <div class="item-nombre">${nombre}</div>
-                    <div class="item-detalle">${fecha} · ${proveedor} ${orden ? '· '+orden : ''}</div>
+                    <div class="item-nombre">${escapeHtml(nombre)}</div>
+                    <div class="item-detalle">${fecha} · ${escapeHtml(proveedor)} ${orden ? '· '+escapeHtml(orden) : ''}</div>
                     <div class="item-cantidad">+${cantidad}</div>
                 </li>
             `;
@@ -679,8 +701,8 @@ async function cargarUltimasSalidas() {
             const nombre = mov.nombre || mov.articulo || `ID ${mov.id}`;
             html += `
                 <li>
-                    <div class="item-nombre">${nombre}</div>
-                    <div class="item-detalle">${fecha} · ${destino} ${factura ? '· '+factura : ''}</div>
+                    <div class="item-nombre">${escapeHtml(nombre)}</div>
+                    <div class="item-detalle">${fecha} · ${escapeHtml(destino)} ${factura ? '· '+escapeHtml(factura) : ''}</div>
                     <div class="item-cantidad" style="color: #dc2626;">-${cantidad}</div>
                 </li>
             `;
@@ -810,7 +832,7 @@ function renderizarMovimientos(datos) {
 
     // Ordenar del más reciente al más viejo
     // (usa `_ts` precomputado para no parsear fechas por comparación)
-    filtrados.sort((a, b) => (b._ts ?? 0) - (a._ts ?? 0));
+    filtrados = [...filtrados].sort((a, b) => (b._ts ?? 0) - (a._ts ?? 0));
 
     if (filtrados.length === 0) {
         movimientosFiltrados = [];
@@ -912,10 +934,10 @@ function generarFilasMovimientos(datos) {
             <tr>
                 <td>${fecha}</td>
                 <td><span class="badge ${tipoClase}">${tipoTexto}</span></td>
-                <td><strong>${m.nombre || m.idArticulo || '—'}</strong></td>
+                <td><strong>${escapeHtml(m.nombre || m.idArticulo || '—')}</strong></td>
                 <td style="font-weight:700;color:${cantColor};">${cantTexto}</td>
-                <td>${origenDestino}</td>
-                <td>${nota}${detalle !== '—' ? ' · ' + detalle : ''}</td>
+                <td>${escapeHtml(origenDestino)}</td>
+                <td>${escapeHtml(nota)}${detalle !== '—' ? ' · ' + escapeHtml(detalle) : ''}</td>
             </tr>
         `;
     });
@@ -1029,7 +1051,7 @@ async function registrarRelevamiento(e) {
     const id = document.getElementById("articuloIdRelevamiento").value;
     const stockReal = parseFloat(document.getElementById("stockReal").value);
     const observaciones = document.getElementById("observacionesRelevamiento").value.trim();
-    const fecha = new Date().toISOString().split('T')[0];
+    const fecha = obtenerFechaLocal();
 
     if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
     if (isNaN(stockReal) || stockReal < 0) { mostrarToast('El stock real debe ser un número mayor o igual a 0', 'error'); return; }
@@ -1170,62 +1192,51 @@ function irARelevamientoConArticulo(id) {
 }
 
 // ============================================================
-// 16. DIRECCIONES - Ranking y detalle (MAQUETA con datos fake)
+// 16. DIRECCIONES - Ranking y detalle (datos reales)
 // ============================================================
-// ⚠️ TEMPORAL: datos de ejemplo. Cuando conectemos el backend,
-//     esta función va a pedir los datos reales.
 
-function cargarDirecciones() {
+/**
+ * ------------------------------------------------------------
+ * Cargar Direcciones (datos reales desde el backend)
+ * ------------------------------------------------------------
+ */
+async function cargarDirecciones() {
     const contenedor = document.getElementById('contenedorRankingDirecciones');
     if (!contenedor) return;
 
-    // 🔧 DATOS DE EJEMPLO (fake, para ver el diseño)
-    const direccionesFake = [
-        { nombre: 'Seguridad Vial',        total: 245, articulos: [
-            { articulo: 'Lápiz Negro',     cantidad: 200, categoria: 'Librería' },
-            { articulo: 'Cuaderno A4',     cantidad: 150, categoria: 'Librería' },
-            { articulo: 'Remera Azul',     cantidad: 50,  categoria: 'Indumentaria' }
-        ]},
-        { nombre: 'Emergencias',           total: 198, articulos: [
-            { articulo: 'Botiquín',        cantidad: 80,  categoria: 'Emergencias' },
-            { articulo: 'Venda',           cantidad: 60,  categoria: 'Emergencias' }
-        ]},
-        { nombre: 'Sistemas e Informática', total: 150, articulos: [
-            { articulo: 'Mouse Óptico',    cantidad: 40,  categoria: 'PDA' },
-            { articulo: 'Teclado USB',     cantidad: 30,  categoria: 'PDA' }
-        ]},
-        { nombre: 'Administración',         total: 120, articulos: [
-            { articulo: 'Resma A4',        cantidad: 80,  categoria: 'Librería' }
-        ]},
-        { nombre: 'Recursos Humanos',       total: 95,  articulos: [
-            { articulo: 'Carpeta',         cantidad: 50,  categoria: 'Librería' }
-        ]},
-        { nombre: 'Ceremonial',             total: 80,  articulos: [
-            { articulo: 'Bandera Argentina', cantidad: 20, categoria: 'Ceremonial' }
-        ]},
-        { nombre: 'Prensa',                 total: 65,  articulos: [
-            { articulo: 'Micrófono',       cantidad: 15,  categoria: 'PDA' }
-        ]},
-        { nombre: 'Contaduría',             total: 55,  articulos: [
-            { articulo: 'Calculadora',     cantidad: 10,  categoria: 'PDA' }
-        ]},
-        { nombre: 'Legal y Técnica',        total: 40,  articulos: [
-            { articulo: 'Sello',           cantidad: 15,  categoria: 'Librería' }
-        ]},
-        { nombre: 'Despacho',               total: 30,  articulos: [
-            { articulo: 'Carpeta Colgante', cantidad: 20, categoria: 'Librería' }
-        ]}
-    ];
+    contenedor.innerHTML = '<p class="placeholder">Cargando ranking...</p>';
 
-    const maxTotal = Math.max(...direccionesFake.map(d => d.total));
+    let direccionesReales = [];
+
+    try {
+        const resultado = await apiService.post({ accion: 'estadisticasDirecciones' });
+
+        if (resultado && resultado.exito === false) {
+            throw new Error(resultado.error || 'Error al obtener direcciones');
+        }
+
+        direccionesReales = Array.isArray(resultado) ? resultado : [];
+
+    } catch (error) {
+        console.error('Error cargando direcciones:', error);
+        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
+        return;
+    }
+
+    if (direccionesReales.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">Todavía no hay salidas registradas con direcciones oficiales.</p>';
+        return;
+    }
+
+    const maxTotal = Math.max(...direccionesReales.map(d => d.total));
 
     let filas = '';
-    direccionesFake.forEach((dir, index) => {
-        const porcentaje = (dir.total / maxTotal) * 100;
+    direccionesReales.slice(0, 10).forEach((dir, index) => {
+        const porcentaje = maxTotal > 0 ? (dir.total / maxTotal) * 100 : 0;
         filas += `
-            <tr data-direccion="${dir.nombre}">
+            <tr data-direccion="${escapeHtml(dir.direccion)}">
                 <td><span class="ranking-numero">${index + 1}</span></td>
-                <td><strong>${dir.nombre}</strong></td>
+                <td><strong>${escapeHtml(dir.direccion)}</strong></td>
                 <td>
                     <div class="ranking-barra-wrapper">
                         <div class="ranking-barra">
@@ -1255,19 +1266,35 @@ function cargarDirecciones() {
     contenedor.querySelectorAll('tbody tr').forEach(tr => {
         tr.addEventListener('click', function() {
             const nombre = this.dataset.direccion;
-            const dir = direccionesFake.find(d => d.nombre === nombre);
+            const dir = direccionesReales.find(d => d.direccion === nombre);
+            if (!dir) return;
 
             // Marcar fila activa
             contenedor.querySelectorAll('tbody tr').forEach(r => r.classList.remove('activo'));
             this.classList.add('activo');
 
-            // Mostrar detalle
-            mostrarDetalleDireccion(dir);
+            // Mostrar detalle (adaptar el formato que espera mostrarDetalleDireccion)
+            mostrarDetalleDireccion({
+                nombre: dir.direccion,
+                total: dir.total,
+                articulos: dir.articulos
+            });
         });
     });
 
     // Mostrar el detalle de la primera dirección por defecto
-    mostrarDetalleDireccion(direccionesFake[0]);
+    const primera = direccionesReales[0];
+    if (primera) {
+        // Marcar la primera fila como activa
+        const primeraFila = contenedor.querySelector('tbody tr');
+        if (primeraFila) primeraFila.classList.add('activo');
+
+        mostrarDetalleDireccion({
+            nombre: primera.direccion,
+            total: primera.total,
+            articulos: primera.articulos
+        });
+    }
 
     // Fecha
     const fechaEl = document.getElementById('fechaActualDirecciones');
@@ -1277,49 +1304,6 @@ function cargarDirecciones() {
         });
     }
 }
-
-function mostrarDetalleDireccion(dir) {
-    const contenedor = document.getElementById('contenedorDetalleDirecciones');
-    if (!contenedor || !dir) return;
-
-    let filas = '';
-    dir.articulos.forEach(a => {
-        filas += `
-            <tr>
-                <td><strong>${a.articulo}</strong></td>
-                <td><span class="badge-categoria">${a.categoria}</span></td>
-                <td style="font-weight: 700; color: var(--accent);">${a.cantidad}</td>
-            </tr>
-        `;
-    });
-
-    contenedor.innerHTML = `
-        <div class="detalle-direccion">
-            <div class="detalle-direccion-header activo">
-                <div class="detalle-direccion-nombre">
-                    <span class="detalle-direccion-flecha">▶</span>
-                    ${dir.nombre}
-                </div>
-                <div class="detalle-direccion-total">
-                    ${dir.total} unidades entregadas
-                </div>
-            </div>
-            <div class="detalle-direccion-body visible">
-                <table class="detalle-articulo-tabla">
-                    <thead>
-                        <tr>
-                            <th>Artículo</th>
-                            <th>Categoría</th>
-                            <th>Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>${filas}</tbody>
-                </table>
-            </div>
-        </div>
-    `;
-}
-
 // ============================================================
 // 17. SALIDAS - Buscador de direcciones + modal nueva dirección
 // ============================================================
@@ -1542,7 +1526,7 @@ function configurarModalNuevaDireccion() {
             errorEl.textContent = error.message;
         } finally {
             btnGuardar.disabled = false;
-            btn.textContent = 'Guardar dirección';
+            btnGuardar.textContent = 'Guardar dirección';
         }
     });
 }
@@ -1578,10 +1562,15 @@ document.addEventListener('DOMContentLoaded', function() {
     configurarNavegacion();
     configurarMenu();
 
+    // Cerrar menús desplegables al hacer clic afuera (listener único)
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.menu-desplegable').forEach(m => m.classList.remove('visible'));
+    });
+
     const fechaEntrada = document.getElementById('fechaEntrada');
-    if (fechaEntrada) fechaEntrada.value = new Date().toISOString().split('T')[0];
+    if (fechaEntrada) fechaEntrada.value = obtenerFechaLocal();
     const fechaSalida = document.getElementById('fechaSalida');
-    if (fechaSalida) fechaSalida.value = new Date().toISOString().split('T')[0];
+    if (fechaSalida) fechaSalida.value = obtenerFechaLocal();
 
     const fechaHoy = new Date().toLocaleDateString('es-AR', {
         weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
