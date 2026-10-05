@@ -1304,6 +1304,60 @@ async function cargarDirecciones() {
         });
     }
 }
+/**
+ * ------------------------------------------------------------
+ * Mostrar el detalle de una dirección (artículos entregados)
+ * ------------------------------------------------------------
+ * Recibe: { nombre, total, articulos: [{articulo, categoria, cantidad}] }
+ * ------------------------------------------------------------
+ */
+function mostrarDetalleDireccion(dir) {
+    const contenedor = document.getElementById('contenedorDetalleDirecciones');
+    if (!contenedor || !dir) return;
+
+    // Si no hay artículos, mostrar mensaje
+    if (!dir.articulos || dir.articulos.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">Esta dirección no tiene artículos entregados.</p>';
+        return;
+    }
+
+    let filas = '';
+    dir.articulos.forEach(a => {
+        filas += `
+            <tr>
+                <td><strong>${escapeHtml(a.articulo)}</strong></td>
+                <td><span class="badge-categoria">${escapeHtml(a.categoria)}</span></td>
+                <td style="font-weight: 700; color: var(--accent);">${a.cantidad}</td>
+            </tr>
+        `;
+    });
+
+    contenedor.innerHTML = `
+        <div class="detalle-direccion">
+            <div class="detalle-direccion-header activo">
+                <div class="detalle-direccion-nombre">
+                    <span class="detalle-direccion-flecha">▶</span>
+                    ${escapeHtml(dir.nombre)}
+                </div>
+                <div class="detalle-direccion-total">
+                    ${dir.total} unidades entregadas
+                </div>
+            </div>
+            <div class="detalle-direccion-body visible">
+                <table class="detalle-articulo-tabla">
+                    <thead>
+                        <tr>
+                            <th>Artículo</th>
+                            <th>Categoría</th>
+                            <th>Cantidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
 // ============================================================
 // 17. SALIDAS - Buscador de direcciones + modal nueva dirección
 // ============================================================
