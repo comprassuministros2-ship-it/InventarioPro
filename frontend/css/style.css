@@ -2240,3 +2240,375 @@ body {
 .dash-remito-tabla tr:last-child td {
     border-bottom: none;
 }
+/* =========================================
+   PEDIDOS - Layout de dos columnas
+   ========================================= */
+.pedidos-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 992px) {
+    .pedidos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pedidos-form {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+
+.pedidos-form h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+}
+
+.pedidos-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* =========================================
+   CARRITO - Buscador y lista
+   ========================================= */
+.carrito-section {
+    margin-bottom: 1rem;
+}
+
+.carrito-section label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.carrito-buscador {
+    position: relative;
+}
+
+.carrito-buscador input {
+    width: 100%;
+    padding: 0.7rem 2.5rem 0.7rem 1rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.carrito-buscador input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.carrito-buscador .icono-lupa {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-soft);
+    pointer-events: none;
+}
+
+/* =========================================
+   CARRITO - Contenedor y tabla
+   ========================================= */
+.carrito-contenedor {
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    min-height: 80px;
+}
+
+.carrito-vacio {
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.carrito-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.carrito-tabla th {
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.carrito-tabla td {
+    padding: 0.6rem 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.carrito-tabla tr:last-child td {
+    border-bottom: none;
+}
+
+.carrito-cantidad {
+    width: 70px;
+    padding: 0.4rem 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: inherit;
+    text-align: center;
+}
+
+.carrito-cantidad:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.carrito-btn-quitar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+}
+
+.carrito-btn-quitar:hover {
+    background: #fee2e2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+/* =========================================
+   CARRITO - Resumen (total + botón)
+   ========================================= */
+.carrito-resumen {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.carrito-resumen span {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.carrito-resumen strong {
+    color: var(--text);
+    font-size: 1.2rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.carrito-resumen .btn-submit {
+    width: auto;
+    padding: 0.7rem 1.5rem;
+}
+
+/* =========================================
+   PEDIDOS RECIENTES - Lista
+   ========================================= */
+.lista-pedidos {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.lista-pedidos li {
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    border-radius: 6px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.lista-pedidos li:hover {
+    background: var(--bg-hover);
+}
+
+.lista-pedidos li:last-child {
+    border-bottom: none;
+}
+
+.lista-pedidos li.activo {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+}
+
+.pedido-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.pedido-item-id {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: monospace;
+}
+
+.pedido-item-fecha {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.pedido-item-info {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+}
+
+.pedido-item-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.pedido-item-cantidad {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* =========================================
+   BADGES DE ESTADO (Pendiente / Entregado)
+   ========================================= */
+.badge-pendiente {
+    background: #fef3c7;
+    color: #b45309;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-entregado {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* =========================================
+   DETALLE DEL PEDIDO
+   ========================================= */
+.detalle-pedido-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1rem;
+}
+
+.detalle-pedido-datos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.detalle-pedido-datos strong {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.detalle-pedido-acciones {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.btn-peligro {
+    padding: 0.6rem 1.2rem;
+    background: var(--bg-card);
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.btn-peligro:hover {
+    background: #fee2e2;
+    border-color: #dc2626;
+}
+
+.btn-exito {
+    padding: 0.6rem 1.2rem;
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-exito:hover {
+    background: var(--accent-hover);
+}
+
+.btn-exito:disabled,
+.btn-peligro:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

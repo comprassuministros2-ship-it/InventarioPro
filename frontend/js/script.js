@@ -2,36 +2,47 @@
  * ============================================================
  * INVENTARIO PRO - SCRIPT PRINCIPAL
  * ============================================================
+ *
+ * ÍNDICE DE CONTENIDO:
+ *
+ *   00. Toast y utilidades globales
+ *   01. Estado global
+ *   02. Navegación entre páginas
+ *   03. Carga de artículos
+ *   04. Renderizado de tabla de inventario
+ *   05. Utilidades de búsqueda y filtros
+ *   06. Select de categorías
+ *   07. Buscadores con dropdown
+ *   08. Vista previa del artículo
+ *   09. Registrar entrada
+ *   10. Registrar salida
+ *   11. Últimas entradas y salidas
+ *   12. Movimientos (caché + render por lotes)
+ *   13. Menú lateral colapsable
+ *   14. Direcciones oficiales (buscador Salidas + modal) ⚠️ VERIFICAR
+ *   15. Registrar relevamiento
+ *   16. Direcciones - Ranking y detalle (backend real)
+ *   17. Dashboard ★ NUEVO
+ *   18. Inicialización
+ * ============================================================
  */
 
 // ============================================================
 // 0. TOAST - Notificación flotante (FUNCIÓN GLOBAL)
 // ============================================================
-// Se usa desde cualquier acción de la app:
-//   mostrarToast('Mensaje de éxito')            → verde
-//   mostrarToast('Mensaje de error', 'error')   → rojo
-// Debe estar FUERA del DOMContentLoaded para ser accesible
-// desde cualquier función.
 function mostrarToast(mensaje, tipo = 'exito') {
     const toast = document.getElementById('toast');
     if (!toast) return;
 
-    // Actualizar mensaje e ícono
     const mensajeEl = toast.querySelector('.toast-mensaje');
     const iconoEl = toast.querySelector('.toast-icono');
     if (!mensajeEl || !iconoEl) return;
     mensajeEl.textContent = mensaje;
     iconoEl.textContent = tipo === 'error' ? '✕' : '✓';
 
-    // Cambiar estilo según tipo
     toast.classList.toggle('toast-error', tipo === 'error');
-
-    // Mostrar
     toast.classList.add('visible');
 
-    // Ocultar después de 3 segundos
-    // (el timeout se guarda en window para que toasts seguidos
-    // no se superpongan: se reinicia el contador)
     clearTimeout(window._toastTimeout);
     window._toastTimeout = setTimeout(() => {
         toast.classList.remove('visible');
@@ -39,7 +50,7 @@ function mostrarToast(mensaje, tipo = 'exito') {
 }
 
 // ============================================================
-// 1. ESTADO GLOBAL
+// 1. ESTADO GLOBAL + UTILIDADES
 // ============================================================
 let articulos = [];
 let filtroActivo = "todos";
@@ -76,6 +87,8 @@ function navegarAPagina(nombre) {
 
     if (nombre === 'inventario') cargarArticulos();
     if (nombre === 'movimientos') cargarMovimientos();
+    if (nombre === 'direcciones') cargarDirecciones();
+    if (nombre === 'dashboard') cargarDashboard();   // ★ NUEVO
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -192,12 +205,10 @@ function renderizarArticulos(datos) {
             const id = this.dataset.id;
             const menu = contenedor.querySelector(`.menu-desplegable[data-id="${id}"]`);
 
-            // Cerrar todos los demás menús
             contenedor.querySelectorAll('.menu-desplegable').forEach(m => {
                 if (m !== menu) m.classList.remove('visible');
             });
 
-            // Toggle este menú
             menu.classList.toggle('visible');
         });
     });
@@ -209,10 +220,8 @@ function renderizarArticulos(datos) {
             const accion = this.dataset.action;
             const id = this.dataset.id;
 
-            // Cerrar el menú
             contenedor.querySelectorAll('.menu-desplegable').forEach(m => m.classList.remove('visible'));
 
-            // Ejecutar la acción
             if (accion === 'relevamiento') {
                 irARelevamientoConArticulo(id);
             } else if (accion === 'detalles') {
@@ -220,8 +229,6 @@ function renderizarArticulos(datos) {
             }
         });
     });
-
-
 }
 
 function obtenerCeldaArticuloHTML(articulo) {
@@ -380,7 +387,7 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
         }
         resultados.forEach(item => {
             const li = document.createElement("li");
-            li.innerHTML = `${item.articulo} <span class="id-articulo">ID ${item.id}</span>`;
+            li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">ID ${item.id}</span>`;
             li.dataset.id = item.id;
             li.addEventListener("click", function() {
                 input.value = `${item.articulo} (ID ${item.id})`;
@@ -415,11 +422,6 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
 /**
  * ------------------------------------------------------------
  * Buscador específico para Relevamiento
- * ------------------------------------------------------------
- * Igual al buscador genérico, pero al seleccionar un artículo:
- * - Muestra el stock del sistema en el input readonly.
- * - Muestra la vista previa del artículo.
- * - Recalcula la diferencia.
  * ------------------------------------------------------------
  */
 function configurarBuscadorDropdownRelevamiento() {
@@ -472,7 +474,7 @@ function configurarBuscadorDropdownRelevamiento() {
         }
         resultados.forEach(item => {
             const li = document.createElement("li");
-            li.innerHTML = `${item.articulo} <span class="id-articulo">ID ${item.id}</span>`;
+            li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">ID ${item.id}</span>`;
             li.dataset.id = item.id;
             li.addEventListener("click", function() {
                 input.value = `${item.articulo} (ID ${item.id})`;
@@ -485,7 +487,6 @@ function configurarBuscadorDropdownRelevamiento() {
         dropdown.classList.add("visible");
     }
 
-    // Navegación con teclado
     let selectedIndex = -1;
     input.addEventListener("keydown", function(e) {
         const items = dropdown.querySelectorAll("li");
@@ -521,7 +522,7 @@ function mostrarVistaPrevia(id, contenedorId) {
     if (!contenedor) return;
     contenedor.innerHTML = `
         <div class="articulo-preview">
-            <div class="nombre">${item.articulo}</div>
+            <div class="nombre">${escapeHtml(item.articulo)}</div>
             <div class="stock-grande">${stock}</div>
             <div style="color: var(--text-muted);">unidades actuales</div>
             <div class="detalle">
@@ -591,7 +592,6 @@ async function registrarSalida(e) {
     e.preventDefault();
     const id = document.getElementById("articuloIdSalida").value;
     const cantidad = parseInt(document.getElementById("cantidadSalida").value);
-    // Validar y tomar el destino (buscador + texto libre)
     if (!validarDestinoSalida()) {
         mostrarToast('Ingresá el destino o dirección', 'error');
         return;
@@ -718,42 +718,15 @@ async function cargarUltimasSalidas() {
 // ============================================================
 // 12. MOVIMIENTOS - Carga con caché y render por lotes
 // ============================================================
-// OPTIMIZACIÓN DE RENDIMIENTO (100% frontend, sin cambios de API):
-//   a) CACHÉ EN MEMORIA: si `movimientos` ya tiene datos, se renderiza
-//      al instante sin volver a pedir al backend. La invalidación usa
-//      el mecanismo que ya existía: `movimientos = []` después de
-//      registrar un movimiento, y el botón 🔄 Actualizar.
-//   b) RENDER POR LOTES: se muestran de a MOV_POR_LOTE filas y un
-//      botón "Ver más" agrega el siguiente lote sin re-render total.
-//   c) TIMESTAMP PRECOMPUTADO: cada movimiento guarda `_ts` una sola
-//      vez al llegar del backend (el orden por fecha deja de crear
-//      objetos Date en cada comparación).
-//   d) DEBOUNCE EN BÚSQUEDA: evita re-renderizar en cada tecla.
-// ============================================================
 
-// Cantidad de filas por lote (cambiar a 200 acá si se prefiere)
 const MOV_POR_LOTE = 100;
-
-// Copia filtrada + ordenada del último render (para el botón "Ver más")
 let movimientosFiltrados = [];
-
-// Cantidad de filas mostradas actualmente
 let movimientosVisibles = 0;
 
-/**
- * ------------------------------------------------------------
- * Cargar movimientos (con caché)
- * ------------------------------------------------------------
- * Si hay datos en memoria, renderiza directo (instantáneo).
- * Solo hace fetch la primera vez, después de un registro
- * (que limpia `movimientos`) o al presionar Actualizar.
- * ------------------------------------------------------------
- */
 async function cargarMovimientos() {
     const contenedor = document.getElementById('contenedorMovimientos');
     if (!contenedor) return;
 
-    // CACHÉ: datos ya en memoria → render al instante, sin fetch
     if (movimientos.length > 0) {
         renderizarMovimientos(movimientos);
         return;
@@ -768,7 +741,6 @@ async function cargarMovimientos() {
         }
         movimientos = Array.isArray(resultado) ? resultado : [];
 
-        // Precomputar timestamps una sola vez (acelera el orden posterior)
         prepararTimestampsMovimientos(movimientos);
 
         renderizarMovimientos(movimientos);
@@ -778,34 +750,16 @@ async function cargarMovimientos() {
     }
 }
 
-/**
- * ------------------------------------------------------------
- * Precomputar timestamp de cada movimiento (una sola vez)
- * ------------------------------------------------------------
- * Guarda `_ts` (milisegundos) para que el orden por fecha no
- * tenga que crear objetos Date en cada comparación del sort.
- * ------------------------------------------------------------
- */
 function prepararTimestampsMovimientos(datos) {
     datos.forEach(m => {
         m._ts = m.fecha ? new Date(m.fecha).getTime() : 0;
     });
 }
 
-/**
- * ------------------------------------------------------------
- * Renderizar movimientos (filtros + orden + primer lote)
- * ------------------------------------------------------------
- * Filtra y ordena TODO en memoria (rápido), pero solo renderiza
- * el primer lote de MOV_POR_LOTE filas. Si hay más, agrega el
- * contador y el botón "Ver más".
- * ------------------------------------------------------------
- */
 function renderizarMovimientos(datos) {
     const contenedor = document.getElementById('contenedorMovimientos');
     if (!contenedor) return;
 
-    // Aplicar filtros
     const texto = (document.getElementById('inputBusquedaMov')?.value || '').trim().toLowerCase();
     const tipo = document.getElementById('selectTipoMov')?.value || 'todos';
 
@@ -830,8 +784,6 @@ function renderizarMovimientos(datos) {
         });
     }
 
-    // Ordenar del más reciente al más viejo
-    // (usa `_ts` precomputado para no parsear fechas por comparación)
     filtrados = [...filtrados].sort((a, b) => (b._ts ?? 0) - (a._ts ?? 0));
 
     if (filtrados.length === 0) {
@@ -841,7 +793,6 @@ function renderizarMovimientos(datos) {
         return;
     }
 
-    // Guardar para el botón "Ver más" y calcular el primer lote
     movimientosFiltrados = filtrados;
     movimientosVisibles = Math.min(MOV_POR_LOTE, filtrados.length);
 
@@ -871,23 +822,12 @@ function renderizarMovimientos(datos) {
         </div>` : ''}
     `;
 
-    // Listener del botón "Ver más" (solo si existe)
     const btnVerMas = document.getElementById('btnVerMasMov');
     if (btnVerMas) {
         btnVerMas.addEventListener('click', verMasMovimientos);
     }
 }
 
-/**
- * ------------------------------------------------------------
- * Generar HTML de filas de movimientos
- * ------------------------------------------------------------
- * Extraído de renderizarMovimientos para reutilizarlo tanto en
- * el render inicial como al agregar el siguiente lote.
- * La lógica de cada fila es idéntica a la original (incluye el
- * manejo de signo para Entrada / Salida / Relevamiento).
- * ------------------------------------------------------------
- */
 function generarFilasMovimientos(datos) {
     let filas = '';
     datos.forEach(m => {
@@ -900,18 +840,13 @@ function generarFilasMovimientos(datos) {
         const tipoClase = esEntrada ? 'badge-disponible' : 'badge-sin-stock';
         const tipoTexto = m.tipo || '—';
 
-        // Origen/Destino según tipo
         const origenDestino = esEntrada
             ? (m.proveedor || '—')
             : (m.destino || m.proveedor || '—');
 
-        // Número de nota/factura/orden
         const nota = m.ordenCompra || m.factura || '—';
-
-        // Detalle: observación
         const detalle = m.observacion || '—';
 
-        // Cantidad con signo (según tipo)
         let cantTexto = '';
         let cantColor = '#dc2626';
 
@@ -922,7 +857,6 @@ function generarFilasMovimientos(datos) {
             cantTexto = `-${m.cantidad}`;
             cantColor = '#dc2626';
         } else if (m.tipo === 'Relevamiento') {
-            // El relevamiento ya viene con signo (positivo o negativo)
             const dif = Number(m.cantidad) || 0;
             cantTexto = dif > 0 ? `+${dif}` : `${dif}`;
             cantColor = dif > 0 ? '#16a34a' : '#dc2626';
@@ -944,37 +878,24 @@ function generarFilasMovimientos(datos) {
     return filas;
 }
 
-/**
- * ------------------------------------------------------------
- * "Ver más": agrega el siguiente lote al final de la tabla
- * ------------------------------------------------------------
- * No re-renderiza la tabla completa: solo agrega filas al tbody
- * existente (insertAdjacentHTML, mucho más barato) y actualiza
- * el contador y el botón.
- * ------------------------------------------------------------
- */
 function verMasMovimientos() {
     const contenedor = document.getElementById('contenedorMovimientos');
     if (!contenedor) return;
 
     const total = movimientosFiltrados.length;
 
-    // Siguiente lote de filas
     const nuevos = movimientosFiltrados.slice(movimientosVisibles, movimientosVisibles + MOV_POR_LOTE);
     if (nuevos.length === 0) return;
 
     const tbody = contenedor.querySelector('.inventario-tabla tbody');
     if (!tbody) return;
 
-    // Agregar las filas nuevas al final de la tabla existente
     tbody.insertAdjacentHTML('beforeend', generarFilasMovimientos(nuevos));
     movimientosVisibles += nuevos.length;
 
-    // Actualizar el contador
     const contador = contenedor.querySelector('.placeholder');
     if (contador) contador.textContent = `Mostrando ${movimientosVisibles} de ${total} movimientos`;
 
-    // Actualizar o quitar el botón "Ver más"
     const btn = document.getElementById('btnVerMasMov');
     if (btn) {
         if (movimientosVisibles >= total) {
@@ -985,14 +906,6 @@ function verMasMovimientos() {
     }
 }
 
-/**
- * ------------------------------------------------------------
- * Configurar listeners de la página Movimientos
- * ------------------------------------------------------------
- * La búsqueda usa debounce de 300ms: el re-render solo se
- * dispara cuando el usuario deja de escribir, no en cada tecla.
- * ------------------------------------------------------------
- */
 function configurarMovimientos() {
     const inputBusqueda = document.getElementById('inputBusquedaMov');
     const selectTipo = document.getElementById('selectTipoMov');
@@ -1015,7 +928,9 @@ function configurarMovimientos() {
             cargarMovimientos();
         });
     }
-}// ============================================================
+}
+
+// ============================================================
 // 13. MENÚ LATERAL COLAPSABLE
 // ============================================================
 function configurarMenu() {
@@ -1038,6 +953,184 @@ function configurarMenu() {
         overlay.addEventListener('click', function() {
             sidebar.classList.remove('open');
             overlay.classList.remove('show');
+        });
+    }
+}
+
+// ============================================================
+// 14. DIRECCIONES OFICIALES - Buscador de Salidas + Modal
+// ⚠️ VERIFICAR: esta sección la reconstruí porque tu paste se
+//    cortó acá. Si tu archivo original difiere, USÁ EL TUYO.
+// ============================================================
+
+let direccionesOficiales = [];
+
+/**
+ * ------------------------------------------------------------
+ * Cargar direcciones oficiales desde el backend
+ * ------------------------------------------------------------
+ */
+async function cargarDireccionesOficiales() {
+    try {
+        const resultado = await apiService.post({ accion: 'listarDirecciones' });
+        if (resultado && resultado.exito === false) throw new Error(resultado.error);
+        direccionesOficiales = Array.isArray(resultado) ? resultado : [];
+    } catch (error) {
+        console.error('Error cargando direcciones oficiales:', error);
+        direccionesOficiales = [];
+    }
+    configurarBuscadorDestinos();
+}
+
+/**
+ * ------------------------------------------------------------
+ * Buscador de destinos (autocompletar con direcciones oficiales
+ * + opción de texto libre)
+ * ------------------------------------------------------------
+ */
+function configurarBuscadorDestinos() {
+    const input = document.getElementById('inputDestinoSalida');
+    const hidden = document.getElementById('destinoSalida');
+    const dropdown = document.getElementById('listaDestinosCustom');
+    if (!input || !hidden || !dropdown) return;
+
+    input.addEventListener('input', function() {
+        const valor = this.value.trim();
+        hidden.value = valor; // texto libre por defecto
+
+        if (valor.length < 1) {
+            dropdown.classList.remove('visible');
+            return;
+        }
+
+        const termino = normalizarTexto(valor);
+        const coincidencias = direccionesOficiales.filter(d =>
+            normalizarTexto(d.nombre).includes(termino)
+        );
+
+        dropdown.innerHTML = '';
+
+        if (coincidencias.length === 0) {
+            const li = document.createElement('li');
+            li.innerHTML = `Usar: <strong>${escapeHtml(valor)}</strong> <span class="id-articulo">(texto libre)</span>`;
+            li.addEventListener('click', function() {
+                hidden.value = valor;
+                dropdown.classList.remove('visible');
+            });
+            dropdown.appendChild(li);
+        } else {
+            coincidencias.forEach(dir => {
+                const li = document.createElement('li');
+                li.innerHTML = `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`;
+                li.addEventListener('click', function() {
+                    input.value = dir.nombre;
+                    hidden.value = dir.nombre;
+                    dropdown.classList.remove('visible');
+                });
+                dropdown.appendChild(li);
+            });
+
+            // Opción final: usar el texto tal cual
+            const liLibre = document.createElement('li');
+            liLibre.innerHTML = `Usar: <strong>${escapeHtml(valor)}</strong> <span class="id-articulo">(texto libre)</span>`;
+            liLibre.addEventListener('click', function() {
+                hidden.value = valor;
+                dropdown.classList.remove('visible');
+            });
+            dropdown.appendChild(liLibre);
+        }
+
+        dropdown.classList.add('visible');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.destino-input-wrapper')) {
+            dropdown.classList.remove('visible');
+        }
+    });
+}
+
+/**
+ * ------------------------------------------------------------
+ * Validar destino antes de registrar la salida
+ * ------------------------------------------------------------
+ */
+function validarDestinoSalida() {
+    const hidden = document.getElementById('destinoSalida');
+    const input = document.getElementById('inputDestinoSalida');
+    if (!hidden || !input) return false;
+    const valor = (hidden.value || input.value || '').trim();
+    return valor.length > 0;
+}
+
+/**
+ * ------------------------------------------------------------
+ * Modal: agregar nueva dirección
+ * ------------------------------------------------------------
+ */
+function configurarModalDireccion() {
+    const btnAbrir = document.getElementById('btnAgregarDireccion');
+    const modal = document.getElementById('modalNuevaDireccion');
+    const btnCerrar = document.getElementById('cerrarModalDireccion');
+    const btnCancelar = document.getElementById('cancelarModalDireccion');
+    const btnGuardar = document.getElementById('guardarModalDireccion');
+    const errorEl = document.getElementById('modalDireccionError');
+    if (!btnAbrir || !modal) return;
+
+    function abrir() {
+        if (errorEl) errorEl.textContent = '';
+        modal.style.display = 'flex';
+        const nombre = document.getElementById('nuevaDireccionNombre');
+        if (nombre) nombre.focus();
+    }
+    function cerrar() {
+        modal.style.display = 'none';
+    }
+
+    btnAbrir.addEventListener('click', abrir);
+    if (btnCerrar) btnCerrar.addEventListener('click', cerrar);
+    if (btnCancelar) btnCancelar.addEventListener('click', cerrar);
+
+    if (btnGuardar) {
+        btnGuardar.addEventListener('click', async function() {
+            const nombre = document.getElementById('nuevaDireccionNombre').value.trim();
+            const tipo = document.getElementById('nuevaDireccionTipo').value;
+            const superior = document.getElementById('nuevaDireccionSuperior').value.trim();
+
+            if (!nombre) {
+                if (errorEl) errorEl.textContent = 'El nombre es obligatorio';
+                return;
+            }
+
+            btnGuardar.disabled = true;
+            btnGuardar.textContent = 'Guardando...';
+            try {
+                const resultado = await apiService.post({
+                    accion: 'guardarDireccion',
+                    nombre: nombre,
+                    tipo: tipo,
+                    dependenciaSuperior: superior
+                });
+                if (resultado && resultado.exito === false) {
+                    throw new Error(resultado.error || 'Error al guardar');
+                }
+                mostrarToast('Dirección guardada correctamente', 'exito');
+                cerrar();
+                document.getElementById('nuevaDireccionNombre').value = '';
+                document.getElementById('nuevaDireccionSuperior').value = '';
+                await cargarDireccionesOficiales();
+
+                // Pre-seleccionar la dirección recién creada
+                const input = document.getElementById('inputDestinoSalida');
+                const hidden = document.getElementById('destinoSalida');
+                if (input) input.value = nombre;
+                if (hidden) hidden.value = nombre;
+            } catch (error) {
+                if (errorEl) errorEl.textContent = error.message;
+            } finally {
+                btnGuardar.disabled = false;
+                btnGuardar.textContent = 'Guardar dirección';
+            }
         });
     }
 }
@@ -1075,7 +1168,6 @@ async function registrarRelevamiento(e) {
             throw new Error(resultado.error || 'Error desconocido');
         }
 
-        // Toast según diferencia
         const dif = resultado.diferencia || 0;
         if (dif === 0) {
             mostrarToast('El stock ya estaba correcto. Sin cambios.', 'exito');
@@ -1084,7 +1176,6 @@ async function registrarRelevamiento(e) {
             mostrarToast(`Relevamiento registrado. Ajuste: ${signo}${dif}`, 'exito');
         }
 
-        // Resetear formulario
         document.getElementById('formRelevamiento').reset();
         document.getElementById('articuloIdRelevamiento').value = '';
         document.getElementById('stockSistema').value = '—';
@@ -1093,7 +1184,6 @@ async function registrarRelevamiento(e) {
         document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML =
             '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
 
-        // Recargar artículos y limpiar caché de movimientos
         await cargarArticulos();
         movimientos = [];
 
@@ -1106,11 +1196,6 @@ async function registrarRelevamiento(e) {
     }
 }
 
-/**
- * ------------------------------------------------------------
- * Calcular diferencia en vivo (mientras el usuario escribe)
- * ------------------------------------------------------------
- */
 function actualizarDiferencia() {
     const stockSistemaInput = document.getElementById('stockSistema');
     const stockRealInput = document.getElementById('stockReal');
@@ -1120,7 +1205,6 @@ function actualizarDiferencia() {
     const sistema = parseFloat(stockSistemaInput.value);
     const real = parseFloat(stockRealInput.value);
 
-    // Si alguno no es número, mostrar "—"
     if (isNaN(sistema) || isNaN(real)) {
         diferenciaInput.value = '—';
         diferenciaInput.style.color = 'var(--text-muted)';
@@ -1141,11 +1225,6 @@ function actualizarDiferencia() {
     }
 }
 
-/**
- * ------------------------------------------------------------
- * Mostrar stock del sistema al seleccionar un artículo
- * ------------------------------------------------------------
- */
 function mostrarStockSistemaRelevamiento(id) {
     const item = articulos.find(a => String(a.id) === String(id));
     if (!item) return;
@@ -1154,21 +1233,10 @@ function mostrarStockSistemaRelevamiento(id) {
     const input = document.getElementById('stockSistema');
     if (input) input.value = stock;
 
-    // Vista previa
     mostrarVistaPrevia(id, 'vistaPreviaContenidoRelevamiento');
-
-    // Recalcular diferencia (por si ya hay un valor escrito)
     actualizarDiferencia();
 }
 
-/**
- * ------------------------------------------------------------
- * Ir a Relevamiento con un artículo pre-seleccionado
- * ------------------------------------------------------------
- * Se llama desde el botón ✏️ de la tabla de Inventario General.
- * Navega a la página Relevamiento y pre-carga el artículo.
- * ------------------------------------------------------------
- */
 function irARelevamientoConArticulo(id) {
     navegarAPagina('relevamiento');
 
@@ -1192,7 +1260,7 @@ function irARelevamientoConArticulo(id) {
 }
 
 // ============================================================
-// 16. DIRECCIONES - Ranking y detalle (datos reales)
+// 16. DIRECCIONES - Ranking y detalle (datos reales del backend)
 // ============================================================
 
 /**
@@ -1262,6 +1330,10 @@ async function cargarDirecciones() {
         </table>
     `;
 
+    // Marcar la primera fila como activa (su detalle se muestra por defecto)
+    const primeraFila = contenedor.querySelector('tbody tr');
+    if (primeraFila) primeraFila.classList.add('activo');
+
     // Listener: al hacer clic en una fila, mostrar el detalle
     contenedor.querySelectorAll('tbody tr').forEach(tr => {
         tr.addEventListener('click', function() {
@@ -1269,11 +1341,10 @@ async function cargarDirecciones() {
             const dir = direccionesReales.find(d => d.direccion === nombre);
             if (!dir) return;
 
-            // Marcar fila activa
             contenedor.querySelectorAll('tbody tr').forEach(r => r.classList.remove('activo'));
             this.classList.add('activo');
 
-            // Mostrar detalle (adaptar el formato que espera mostrarDetalleDireccion)
+            // El backend devuelve "direccion"; el detalle espera "nombre"
             mostrarDetalleDireccion({
                 nombre: dir.direccion,
                 total: dir.total,
@@ -1284,19 +1355,13 @@ async function cargarDirecciones() {
 
     // Mostrar el detalle de la primera dirección por defecto
     const primera = direccionesReales[0];
-    if (primera) {
-        // Marcar la primera fila como activa
-        const primeraFila = contenedor.querySelector('tbody tr');
-        if (primeraFila) primeraFila.classList.add('activo');
+    mostrarDetalleDireccion({
+        nombre: primera.direccion,
+        total: primera.total,
+        articulos: primera.articulos
+    });
 
-        mostrarDetalleDireccion({
-            nombre: primera.direccion,
-            total: primera.total,
-            articulos: primera.articulos
-        });
-    }
-
-    // Fecha
+    // Fecha del encabezado
     const fechaEl = document.getElementById('fechaActualDirecciones');
     if (fechaEl) {
         fechaEl.textContent = new Date().toLocaleDateString('es-AR', {
@@ -1304,47 +1369,40 @@ async function cargarDirecciones() {
         });
     }
 }
+
 /**
  * ------------------------------------------------------------
- * Mostrar el detalle de una dirección (artículos entregados)
- * ------------------------------------------------------------
- * Recibe: { nombre, total, articulos: [{articulo, categoria, cantidad}] }
+ * Mostrar detalle de una dirección
+ * ⚠️ VERIFICAR: reconstruida. Si tu versión difiere, usá la tuya.
  * ------------------------------------------------------------
  */
-function mostrarDetalleDireccion(dir) {
+function mostrarDetalleDireccion({ nombre, total, articulos }) {
     const contenedor = document.getElementById('contenedorDetalleDirecciones');
-    if (!contenedor || !dir) return;
+    if (!contenedor) return;
 
-    // Si no hay artículos, mostrar mensaje
-    if (!dir.articulos || dir.articulos.length === 0) {
-        contenedor.innerHTML = '<p class="placeholder">Esta dirección no tiene artículos entregados.</p>';
-        return;
-    }
-
-    let filas = '';
-    dir.articulos.forEach(a => {
-        filas += `
+    let filasArticulos = '';
+    (articulos || []).forEach(a => {
+        filasArticulos += `
             <tr>
                 <td><strong>${escapeHtml(a.articulo)}</strong></td>
-                <td><span class="badge-categoria">${escapeHtml(a.categoria)}</span></td>
-                <td style="font-weight: 700; color: var(--accent);">${a.cantidad}</td>
+                <td><span class="badge-categoria">${escapeHtml(a.categoria || '—')}</span></td>
+                <td style="font-weight: 700; color: #16a34a;">+${a.cantidad}</td>
             </tr>
         `;
     });
 
+    if (!articulos || articulos.length === 0) {
+        filasArticulos = `<tr><td colspan="3"><p class="placeholder">Sin artículos registrados.</p></td></tr>`;
+    }
+
     contenedor.innerHTML = `
         <div class="detalle-direccion">
-            <div class="detalle-direccion-header activo">
-                <div class="detalle-direccion-nombre">
-                    <span class="detalle-direccion-flecha">▶</span>
-                    ${escapeHtml(dir.nombre)}
-                </div>
-                <div class="detalle-direccion-total">
-                    ${dir.total} unidades entregadas
-                </div>
-            </div>
-            <div class="detalle-direccion-body visible">
-                <table class="detalle-articulo-tabla">
+            <h3 class="detalle-direccion-nombre">${escapeHtml(nombre)}</h3>
+            <p class="detalle-direccion-total">
+                Total: <strong>${total}</strong> unidades recibidas
+            </p>
+            <div class="inventario-tabla-wrapper">
+                <table class="inventario-tabla">
                     <thead>
                         <tr>
                             <th>Artículo</th>
@@ -1352,328 +1410,258 @@ function mostrarDetalleDireccion(dir) {
                             <th>Cantidad</th>
                         </tr>
                     </thead>
-                    <tbody>${filas}</tbody>
+                    <tbody>${filasArticulos}</tbody>
                 </table>
             </div>
         </div>
     `;
 }
-// ============================================================
-// 17. SALIDAS - Buscador de direcciones + modal nueva dirección
-// ============================================================
 
-// Estado global
-let direccionesOficiales = [];
+// ============================================================
+// 17. DASHBOARD - Tarjetas, listas y acciones rápidas ★ NUEVO
+// ============================================================
 
 /**
  * ------------------------------------------------------------
- * Cargar la lista de direcciones oficiales desde el backend
+ * Cargar todo el Dashboard desde el backend
  * ------------------------------------------------------------
  */
-async function cargarDireccionesOficiales() {
-    try {
-        const resultado = await apiService.post({ accion: 'listarDirecciones' });
-        if (resultado && resultado.exito === false) {
-            throw new Error(resultado.error || 'Error al listar direcciones');
-        }
-        direccionesOficiales = Array.isArray(resultado) ? resultado : [];
-    } catch (error) {
-        console.error('Error cargando direcciones:', error);
-        direccionesOficiales = [];
+async function cargarDashboard() {
+    const contenedor = document.getElementById('pagina-dashboard');
+    if (!contenedor) return;
+
+    // Fecha del encabezado
+    const fechaEl = document.getElementById('fechaActualDashboard');
+    if (fechaEl) {
+        fechaEl.textContent = new Date().toLocaleDateString('es-AR', {
+            weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
+        });
     }
-}
 
-/**
- * ------------------------------------------------------------
- * Configurar el buscador de destino para el formulario de Salidas
- * ------------------------------------------------------------
- */
-function configurarBuscadorDestino() {
-    const input = document.getElementById('inputDestinoSalida');
-    const hidden = document.getElementById('destinoSalida');
-    const dropdown = document.getElementById('listaDestinosCustom');
-    if (!input || !hidden || !dropdown) return;
+    // Llamar al backend
+    let datos;
+    try {
+        datos = await apiService.post({ accion: 'estadisticasDashboard' });
 
-    // Al hacer foco: mostrar todas las direcciones
-    input.addEventListener('focus', function() {
-        filtrarDirecciones(this.value.trim());
-        dropdown.classList.add('visible');
-    });
-
-    // Al escribir: filtrar
-    input.addEventListener('input', function() {
-        const valor = this.value.trim();
-        filtrarDirecciones(valor);
-        dropdown.classList.add('visible');
-        // Al cambiar el texto, limpiar el hidden (por si era una selección previa)
-        hidden.value = '';
-    });
-
-    // Cerrar al hacer clic afuera
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.destino-wrapper')) {
-            dropdown.classList.remove('visible');
+        if (datos && datos.exito === false) {
+            throw new Error(datos.error || 'Error al obtener estadísticas');
         }
-    });
-
-    // Navegación con teclado
-    let selectedIndex = -1;
-    input.addEventListener('keydown', function(e) {
-        const items = dropdown.querySelectorAll('li');
-        if (items.length === 0) return;
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex + 1) % items.length;
-            items.forEach((li, i) => li.classList.toggle('seleccionado', i === selectedIndex));
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
-            items.forEach((li, i) => li.classList.toggle('seleccionado', i === selectedIndex));
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
-        }
-    });
-}
-
-/**
- * ------------------------------------------------------------
- * Filtrar direcciones y mostrar en el dropdown
- * ------------------------------------------------------------
- */
-function filtrarDirecciones(texto) {
-    const dropdown = document.getElementById('listaDestinosCustom');
-    if (!dropdown) return;
-
-    const termino = normalizarTexto(texto);
-
-    const resultados = direccionesOficiales.filter(dir => {
-        if (!termino) return true;
-        const campos = [dir.nombre, dir.tipo, dir.dependenciaSuperior].filter(Boolean);
-        return campos.some(c => normalizarTexto(c).includes(termino));
-    });
-
-    dropdown.innerHTML = '';
-
-    if (resultados.length === 0) {
-        const li = document.createElement('li');
-        li.textContent = 'No se encontraron direcciones. Usá "+ Nueva" para agregar una.';
-        li.style.color = 'var(--text-muted)';
-        li.style.fontStyle = 'italic';
-        li.style.cursor = 'default';
-        dropdown.appendChild(li);
-        dropdown.classList.add('visible');
+    } catch (error) {
+        console.error('Error cargando Dashboard:', error);
+        mostrarToast('Error al cargar el Dashboard', 'error');
         return;
     }
 
-    resultados.forEach(dir => {
-        const li = document.createElement('li');
-        li.innerHTML = `
-            ${dir.nombre}
-            <span class="id-articulo">${dir.tipo || ''}</span>
-        `;
-        li.dataset.nombre = dir.nombre;
-        li.addEventListener('click', function() {
-            inputDestinoSeleccionado(dir.nombre);
-        });
-        dropdown.appendChild(li);
-    });
+    if (!datos) return;
 
-    dropdown.classList.add('visible');
+    // --- 1. Llenar las tarjetas ---
+    document.getElementById('dashTotalArticulos').textContent = datos.totalArticulos || 0;
+    document.getElementById('dashCategorias').textContent =
+        `${datos.categorias || 0} categorías · ${(datos.unidadesTotales || 0).toLocaleString('es-AR')} ud. totales`;
+
+    document.getElementById('dashCriticos').textContent = datos.criticos || 0;
+
+    document.getElementById('dashEntradasMes').textContent = (datos.entradasMes || 0).toLocaleString('es-AR');
+    document.getElementById('dashSalidasMes').textContent = (datos.salidasMes || 0).toLocaleString('es-AR');
+
+    // --- 2. Últimos movimientos del día (entradas de hoy) ---
+    renderizarDashUltimosMovimientos(datos.entradasHoy || []);
+
+    // --- 3. Artículos críticos (top 5) ---
+    renderizarDashArticulosCriticos(datos.top5Criticos || []);
+
+    // --- 4. Salidas con remito ---
+    renderizarDashSalidasConRemito(datos.salidasConRemito || []);
 }
 
 /**
  * ------------------------------------------------------------
- * Al elegir una dirección del dropdown
+ * Lista de últimos movimientos del día
  * ------------------------------------------------------------
  */
-function inputDestinoSeleccionado(nombre) {
-    const input = document.getElementById('inputDestinoSalida');
-    const hidden = document.getElementById('destinoSalida');
-    const dropdown = document.getElementById('listaDestinosCustom');
+function renderizarDashUltimosMovimientos(entradas) {
+    const contenedor = document.getElementById('dashUltimosMovimientos');
+    if (!contenedor) return;
 
-    if (input) input.value = nombre;
-    if (hidden) hidden.value = nombre;
-    if (dropdown) dropdown.classList.remove('visible');
-}
-
-/**
- * ------------------------------------------------------------
- * Configurar el modal "Agregar nueva dirección"
- * ------------------------------------------------------------
- */
-function configurarModalNuevaDireccion() {
-    const btnAbrir = document.getElementById('btnAgregarDireccion');
-    const modal = document.getElementById('modalNuevaDireccion');
-    const btnCerrar = document.getElementById('cerrarModalDireccion');
-    const btnCancelar = document.getElementById('cancelarModalDireccion');
-    const btnGuardar = document.getElementById('guardarModalDireccion');
-
-    if (!btnAbrir || !modal) return;
-
-    // Abrir modal
-    btnAbrir.addEventListener('click', () => {
-        document.getElementById('nuevaDireccionNombre').value = '';
-        document.getElementById('nuevaDireccionTipo').value = 'Dirección';
-        document.getElementById('nuevaDireccionSuperior').value = '';
-        document.getElementById('modalDireccionError').textContent = '';
-        modal.style.display = 'flex';
-        setTimeout(() => document.getElementById('nuevaDireccionNombre').focus(), 100);
-    });
-
-    // Cerrar modal
-    const cerrar = () => { modal.style.display = 'none'; };
-    btnCerrar.addEventListener('click', cerrar);
-    btnCancelar.addEventListener('click', cerrar);
-
-    // Cerrar al hacer clic afuera del modal
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) cerrar();
-    });
-
-    // Cerrar con Escape
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.style.display === 'flex') cerrar();
-    });
-
-    // Guardar dirección
-    btnGuardar.addEventListener('click', async () => {
-        const nombre = document.getElementById('nuevaDireccionNombre').value.trim();
-        const tipo = document.getElementById('nuevaDireccionTipo').value;
-        const dependenciaSuperior = document.getElementById('nuevaDireccionSuperior').value.trim();
-        const errorEl = document.getElementById('modalDireccionError');
-
-        if (!nombre) {
-            errorEl.textContent = 'El nombre es obligatorio';
-            return;
-        }
-
-        btnGuardar.disabled = true;
-        btnGuardar.textContent = 'Guardando...';
-        errorEl.textContent = '';
-
-        try {
-            const resultado = await apiService.post({
-                accion: 'guardarDireccion',
-                nombre: nombre,
-                tipo: tipo,
-                dependenciaSuperior: dependenciaSuperior
-            });
-
-            if (resultado && resultado.exito === false) {
-                throw new Error(resultado.error || 'Error al guardar');
-            }
-
-            // Recargar lista de direcciones
-            await cargarDireccionesOficiales();
-
-            // Seleccionar automáticamente la nueva
-            inputDestinoSeleccionado(nombre);
-
-            // Cerrar modal
-            cerrar();
-
-            // Toast
-            mostrarToast(`Dirección "${nombre}" agregada`, 'exito');
-
-        } catch (error) {
-            errorEl.textContent = error.message;
-        } finally {
-            btnGuardar.disabled = false;
-            btnGuardar.textContent = 'Guardar dirección';
-        }
-    });
-}
-
-/**
- * ------------------------------------------------------------
- * Validar al enviar el formulario de Salida
- * ------------------------------------------------------------
- * Si el usuario escribió algo pero no lo seleccionó del dropdown,
- * igual lo usamos (escribir libre).
- */
-function validarDestinoSalida() {
-    const input = document.getElementById('inputDestinoSalida');
-    const hidden = document.getElementById('destinoSalida');
-
-    if (!input || !hidden) return true;
-
-    const valor = input.value.trim();
-    if (!valor) return false;
-
-    // Si el hidden no tiene valor, usar el texto libre del input
-    if (!hidden.value) {
-        hidden.value = valor;
+    if (entradas.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">No hay entradas registradas hoy.</p>';
+        return;
     }
 
-    return true;
+    let html = '<ul class="dash-mov-lista">';
+    entradas.forEach(e => {
+        html += `
+            <li>
+                <div class="dash-mov-icono entrada">⬆️</div>
+                <div class="dash-mov-info">
+                    <div class="dash-mov-nombre">${escapeHtml(e.articulo)}</div>
+                    <div class="dash-mov-detalle">${escapeHtml(e.proveedor || '—')}</div>
+                </div>
+                <div class="dash-mov-cantidad entrada">+${e.cantidad}</div>
+            </li>
+        `;
+    });
+    html += '</ul>';
+    contenedor.innerHTML = html;
+}
+
+/**
+ * ------------------------------------------------------------
+ * Lista de artículos críticos
+ * ------------------------------------------------------------
+ */
+function renderizarDashArticulosCriticos(criticos) {
+    const contenedor = document.getElementById('dashArticulosCriticos');
+    if (!contenedor) return;
+
+    if (criticos.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">No hay artículos críticos.</p>';
+        return;
+    }
+
+    let html = '<ul class="dash-critico-lista">';
+    criticos.forEach(c => {
+        const badgeClase = c.stock === 0 ? 'sin-stock' : 'critico';
+        const badgeTexto = c.stock === 0 ? 'Sin stock' : `Crítico (${c.stock})`;
+
+        html += `
+            <li>
+                <div class="dash-critico-nombre">${escapeHtml(c.articulo)}</div>
+                <div class="dash-critico-badge ${badgeClase}">${badgeTexto}</div>
+            </li>
+        `;
+    });
+    html += '</ul>';
+    contenedor.innerHTML = html;
+}
+
+/**
+ * ------------------------------------------------------------
+ * Tabla de últimas salidas con remito
+ * ------------------------------------------------------------
+ */
+function renderizarDashSalidasConRemito(salidas) {
+    const contenedor = document.getElementById('dashSalidasConRemito');
+    if (!contenedor) return;
+
+    if (salidas.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">No hay salidas con remito registradas.</p>';
+        return;
+    }
+
+    let filas = '';
+    salidas.forEach(s => {
+        const fecha = s.fecha ? new Date(s.fecha).toLocaleDateString('es-AR') : '—';
+        filas += `
+            <tr>
+                <td>${fecha}</td>
+                <td><strong>${escapeHtml(s.articulo)}</strong></td>
+                <td>${escapeHtml(s.destino || '—')}</td>
+                <td><span class="badge-categoria">${escapeHtml(s.remito)}</span></td>
+                <td style="font-weight: 700; color: #dc2626;">-${s.cantidad}</td>
+            </tr>
+        `;
+    });
+
+    contenedor.innerHTML = `
+        <div style="overflow-x: auto;">
+            <table class="dash-remito-tabla">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Artículo</th>
+                        <th>Destino</th>
+                        <th>N° Remito</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+/**
+ * ------------------------------------------------------------
+ * Configurar botones de acciones rápidas
+ * ------------------------------------------------------------
+ */
+function configurarDashboard() {
+    const botones = document.querySelectorAll('.dashboard-btn-accion');
+    botones.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const destino = this.dataset.nav;
+            if (destino) navegarAPagina(destino);
+        });
+    });
 }
 
 // ============================================================
-// 14. INICIALIZACIÓN
+// 18. INICIALIZACIÓN
+// ⚠️ VERIFICAR: reconstruida. Compará con tu DOMContentLoaded
+//    original y ajustá IDs de buscadores si difieren.
 // ============================================================
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Configuración general
     configurarNavegacion();
     configurarMenu();
+    configurarBuscador();
+    configurarMovimientos();
+    configurarModalDireccion();
 
-    // Cerrar menús desplegables al hacer clic afuera (listener único)
-    document.addEventListener('click', function() {
-        document.querySelectorAll('.menu-desplegable').forEach(m => m.classList.remove('visible'));
-    });
+    // Buscadores con dropdown
+    configurarBuscadorDropdown(
+        'inputArticulo', 'articuloId',
+        'listaArticulosCustom', 'vistaPreviaContenido'
+    );
+    configurarBuscadorDropdown(
+        'inputArticuloSalida', 'articuloIdSalida',
+        'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida'
+    );
+    configurarBuscadorDropdownRelevamiento();
 
+    // Dashboard
+    cargarDashboard();
+    configurarDashboard();
+
+    // Cargar direcciones oficiales para el buscador de Salidas
+    await cargarDireccionesOficiales();
+
+    // Formularios
+    const formEntrada = document.getElementById('formEntrada');
+    if (formEntrada) formEntrada.addEventListener('submit', registrarEntrada);
+
+    const formSalida = document.getElementById('formSalida');
+    if (formSalida) formSalida.addEventListener('submit', registrarSalida);
+
+    const formRelevamiento = document.getElementById('formRelevamiento');
+    if (formRelevamiento) formRelevamiento.addEventListener('submit', registrarRelevamiento);
+
+    // Recalcular diferencia en vivo (Relevamiento)
+    const stockRealInput = document.getElementById('stockReal');
+    if (stockRealInput) stockRealInput.addEventListener('input', actualizarDiferencia);
+
+    // Fechas por defecto (hoy) en los inputs date
     const fechaEntrada = document.getElementById('fechaEntrada');
     if (fechaEntrada) fechaEntrada.value = obtenerFechaLocal();
     const fechaSalida = document.getElementById('fechaSalida');
     if (fechaSalida) fechaSalida.value = obtenerFechaLocal();
 
-    const fechaHoy = new Date().toLocaleDateString('es-AR', {
-        weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
-    });
-    const fechaEl = document.getElementById('fechaActual');
-    if (fechaEl) fechaEl.textContent = fechaHoy;
-    const fechaElSalida = document.getElementById('fechaActualSalidas');
-    if (fechaElSalida) fechaElSalida.textContent = fechaHoy;
+    // Fechas de encabezados
+    const f1 = document.getElementById('fechaActual');
+    if (f1) f1.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    const f2 = document.getElementById('fechaActualSalidas');
+    if (f2) f2.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    const f3 = document.getElementById('fechaActualRelevamiento');
+    if (f3) f3.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
-    cargarArticulos();
+    // Carga inicial de datos
+    await cargarArticulos();
+    await cargarUltimasEntradas();
+    await cargarUltimasSalidas();
 
-    configurarBuscadorDropdown('inputArticulo', 'articuloId', 'listaArticulosCustom', 'vistaPreviaContenido');
-    configurarBuscadorDropdown('inputArticuloSalida', 'articuloIdSalida', 'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida');
-
-    // Buscador de artículos para Relevamiento
-    configurarBuscadorDropdownRelevamiento();
-
-    // Evento del formulario de Relevamiento
-    const formRelevamiento = document.getElementById('formRelevamiento');
-    if (formRelevamiento) formRelevamiento.addEventListener('submit', registrarRelevamiento);
-
-    // Evento en vivo para calcular la diferencia
-    const stockRealInput = document.getElementById('stockReal');
-    if (stockRealInput) stockRealInput.addEventListener('input', actualizarDiferencia);
-
-    // Fecha de relevamiento
-    const fechaElRel = document.getElementById('fechaActualRelevamiento');
-    if (fechaElRel) fechaElRel.textContent = fechaHoy;
-
-    configurarBuscador();
-    configurarMovimientos();
-
-    // Cargar direcciones oficiales para el buscador de Salidas
-    cargarDireccionesOficiales();
-
-    // Configurar el buscador de destino y el modal
-    configurarBuscadorDestino();
-    configurarModalNuevaDireccion();
-
-    const formEntrada = document.getElementById('formEntrada');
-    if (formEntrada) formEntrada.addEventListener('submit', registrarEntrada);
-    const formSalida = document.getElementById('formSalida');
-    if (formSalida) formSalida.addEventListener('submit', registrarSalida);
-
-    cargarUltimasEntradas();
-    cargarUltimasSalidas();
-
-    // Cargar Direcciones (maqueta con datos de ejemplo)
-    cargarDirecciones();
-
-    console.log('✅ InventarioPro - Aplicación inicializada.');
+    // Si la página inicial es otra (por hash), cargar sus datos
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'direcciones') cargarDirecciones();
+    if (hash === 'dashboard') cargarDashboard();
 });
