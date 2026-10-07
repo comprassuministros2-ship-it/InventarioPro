@@ -84,6 +84,7 @@ function navegarAPagina(nombre) {
     document.querySelectorAll('.sidebar-link').forEach(e => e.classList.remove('is-active'));
     const activo = document.querySelector(`.sidebar-link[data-page="${nombre}"]`);
     if (activo) activo.classList.add('is-active');
+    if (nombre === 'pedidos') cargarPedidos();
 
     if (nombre === 'inventario') cargarArticulos();
     if (nombre === 'movimientos') cargarMovimientos();
@@ -1623,6 +1624,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Dashboard
     cargarDashboard();
     configurarDashboard();
+    configurarPedidos();
 
     // Cargar direcciones oficiales para el buscador de Salidas
     await cargarDireccionesOficiales();
@@ -1665,3 +1667,219 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hash === 'direcciones') cargarDirecciones();
     if (hash === 'dashboard') cargarDashboard();
 });
+// ============================================================
+// 19. PEDIDOS — MAQUETA CON DATOS FAKE (FASE 1)
+// ⚠️ TEMPORAL: reemplazar por integración real en Fase 3.
+// ============================================================
+let carritoPedido = [];
+let pedidoSeleccionado = null;
+
+const PEDIDOS_FAKE = [
+    {
+        id: 'f2121faf', direccion: 'MT120', director: 'Ghhh',
+        referencia: 'Gyhy', estado: 'Confirmado', fecha: '2026-06-11',
+        items: [
+            { id: '1', nombre: 'Coca-Cola Original Packs x12', cantidad: 45 },
+            { id: '9', nombre: 'Bandera Bonaerense', cantidad: 9 }
+        ]
+    },
+    {
+        id: 'a8b32c11', direccion: 'MT101', director: 'María López',
+        referencia: 'Reposición mensual', estado: 'Pendiente', fecha: '2026-06-10',
+        items: [{ id: '3', nombre: 'Agua Mineral 500ml x6', cantidad: 20 }]
+    },
+    {
+        id: 'c4d55e22', direccion: 'MT105', director: 'Juan Pérez',
+        referencia: 'Evento institucional', estado: 'Entregado', fecha: '2026-06-09',
+        items: [
+            { id: '7', nombre: 'Vasos descartables x100', cantidad: 5 },
+            { id: '12', nombre: 'Servilletas x50', cantidad: 10 }
+        ]
+    }
+];
+
+function cargarPedidos() {
+    const fechaEl = document.getElementById('fechaActualPedidos');
+    if (fechaEl) {
+        fechaEl.textContent = new Date().toLocaleDateString('es-AR', {
+            weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
+        });
+    }
+    renderizarListaPedidos();
+    renderizarCarrito();
+}
+
+function renderizarListaPedidos() {
+    const contenedor = document.getElementById('listaPedidosRecientes');
+    if (!contenedor) return;
+
+    const filtro = document.getElementById('selectEstadoPedido')?.value || 'todos';
+    const filtrados = filtro === 'todos'
+        ? PEDIDOS_FAKE
+        : PEDIDOS_FAKE.filter(p => p.estado === filtro);
+
+    if (filtrados.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">No hay pedidos para este filtro.</p>';
+        return;
+    }
+
+    contenedor.innerHTML = filtrados.map(p => `
+        <div class="pedido-item ${pedidoSeleccionado === p.id ? 'activo' : ''}" data-id="${p.id}">
+            <div class="pedido-item-top">
+                <span class="pedido-item-id">#${p.id}</span>
+                <span class="badge-estado ${p.estado.toLowerCase()}">${p.estado}</span>
+            </div>
+            <div class="pedido-item-direccion">${escapeHtml(p.direccion)} · ${escapeHtml(p.director)}</div>
+            <div class="pedido-item-fecha">${new Date(p.fecha).toLocaleDateString('es-AR')}</div>
+        </div>
+    `).join('');
+
+    contenedor.querySelectorAll('.pedido-item').forEach(el => {
+        el.addEventListener('click', () => {
+            pedidoSeleccionado = el.dataset.id;
+            renderizarListaPedidos();
+            renderizarDetallePedido();
+        });
+    });
+}
+
+function renderizarDetallePedido() {
+    const contenedor = document.getElementById('detallePedido');
+    if (!contenedor) return;
+
+    if (!pedidoSeleccionado) {
+        contenedor.innerHTML = '<p class="placeholder">Seleccioná un pedido de la lista para ver el detalle.</p>';
+        return;
+    }
+
+    const p = PEDIDOS_FAKE.find(x => x.id === pedidoSeleccionado);
+    if (!p) return;
+
+    const filas = p.items.map(it => `
+        <tr>
+            <td>${escapeHtml(it.nombre)}</td>
+            <td><span class="badge-categoria">ID ${escapeHtml(it.id)}</span></td>
+            <td style="font-weight:700;">${it.cantidad}</td>
+        </tr>
+    `).join('');
+
+    const esPendiente = p.estado === 'Pendiente';
+
+    contenedor.innerHTML = `
+        <div class="detalle-pedido-header">
+            <div class="detalle-pedido-meta">
+                <div><span class="label">Pedido</span><span class="valor">#${p.id}</span></div>
+                <div><span class="label">Dirección</span><span class="valor">${escapeHtml(p.direccion)}</span></div>
+                <div><span class="label">Solicitado por</span><span class="valor">${escapeHtml(p.director)}</span></div>
+                <div><span class="label">Referencia</span><span class="valor">${escapeHtml(p.referencia)}</span></div>
+                <div><span class="label">Fecha</span><span class="valor">${new Date(p.fecha).toLocaleDateString('es-AR')}</span></div>
+                <div><span class="label">Estado</span><span class="valor"><span class="badge-estado ${p.estado.toLowerCase()}">${p.estado}</span></span></div>
+            </div>
+            <div class="detalle-pedido-acciones">
+                ${esPendiente ? `
+                    <button class="btn-accion-pedido" data-accion="editar">✏️ Editar</button>
+                    <button class="btn-accion-pedido peligro" data-accion="cancelar">🗑️ Cancelar</button>
+                    <button class="btn-accion-pedido primario" data-accion="entregar">✅ Marcar entregado</button>
+                ` : `
+                    <button class="btn-accion-pedido primario" data-accion="pdf">📄 Descargar PDF</button>
+                `}
+            </div>
+        </div>
+        <div class="inventario-tabla-wrapper">
+            <table class="inventario-tabla">
+                <thead>
+                    <tr><th>Artículo</th><th>ID</th><th>Cantidad</th></tr>
+                </thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>
+    `;
+
+    contenedor.querySelectorAll('[data-accion]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            mostrarToast(`Acción "${btn.dataset.accion}" — Fase 1 (mockup)`, 'exito');
+        });
+    });
+}
+
+function renderizarCarrito() {
+    const contenedor = document.getElementById('carritoPedido');
+    const totalEl = document.getElementById('carritoTotal');
+    if (!contenedor) return;
+
+    if (carritoPedido.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>';
+        if (totalEl) totalEl.textContent = '0';
+        return;
+    }
+
+    const filas = carritoPedido.map((it, idx) => `
+        <tr>
+            <td>${escapeHtml(it.nombre)}</td>
+            <td><input type="number" min="1" value="${it.cantidad}" class="carrito-input-cantidad" data-idx="${idx}"></td>
+            <td style="text-align:right;">
+                <button type="button" class="carrito-btn-quitar" data-idx="${idx}" title="Quitar">✕</button>
+            </td>
+        </tr>
+    `).join('');
+
+    contenedor.innerHTML = `
+        <table class="carrito-tabla">
+            <thead><tr><th>Artículo</th><th>Cantidad</th><th></th></tr></thead>
+            <tbody>${filas}</tbody>
+        </table>
+    `;
+
+    const total = carritoPedido.reduce((a, i) => a + (Number(i.cantidad) || 0), 0);
+    if (totalEl) totalEl.textContent = total;
+
+    contenedor.querySelectorAll('.carrito-input-cantidad').forEach(inp => {
+        inp.addEventListener('input', () => {
+            const idx = Number(inp.dataset.idx);
+            const val = Math.max(1, parseInt(inp.value) || 1);
+            carritoPedido[idx].cantidad = val;
+            inp.value = val;
+            if (totalEl) totalEl.textContent = carritoPedido.reduce((a, i) => a + (Number(i.cantidad) || 0), 0);
+        });
+    });
+
+    contenedor.querySelectorAll('.carrito-btn-quitar').forEach(btn => {
+        btn.addEventListener('click', () => {
+            carritoPedido.splice(Number(btn.dataset.idx), 1);
+            renderizarCarrito();
+        });
+    });
+}
+
+function configurarPedidos() {
+    const sel = document.getElementById('selectEstadoPedido');
+    if (sel) sel.addEventListener('change', renderizarListaPedidos);
+
+    const form = document.getElementById('formPedido');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            mostrarToast('Pedido confirmado (mockup Fase 1)', 'exito');
+        });
+    }
+
+    const inputArt = document.getElementById('inputArticuloPedido');
+    if (inputArt) {
+        inputArt.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            const val = inputArt.value.trim();
+            if (!val) return;
+            const item = articulos.find(a => normalizarTexto(a.articulo).includes(normalizarTexto(val)));
+            carritoPedido.push({
+                id: item ? item.id : 'demo-' + Date.now(),
+                nombre: item ? item.articulo : val,
+                cantidad: 1
+            });
+            inputArt.value = '';
+            renderizarCarrito();
+        });
+    }
+
+    cargarPedidos();
+}
