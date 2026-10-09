@@ -185,8 +185,7 @@
                             <label for="inputDestinoSalida">DESTINO / DIRECCIÓN *</label>
                             <div class="destino-wrapper">
                                 <div class="destino-input-wrapper">
-                                    <input type="text" id="inputDestinoSalida"
-                                           placeholder="Buscar dirección..." autocomplete="off" required>
+                                    <input type="text" id="inputDestinoSalida" placeholder="Buscar dirección..." autocomplete="off" required>
                                     <span class="icono-lupa">🔍</span>
                                     <ul id="listaDestinosCustom" class="dropdown-lista"></ul>
                                 </div>
@@ -238,7 +237,6 @@
 
             <div style="padding: 0 1.5rem;">
 
-                <!-- TOOLBAR MOVIMIENTOS -->
                 <div class="toolbar-movimientos">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
@@ -256,7 +254,6 @@
                     </div>
                 </div>
 
-                <!-- TABLA MOVIMIENTOS -->
                 <div id="contenedorMovimientos">
                     <p class="placeholder">Cargando movimientos...</p>
                 </div>
@@ -272,7 +269,6 @@
 
             <div style="padding: 0 1.5rem;">
 
-                <!-- TOOLBAR -->
                 <div class="toolbar-inventario">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
@@ -289,23 +285,19 @@
                     </div>
                 </div>
 
-                <!-- RANKING TOP 10 -->
                 <div class="estadistica-seccion">
                     <h2 class="estadistica-titulo">Ranking Top 10 direcciones</h2>
                     <div id="contenedorRankingDirecciones">
-                        <!-- Se llena con JS -->
                         <p class="placeholder">Cargando ranking...</p>
                     </div>
                 </div>
 
-                <!-- DETALLE POR DIRECCIÓN -->
                 <div class="estadistica-seccion" style="margin-top: 2rem;">
                     <h2 class="estadistica-titulo">Detalle por dirección</h2>
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
                         Hacé clic en una dirección para ver el detalle de los artículos entregados.
                     </p>
                     <div id="contenedorDetalleDirecciones">
-                        <!-- Se llena con JS -->
                         <p class="placeholder">Seleccioná una dirección del ranking</p>
                     </div>
                 </div>
@@ -322,7 +314,6 @@
 
             <div style="padding: 0 1.5rem;">
 
-                <!-- TARJETAS DE RESUMEN -->
                 <div class="dashboard-tarjetas">
                     <div class="dashboard-tarjeta">
                         <div class="dashboard-tarjeta-icono">📦</div>
@@ -361,7 +352,6 @@
                     </div>
                 </div>
 
-                <!-- ACCIONES RÁPIDAS -->
                 <div class="estadistica-seccion" style="margin-top: 1.5rem;">
                     <h2 class="estadistica-titulo">Acciones rápidas</h2>
                     <div class="dashboard-acciones">
@@ -384,9 +374,7 @@
                     </div>
                 </div>
 
-                <!-- DOS COLUMNAS: ÚLTIMOS MOVIMIENTOS + ARTÍCULOS CRÍTICOS -->
                 <div class="dashboard-grid-2">
-                    <!-- Últimos movimientos -->
                     <div class="estadistica-seccion">
                         <h2 class="estadistica-titulo">Últimos movimientos del día</h2>
                         <div id="dashUltimosMovimientos">
@@ -394,7 +382,6 @@
                         </div>
                     </div>
 
-                    <!-- Artículos críticos -->
                     <div class="estadistica-seccion">
                         <h2 class="estadistica-titulo">Artículos críticos</h2>
                         <div id="dashArticulosCriticos">
@@ -403,7 +390,6 @@
                     </div>
                 </div>
 
-                <!-- PEDIDOS RECIENTES (últimas salidas con remito) -->
                 <div class="estadistica-seccion" style="margin-top: 1.5rem;">
                     <h2 class="estadistica-titulo">Últimas salidas con remito</h2>
                     <div id="dashSalidasConRemito">
@@ -422,12 +408,10 @@
             </div>
 
             <div class="relevamiento-wrapper">
-                <!-- COLUMNA IZQUIERDA: FORMULARIO -->
                 <div class="relevamiento-form">
                     <h2>Registrar relevamiento</h2>
                     <form id="formRelevamiento">
 
-                        <!-- Artículo con buscador -->
                         <div class="form-group buscador-articulo-group">
                             <label for="inputArticuloRelevamiento">ARTÍCULO *</label>
                             <div class="buscador-wrapper">
@@ -438,31 +422,26 @@
                             <input type="hidden" id="articuloIdRelevamiento" value="">
                         </div>
 
-                        <!-- Stock del sistema (solo lectura) -->
                         <div class="form-group">
                             <label for="stockSistema">STOCK DEL SISTEMA</label>
                             <input type="text" id="stockSistema" value="—" readonly style="background: var(--bg-hover); cursor: not-allowed;">
                         </div>
 
-                        <!-- Stock real contado (input) -->
                         <div class="form-group">
                             <label for="stockReal">STOCK REAL CONTADO *</label>
                             <input type="number" id="stockReal" min="0" value="" placeholder="Ingresá el stock contado físicamente" required>
                         </div>
 
-                        <!-- Diferencia (se calcula en vivo) -->
                         <div class="form-group">
                             <label for="diferencia">DIFERENCIA</label>
                             <input type="text" id="diferencia" value="—" readonly style="background: var(--bg-hover); cursor: not-allowed; font-weight: 700;">
                         </div>
 
-                        <!-- Observación -->
                         <div class="form-group">
                             <label for="observacionesRelevamiento">OBSERVACIÓN</label>
                             <textarea id="observacionesRelevamiento" rows="3" placeholder="Motivo del ajuste (opcional)..."></textarea>
                         </div>
 
-                        <!-- Registrado por -->
                         <div class="form-group">
                             <label for="registradoPorRelevamiento">REGISTRADO POR *</label>
                             <input type="text" id="registradoPorRelevamiento" value="Samuel Steves" required>
@@ -472,7 +451,6 @@
                     </form>
                 </div>
 
-                <!-- COLUMNA DERECHA: VISTA PREVIA -->
                 <div class="relevamiento-sidebar">
                     <div class="vista-previa">
                         <h3>Artículo seleccionado</h3>
@@ -484,9 +462,7 @@
             </div>
         </div>
 
-        <!-- ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ -->
-        <!-- ★ NUEVO: PÁGINA: PEDIDOS (reemplaza el placeholder) -->
-        <!-- ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★ -->
+        <!-- ============ PÁGINA: PEDIDOS ============ -->
         <div id="pagina-pedidos" class="pagina">
             <div class="page-header">
                 <h1>Pedidos</h1>
@@ -506,8 +482,7 @@
                             <div class="form-group buscador-articulo-group">
                                 <label for="inputDireccionPedido">DIRECCIÓN SOLICITANTE *</label>
                                 <div class="buscador-wrapper">
-                                    <input type="text" id="inputDireccionPedido"
-                                           placeholder="Buscar dirección..." autocomplete="off" required>
+                                    <input type="text" id="inputDireccionPedido" placeholder="Buscar dirección..." autocomplete="off" required>
                                     <span class="icono-lupa">🔍</span>
                                     <ul id="listaDireccionesPedido" class="dropdown-lista"></ul>
                                 </div>
@@ -526,13 +501,11 @@
                                 <input type="text" id="referenciaPedido" placeholder="Ej: Reposición mensual">
                             </div>
 
-                            <!-- Carrito -->
-                            <div class="carrito-section">
-                                <label>AGREGAR ARTÍCULO AL CARRITO</label>
-
-                                <div class="carrito-buscador">
-                                    <input type="text" id="inputArticuloPedido"
-                                           placeholder="Buscar artículo..." autocomplete="off">
+                            <!-- Buscador de artículos (misma estructura que Entradas) -->
+                            <div class="form-group buscador-articulo-group">
+                                <label for="inputArticuloPedido">AGREGAR ARTÍCULO AL CARRITO</label>
+                                <div class="buscador-wrapper">
+                                    <input type="text" id="inputArticuloPedido" placeholder="Escribí para buscar..." autocomplete="off">
                                     <span class="icono-lupa">🔍</span>
                                     <ul id="listaArticulosPedido" class="dropdown-lista"></ul>
                                 </div>
@@ -563,7 +536,7 @@
                             <select id="selectEstadoPedido" class="select-ubicacion" style="width: 100%; margin-bottom: 1rem;">
                                 <option value="todos">Todos los estados</option>
                                 <option value="Pendiente">Pendientes</option>
-                                <option value="Entregado">Entregados</option>
+                                <option value="Confirmado">Confirmados</option>
                             </select>
 
                             <div id="listaPedidosRecientes">
@@ -584,7 +557,7 @@
 
             </div>
         </div>
-        <!-- ★ FIN NUEVO: PEDIDOS -->
+        <!-- ★ FIN PEDIDOS -->
 
         <!-- Otras páginas (placeholder) -->
         <div id="pagina-reportes" class="pagina"><div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>

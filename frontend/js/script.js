@@ -1668,71 +1668,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hash === 'dashboard') cargarDashboard();
 });
 // ============================================================
-// 19. PEDIDOS — MAQUETA CON DATOS FAKE (FASE 1)
-// ⚠️ TEMPORAL: reemplazar por integración real en Fase 3.
+// 19. PEDIDOS — Frontend real (conectado al backend)
 // ============================================================
 let carritoPedido = [];
 let pedidoSeleccionado = null;
+let pedidosCache = [];
+let modoEdicionPedido = null; // null = nuevo, o el ID del pedido que se edita
 
-const PEDIDOS_FAKE = [
-    {
-        id: 'f2121faf', direccion: 'MT120', director: 'Ghhh',
-        referencia: 'Gyhy', estado: 'Confirmado', fecha: '2026-06-11',
-        items: [
-            { id: '1', nombre: 'Coca-Cola Original Packs x12', cantidad: 45 },
-            { id: '9', nombre: 'Bandera Bonaerense', cantidad: 9 }
-        ]
-    },
-    {
-        id: 'a8b32c11', direccion: 'MT101', director: 'María López',
-        referencia: 'Reposición mensual', estado: 'Pendiente', fecha: '2026-06-10',
-        items: [{ id: '3', nombre: 'Agua Mineral 500ml x6', cantidad: 20 }]
-    },
-    {
-        id: 'c4d55e22', direccion: 'MT105', director: 'Juan Pérez',
-        referencia: 'Evento institucional', estado: 'Entregado', fecha: '2026-06-09',
-        items: [
-            { id: '7', nombre: 'Vasos descartables x100', cantidad: 5 },
-            { id: '12', nombre: 'Servilletas x50', cantidad: 10 }
-        ]
-    }
-];
-
-function cargarPedidos() {
+// ------------------------------------------------------------
+// Cargar página Pedidos
+// ------------------------------------------------------------
+async function cargarPedidos() {
     const fechaEl = document.getElementById('fechaActualPedidos');
     if (fechaEl) {
         fechaEl.textContent = new Date().toLocaleDateString('es-AR', {
             weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
         });
     }
-    renderizarListaPedidos();
+    await cargarListaPedidos();
     renderizarCarrito();
 }
 
+// ------------------------------------------------------------
+// Traer pedidos del backend
+// ------------------------------------------------------------
+async function cargarListaPedidos() {
+    const contenedor = document.getElementById('listaPedidosRecientes');
+    if (contenedor) contenedor.innerHTML = '<p class="placeholder">Cargando pedidos...</p>';
+
+    try {
+        const r = await apiService.post({ accion: 'listarPedidos' });
+        if (!r || r.exito === false) throw new Error(r?.error || 'Error al listar');
+        pedidosCache = r.pedidos || [];
+    } catch (e) {
+        console.error('Error cargando pedidos:', e);
+        if (contenedor) contenedor.innerHTML = `<p class="placeholder">⚠️ Error: ${escapeHtml(e.message)}</p>`;
+        return;
+    }
+
+    renderizarListaPedidos();
+}
+
+// ------------------------------------------------------------
+// Render: lista de pedidos recientes
+// ------------------------------------------------------------
 function renderizarListaPedidos() {
     const contenedor = document.getElementById('listaPedidosRecientes');
     if (!contenedor) return;
 
     const filtro = document.getElementById('selectEstadoPedido')?.value || 'todos';
     const filtrados = filtro === 'todos'
-        ? PEDIDOS_FAKE
-        : PEDIDOS_FAKE.filter(p => p.estado === filtro);
+        ? pedidosCache
+        : pedidosCache.filter(p => p.estado === filtro);
 
     if (filtrados.length === 0) {
         contenedor.innerHTML = '<p class="placeholder">No hay pedidos para este filtro.</p>';
         return;
     }
 
-    contenedor.innerHTML = filtrados.map(p => `
-        <div class="pedido-item ${pedidoSeleccionado === p.id ? 'activo' : ''}" data-id="${p.id}">
-            <div class="pedido-item-top">
-                <span class="pedido-item-id">#${p.id}</span>
-                <span class="badge-estado ${p.estado.toLowerCase()}">${p.estado}</span>
+    contenedor.innerHTML = filtrados.map(p => {
+        const fechaTxt = p.fecha ? new Date(p.fecha).toLocaleDateString('es-AR') : '—';
+        return `
+            <div class="pedido-item ${pedidoSeleccionado === p.id ? 'activo' : ''}" data-id="${escapeHtml(p.id)}">
+                <div class="pedido-item-top">
+                    <span class="pedido-item-id">#${escapeHtml(p.id)}</span>
+                    <span class="badge-estado ${p.estado.toLowerCase()}">${escapeHtml(p.estado)}</span>
+                </div>
+                <div class="pedido-item-direccion">${escapeHtml(p.direccion)} · ${escapeHtml(p.director || '—')}</div>
+                <div class="pedido-item-fecha">${fechaTxt} · ${p.totalUnidades || 0} ud.</div>
             </div>
-            <div class="pedido-item-direccion">${escapeHtml(p.direccion)} · ${escapeHtml(p.director)}</div>
-            <div class="pedido-item-fecha">${new Date(p.fecha).toLocaleDateString('es-AR')}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     contenedor.querySelectorAll('.pedido-item').forEach(el => {
         el.addEventListener('click', () => {
@@ -1743,6 +1749,9 @@ function renderizarListaPedidos() {
     });
 }
 
+// ------------------------------------------------------------
+// Render: detalle de un pedido
+// ------------------------------------------------------------
 function renderizarDetallePedido() {
     const contenedor = document.getElementById('detallePedido');
     if (!contenedor) return;
@@ -1752,34 +1761,35 @@ function renderizarDetallePedido() {
         return;
     }
 
-    const p = PEDIDOS_FAKE.find(x => x.id === pedidoSeleccionado);
+    const p = pedidosCache.find(x => x.id === pedidoSeleccionado);
     if (!p) return;
 
-    const filas = p.items.map(it => `
+    const filas = (p.items || []).map(it => `
         <tr>
-            <td>${escapeHtml(it.nombre)}</td>
-            <td><span class="badge-categoria">ID ${escapeHtml(it.id)}</span></td>
+            <td>${escapeHtml(it.articuloNombre)}</td>
+            <td><span class="badge-categoria">ID ${escapeHtml(it.articuloId)}</span></td>
             <td style="font-weight:700;">${it.cantidad}</td>
         </tr>
-    `).join('');
+    `).join('') || '<tr><td colspan="3"><p class="placeholder">Sin artículos.</p></td></tr>';
 
     const esPendiente = p.estado === 'Pendiente';
+    const fechaTxt = p.fecha ? new Date(p.fecha).toLocaleDateString('es-AR') : '—';
 
     contenedor.innerHTML = `
         <div class="detalle-pedido-header">
             <div class="detalle-pedido-meta">
-                <div><span class="label">Pedido</span><span class="valor">#${p.id}</span></div>
+                <div><span class="label">Pedido</span><span class="valor">#${escapeHtml(p.id)}</span></div>
                 <div><span class="label">Dirección</span><span class="valor">${escapeHtml(p.direccion)}</span></div>
-                <div><span class="label">Solicitado por</span><span class="valor">${escapeHtml(p.director)}</span></div>
-                <div><span class="label">Referencia</span><span class="valor">${escapeHtml(p.referencia)}</span></div>
-                <div><span class="label">Fecha</span><span class="valor">${new Date(p.fecha).toLocaleDateString('es-AR')}</span></div>
-                <div><span class="label">Estado</span><span class="valor"><span class="badge-estado ${p.estado.toLowerCase()}">${p.estado}</span></span></div>
+                <div><span class="label">Solicitado por</span><span class="valor">${escapeHtml(p.director || '—')}</span></div>
+                <div><span class="label">Referencia</span><span class="valor">${escapeHtml(p.referencia || '—')}</span></div>
+                <div><span class="label">Fecha</span><span class="valor">${fechaTxt}</span></div>
+                <div><span class="label">Estado</span><span class="valor"><span class="badge-estado ${p.estado.toLowerCase()}">${escapeHtml(p.estado)}</span></span></div>
             </div>
             <div class="detalle-pedido-acciones">
                 ${esPendiente ? `
                     <button class="btn-accion-pedido" data-accion="editar">✏️ Editar</button>
                     <button class="btn-accion-pedido peligro" data-accion="cancelar">🗑️ Cancelar</button>
-                    <button class="btn-accion-pedido primario" data-accion="entregar">✅ Marcar entregado</button>
+                    <button class="btn-accion-pedido primario" data-accion="confirmar">✅ Confirmar pedido</button>
                 ` : `
                     <button class="btn-accion-pedido primario" data-accion="pdf">📄 Descargar PDF</button>
                 `}
@@ -1796,12 +1806,75 @@ function renderizarDetallePedido() {
     `;
 
     contenedor.querySelectorAll('[data-accion]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            mostrarToast(`Acción "${btn.dataset.accion}" — Fase 1 (mockup)`, 'exito');
-        });
+        btn.addEventListener('click', () => manejarAccionPedido(btn.dataset.accion, p));
     });
 }
 
+// ------------------------------------------------------------
+// Acciones del detalle
+// ------------------------------------------------------------
+async function manejarAccionPedido(accion, pedido) {
+    if (accion === 'editar') {
+        modoEdicionPedido = pedido.id;
+        document.getElementById('directorPedido').value = pedido.director || '';
+        document.getElementById('referenciaPedido').value = pedido.referencia || '';
+        document.getElementById('inputDireccionPedido').value = pedido.direccion || '';
+        document.getElementById('direccionPedido').value = pedido.direccion || '';
+        carritoPedido = (pedido.items || []).map(it => ({
+            id: it.articuloId,
+            nombre: it.articuloNombre,
+            categoria: it.categoria,
+            cantidad: it.cantidad
+        }));
+        document.getElementById('btnConfirmarPedido').textContent = 'Guardar cambios';
+        renderizarCarrito();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        mostrarToast('Editando pedido #' + pedido.id, 'exito');
+        return;
+    }
+
+    if (accion === 'cancelar') {
+        if (!confirm('¿Cancelar el pedido #' + pedido.id + '?')) return;
+        try {
+            const r = await apiService.post({ accion: 'cancelarPedido', id: pedido.id });
+            if (!r || r.exito === false) throw new Error(r?.error || 'Error');
+            mostrarToast('Pedido cancelado', 'exito');
+            pedidoSeleccionado = null;
+            await cargarListaPedidos();
+            renderizarDetallePedido();
+        } catch (e) {
+            mostrarToast('Error: ' + e.message, 'error');
+        }
+        return;
+    }
+
+    if (accion === 'confirmar') {
+        if (!confirm('¿Confirmar pedido #' + pedido.id + '?\n\nSe descontará stock y se generará el remito.')) return;
+        try {
+            const r = await apiService.post({ accion: 'confirmarPedido', id: pedido.id });
+            if (!r || r.exito === false) throw new Error(r?.error || 'Error');
+            mostrarToast('Remito ' + r.nroRemito + ' generado', 'exito');
+            await cargarListaPedidos();
+            await cargarArticulos(); // refrescar stock
+            renderizarDetallePedido();
+        } catch (e) {
+            mostrarToast('Error: ' + e.message, 'error');
+        }
+        return;
+    }
+
+    if (accion === 'pdf') {
+        if (pedido.pdfRemito && pedido.pdfRemito.startsWith('http')) {
+            window.open(pedido.pdfRemito, '_blank');
+        } else {
+            mostrarToast('PDF no disponible', 'error');
+        }
+    }
+}
+
+// ------------------------------------------------------------
+// Render: carrito
+// ------------------------------------------------------------
 function renderizarCarrito() {
     const contenedor = document.getElementById('carritoPedido');
     const totalEl = document.getElementById('carritoTotal');
@@ -1851,35 +1924,245 @@ function renderizarCarrito() {
     });
 }
 
+// ------------------------------------------------------------
+// Configurar: form, filtros, buscador
+// ------------------------------------------------------------
 function configurarPedidos() {
     const sel = document.getElementById('selectEstadoPedido');
     if (sel) sel.addEventListener('change', renderizarListaPedidos);
 
     const form = document.getElementById('formPedido');
-    if (form) {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            mostrarToast('Pedido confirmado (mockup Fase 1)', 'exito');
-        });
-    }
+    if (form) form.addEventListener('submit', manejarSubmitPedido);
 
-    const inputArt = document.getElementById('inputArticuloPedido');
-    if (inputArt) {
-        inputArt.addEventListener('keydown', (e) => {
-            if (e.key !== 'Enter') return;
-            e.preventDefault();
-            const val = inputArt.value.trim();
-            if (!val) return;
-            const item = articulos.find(a => normalizarTexto(a.articulo).includes(normalizarTexto(val)));
-            carritoPedido.push({
-                id: item ? item.id : 'demo-' + Date.now(),
-                nombre: item ? item.articulo : val,
-                cantidad: 1
-            });
-            inputArt.value = '';
-            renderizarCarrito();
-        });
-    }
+    configurarBuscadorArticulosPedido();
+    configurarBuscadorDireccionesPedido();
 
     cargarPedidos();
+}
+
+// ------------------------------------------------------------
+// Submit: crear o editar pedido
+// ------------------------------------------------------------
+async function manejarSubmitPedido(e) {
+    e.preventDefault();
+
+    const direccion = document.getElementById('direccionPedido')?.value
+        || document.getElementById('inputDireccionPedido')?.value?.trim();
+    const director = document.getElementById('directorPedido')?.value?.trim() || '';
+    const referencia = document.getElementById('referenciaPedido')?.value?.trim() || '';
+
+    if (!direccion) { mostrarToast('Seleccioná una dirección', 'error'); return; }
+    if (carritoPedido.length === 0) { mostrarToast('El carrito está vacío', 'error'); return; }
+
+    const btn = document.getElementById('btnConfirmarPedido');
+    const txtOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    try {
+        const items = carritoPedido.map(it => ({
+            id: it.id,
+            nombre: it.nombre,
+            categoria: it.categoria,
+            cantidad: it.cantidad
+        }));
+
+        let r;
+        if (modoEdicionPedido) {
+            r = await apiService.post({
+                accion: 'editarPedido',
+                id: modoEdicionPedido,
+                direccion, director, referencia, items
+            });
+        } else {
+            r = await apiService.post({
+                accion: 'crearPedido',
+                direccion, director, referencia, items
+            });
+        }
+
+        if (!r || r.exito === false) throw new Error(r?.error || 'Error');
+
+        mostrarToast(modoEdicionPedido ? 'Pedido actualizado' : 'Pedido creado', 'exito');
+
+        // Reset
+        carritoPedido = [];
+        modoEdicionPedido = null;
+        document.getElementById('formPedido').reset();
+        document.getElementById('direccionPedido').value = '';
+        document.getElementById('directorPedido').value = '';
+        document.getElementById('referenciaPedido').value = '';
+        btn.textContent = 'Confirmar pedido';
+        renderizarCarrito();
+
+        await cargarListaPedidos();
+    } catch (err) {
+        mostrarToast('Error: ' + err.message, 'error');
+        btn.textContent = txtOriginal;
+    } finally {
+        btn.disabled = false;
+        if (modoEdicionPedido === null) btn.textContent = 'Confirmar pedido';
+    }
+}
+// ------------------------------------------------------------
+// Buscador de artículos con dropdown (para el carrito)
+// ------------------------------------------------------------
+function configurarBuscadorArticulosPedido() {
+    const input = document.getElementById('inputArticuloPedido');
+    const dropdown = document.getElementById('listaArticulosPedido');
+    if (!input || !dropdown) return;
+
+    input.addEventListener('focus', function() {
+        if (this.value.trim().length >= 1) filtrar(this.value.trim());
+    });
+
+    input.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (val.length >= 1) {
+            filtrar(val);
+            dropdown.classList.add('visible');
+        } else {
+            dropdown.classList.remove('visible');
+        }
+    });
+
+    input.addEventListener('keydown', function(e) {
+        const items = dropdown.querySelectorAll('li');
+        if (items.length === 0) return;
+
+        let idx = Array.from(items).findIndex(li => li.classList.contains('seleccionado'));
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            idx = (idx + 1) % items.length;
+            items.forEach((li, i) => li.classList.toggle('seleccionado', i === idx));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            idx = (idx - 1 + items.length) % items.length;
+            items.forEach((li, i) => li.classList.toggle('seleccionado', i === idx));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (idx >= 0 && items[idx]) {
+                items[idx].click();
+            } else if (items.length > 0) {
+                items[0].click();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.classList.remove('visible');
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.carrito-section') &&
+            !e.target.closest('.buscador-articulo-group')) {
+            dropdown.classList.remove('visible');
+        }
+    });
+
+    function filtrar(texto) {
+        const termino = normalizarTexto(texto);
+        const resultados = articulos.filter(item =>
+            normalizarTexto(item.articulo).includes(termino) ||
+            String(item.id).includes(termino)
+        ).slice(0, 10);
+
+        dropdown.innerHTML = '';
+
+        if (resultados.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = 'No se encontraron artículos';
+            li.style.color = 'var(--text-muted)';
+            li.style.fontStyle = 'italic';
+            li.style.cursor = 'default';
+            dropdown.appendChild(li);
+            dropdown.classList.add('visible');
+            return;
+        }
+
+        resultados.forEach(item => {
+            const li = document.createElement('li');
+            const stock = obtenerStock ? obtenerStock(item) : '—';
+            li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">ID ${escapeHtml(String(item.id))} · Stock ${stock}</span>`;
+            li.addEventListener('click', function() {
+                agregarAlCarrito(item);
+                input.value = '';
+                dropdown.classList.remove('visible');
+            });
+            dropdown.appendChild(li);
+        });
+        dropdown.classList.add('visible');
+    }
+}
+
+// ------------------------------------------------------------
+// Agregar un artículo al carrito
+// ------------------------------------------------------------
+function agregarAlCarrito(item) {
+    const existente = carritoPedido.find(x => String(x.id) === String(item.id));
+    if (existente) {
+        existente.cantidad += 1;
+    } else {
+        carritoPedido.push({
+            id: item.id,
+            nombre: item.articulo,
+            categoria: item.categoriaID || '',
+            cantidad: 1
+        });
+    }
+    renderizarCarrito();
+}
+
+// ------------------------------------------------------------
+// Buscador de direcciones con dropdown
+// ------------------------------------------------------------
+function configurarBuscadorDireccionesPedido() {
+    const input = document.getElementById('inputDireccionPedido');
+    const hidden = document.getElementById('direccionPedido');
+    const dropdown = document.getElementById('listaDireccionesPedido');
+    if (!input || !hidden || !dropdown) return;
+
+    input.addEventListener('input', function() {
+        const val = this.value.trim();
+        hidden.value = val;
+
+        if (val.length < 1) {
+            dropdown.classList.remove('visible');
+            return;
+        }
+
+        const termino = normalizarTexto(val);
+        const coincidencias = (direccionesOficiales || []).filter(d =>
+            normalizarTexto(d.nombre).includes(termino)
+        ).slice(0, 10);
+
+        dropdown.innerHTML = '';
+
+        if (coincidencias.length === 0) {
+            const li = document.createElement('li');
+            li.innerHTML = `Usar: <strong>${escapeHtml(val)}</strong> <span class="id-articulo">(texto libre)</span>`;
+            li.addEventListener('click', function() {
+                hidden.value = val;
+                dropdown.classList.remove('visible');
+            });
+            dropdown.appendChild(li);
+        } else {
+            coincidencias.forEach(dir => {
+                const li = document.createElement('li');
+                li.innerHTML = `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`;
+                li.addEventListener('click', function() {
+                    input.value = dir.nombre;
+                    hidden.value = dir.nombre;
+                    dropdown.classList.remove('visible');
+                });
+                dropdown.appendChild(li);
+            });
+        }
+        dropdown.classList.add('visible');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#inputDireccionPedido')) {
+            dropdown.classList.remove('visible');
+        }
+    });
 }
