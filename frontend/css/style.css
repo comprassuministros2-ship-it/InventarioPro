@@ -5,7 +5,8 @@
 
    01. FUENTE
    02. RESET
-   03. VARIABLES — TEMA CLARO
+   03. VARIABLES — TEMA CLARO (default)
+   03b. VARIABLES — TEMA OSCURO
    04. CUERPO
    05. LAYOUT PRINCIPAL (grid sidebar + contenido)
    06. SIDEBAR (navegación lateral + versión colapsada)
@@ -34,6 +35,10 @@
    29. ESTADÍSTICAS — SECCIONES Y TÍTULOS
    30. DIRECCIONES — RANKING TOP 10 (tabla con barras y medallas)
    31. DIRECCIONES — DETALLE (acordeón)
+   32. FORMULARIO SALIDAS — Campo Destino con buscador
+   33. MODAL — Agregar nueva dirección
+   34. DASHBOARD — Tarjetas y acciones rápidas
+   35. PEDIDOS — Layout, carrito, seguimiento y rediseño
    ============================================================ */
 
 /* =========================================
@@ -51,10 +56,9 @@
 }
 
 /* =========================================
-   03. VARIABLES — TEMA CLARO
+   03. VARIABLES — TEMA CLARO (default)
    ========================================= */
 :root,
-[data-theme="dark"],
 [data-theme="light"] {
     --bg: #f8fafc;
     --bg-card: #ffffff;
@@ -96,6 +100,37 @@
 
     /* Ancho máximo del contenido */
     --content-max-width: 1400px;
+}
+
+/* =========================================
+   03b. VARIABLES — TEMA OSCURO
+   ========================================= */
+[data-theme="dark"] {
+    --bg: #0f172a;
+    --bg-card: #1e293b;
+    --bg-input: #1e293b;
+    --bg-hover: #334155;
+    --border: #334155;
+    --text: #f1f5f9;
+    --text-muted: #cbd5e1;
+    --text-soft: #94a3b8;
+
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-soft: rgba(59, 130, 246, .15);
+    --accent-border: rgba(59, 130, 246, .35);
+
+    --sidebar-bg: #1e293b;
+    --sidebar-hover: #334155;
+    --sidebar-active: #3b82f6;
+    --sidebar-active-bg: rgba(59, 130, 246, .15);
+    --sidebar-text: #f1f5f9;
+    --sidebar-text-muted: #cbd5e1;
+    --sidebar-border: #334155;
+    --sidebar-btn-bg: #1e293b;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .25), 0 1px 3px rgba(0, 0, 0, .35);
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, .30), 0 4px 12px rgba(0, 0, 0, .25);
 }
 
 /* =========================================
@@ -544,7 +579,6 @@ body {
 
 /* =========================================
    12. PANELES LATERALES
-   (vista previa + últimas entradas/salidas)
    ========================================= */
 .vista-previa,
 .ultimas-entradas,
@@ -586,7 +620,6 @@ body {
     margin-top: 0.8rem;
 }
 
-/* Listas de movimientos (dentro de los paneles) */
 .lista-entradas,
 .lista-salidas {
     list-style: none;
@@ -667,7 +700,6 @@ body {
 
 /* =========================================
    14. BUSCADOR DE ARTÍCULOS CON DROPDOWN
-   (inputs de búsqueda dentro de formularios)
    ========================================= */
 .buscador-articulo-group .buscador-wrapper {
     position: relative;
@@ -729,7 +761,7 @@ body {
 }
 
 /* =========================================
-   15. BADGES (etiquetas de estado)
+   15. BADGES
    ========================================= */
 .badge {
     padding: 0.35rem 0.8rem;
@@ -810,7 +842,7 @@ body {
 }
 
 .inventario-tabla th {
-    background: #f8fafc;
+    background: var(--bg-hover);
     font-weight: 700;
     text-transform: uppercase;
     font-size: 0.72rem;
@@ -821,7 +853,7 @@ body {
 }
 
 .inventario-tabla tbody tr { transition: background-color 0.15s ease; }
-.inventario-tabla tbody tr:hover td { background: #f1f5f9; }
+.inventario-tabla tbody tr:hover td { background: var(--bg-hover); }
 .inventario-tabla tbody tr:last-child td { border-bottom: none; }
 
 .inventario-tabla thead th:first-child { border-top-left-radius: 10px; }
@@ -829,7 +861,6 @@ body {
 .inventario-tabla tbody tr:last-child td:first-child { border-bottom-left-radius: 10px; }
 .inventario-tabla tbody tr:last-child td:last-child { border-bottom-right-radius: 10px; }
 
-/* Tabla — celda de artículo (imagen + nombre) */
 .articulo-celda {
     display: flex;
     align-items: center;
@@ -890,7 +921,6 @@ body {
     color: var(--text-muted);
 }
 
-/* Tabla — emoji del artículo (cuando no hay imagen) */
 .emoji-articulo {
     font-size: 1.6rem;
     line-height: 1;
@@ -904,7 +934,6 @@ body {
     text-rendering: optimizeLegibility;
 }
 
-/* Tabla — scrollbar horizontal */
 .inventario-tabla-wrapper::-webkit-scrollbar { height: 8px; }
 .inventario-tabla-wrapper::-webkit-scrollbar-track { background: transparent; }
 .inventario-tabla-wrapper::-webkit-scrollbar-thumb {
@@ -969,7 +998,6 @@ body {
 
 /* =========================================
    19. BUSCADOR DE INVENTARIO
-   (píldora con brillo animado)
    ========================================= */
 .buscador-inventario {
     position: relative;
@@ -1228,43 +1256,34 @@ body {
     .salidas-form { padding: 1.2rem; }
 }
 
-/* ============================================================
+/* =========================================
    26. TOAST — NOTIFICACIONES FLOTANTES
-   ============================================================
-   HTML requerido al final del <body>:
-
-   <div id="toast" class="toast" role="alert" aria-live="polite">
-       <div class="toast-icono">✓</div>
-       <div class="toast-mensaje"></div>
-   </div>
-
-   Contrato con el JS:
-   - .visible     → mostrar   |  sin .visible → oculto
-   - .toast-error → variante error
-   ============================================================ */
-
-/* Toast — variables locales (mismos colores que ya usa la app) */
+   ========================================= */
 :root {
-    --toast-success: #16a34a;      /* verde de .lista-entradas .item-cantidad */
-    --toast-success-bg: #dcfce7;   /* fondo de .badge-disponible */
-    --toast-error: #dc2626;        /* rojo de .lista-salidas .item-cantidad */
-    --toast-error-bg: #fee2e2;     /* fondo de .badge-sin-stock */
+    --toast-success: #16a34a;
+    --toast-success-bg: #dcfce7;
+    --toast-error: #dc2626;
+    --toast-error-bg: #fee2e2;
 
-    /* Misma familia de tono que --shadow-md, más elevada
-       porque el toast "flota" sobre todo el contenido */
     --toast-shadow:
         0 2px 4px rgba(15, 23, 42, .06),
         0 12px 24px rgba(15, 23, 42, .12),
         0 20px 48px rgba(15, 23, 42, .10);
 }
 
-/* Toast — contenedor en estado oculto (base) */
+[data-theme="dark"] {
+    --toast-shadow:
+        0 2px 4px rgba(0, 0, 0, .35),
+        0 12px 24px rgba(0, 0, 0, .45),
+        0 20px 48px rgba(0, 0, 0, .35);
+}
+
 .toast {
     position: fixed;
     right: 24px;
-    bottom: 24px; /* fallback si el navegador no soporta env() */
+    bottom: 24px;
     bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-    z-index: 1200; /* encima de dropdowns (1000) y overlay (999) */
+    z-index: 1200;
 
     display: flex;
     align-items: center;
@@ -1278,21 +1297,17 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     box-shadow: var(--toast-shadow);
-    overflow: hidden; /* recorta el acento y la barra al radio */
+    overflow: hidden;
 
-    /* Estado oculto: opacity + transform (contrato con el JS)
-       + micro-escala para una entrada con más "cuerpo" */
     opacity: 0;
     transform: translateY(20px) scale(0.97);
-    pointer-events: none; /* invisible = no bloquea clics */
+    pointer-events: none;
 
-    /* Transición de SALIDA: rápida, se retira sin molestar */
     transition:
         opacity 0.25s ease,
         transform 0.3s cubic-bezier(0.4, 0, 1, 1);
 }
 
-/* Toast — estado visible (animación de entrada con curva "expo") */
 .toast.visible {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -1303,8 +1318,6 @@ body {
         transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Toast — borde izquierdo de estado (::before)
-   Verde por defecto (éxito) · rojo con .toast-error */
 .toast::before {
     content: '';
     position: absolute;
@@ -1319,7 +1332,6 @@ body {
     background: var(--toast-error);
 }
 
-/* Toast — ícono circular (el anillo replica el estilo del logo) */
 .toast-icono {
     display: flex;
     align-items: center;
@@ -1345,17 +1357,14 @@ body {
     box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }
 
-/* Toast — mensaje */
 .toast-mensaje {
     font-size: 0.9rem;
     font-weight: 500;
     line-height: 1.45;
     color: var(--text);
-    overflow-wrap: anywhere; /* textos largos no rompen el layout */
+    overflow-wrap: anywhere;
 }
 
-/* Toast — barra de progreso (::after)
-   Se vacía en 3s, sincronizada con el setTimeout del JS */
 .toast::after {
     content: '';
     position: absolute;
@@ -1364,7 +1373,7 @@ body {
     width: 100%;
     height: 3px;
     background: var(--toast-success);
-    transform: scaleX(0); /* oculta fuera del estado visible (evita flash en la salida) */
+    transform: scaleX(0);
     transform-origin: left;
 }
 
@@ -1381,19 +1390,17 @@ body {
     to   { transform: scaleX(0); }
 }
 
-/* Toast — responsive (móvil: ancho completo abajo) */
 @media (max-width: 768px) {
     .toast {
         left: 16px;
         right: 16px;
-        bottom: 16px; /* fallback si el navegador no soporta env() */
+        bottom: 16px;
         bottom: calc(16px + env(safe-area-inset-bottom, 0px));
         min-width: 0;
         max-width: none;
     }
 }
 
-/* Toast — accesibilidad (respetar "reducir movimiento") */
 @media (prefers-reduced-motion: reduce) {
     .toast,
     .toast.visible {
@@ -1443,8 +1450,6 @@ body {
     gap: var(--space-md);
 }
 
-/* Relevamiento — responsive (afinaciones menores en móvil;
-   el paso a 1 columna ya lo cubre el @media de 992px) */
 @media (max-width: 768px) {
     .relevamiento-wrapper {
         gap: 1rem;
@@ -1456,15 +1461,12 @@ body {
 
 /* =========================================
    28. MENÚ DESPLEGABLE DE ACCIONES
-   (botón ➡️ en la tabla de inventario:
-   Detalles / Relevamiento)
    ========================================= */
 .acciones-celda {
-    position: relative; /* ancla del menú desplegable */
+    position: relative;
     display: inline-block;
 }
 
-/* Botón que abre el menú */
 .btn-menu {
     font-size: 0.9rem;
     line-height: 1;
@@ -1478,7 +1480,6 @@ body {
     border-color: var(--accent);
 }
 
-/* Panel flotante con las opciones */
 .menu-desplegable {
     position: absolute;
     top: calc(100% + 4px);
@@ -1490,14 +1491,13 @@ body {
     box-shadow: var(--shadow-md);
     padding: 0.4rem;
     z-index: 100;
-    display: none; /* oculto por defecto; .visible lo muestra */
+    display: none;
 }
 
 .menu-desplegable.visible {
     display: block;
 }
 
-/* Cada opción del menú */
 .menu-item {
     display: flex;
     align-items: center;
@@ -1531,8 +1531,6 @@ body {
 
 /* =========================================
    29. ESTADÍSTICAS — SECCIONES Y TÍTULOS
-   (contenedores panel de páginas tipo
-   Estadísticas / Direcciones)
    ========================================= */
 .estadistica-seccion {
     background: var(--bg-card);
@@ -1553,8 +1551,6 @@ body {
 
 /* =========================================
    30. DIRECCIONES — RANKING TOP 10
-   (tabla con barras de progreso y medallas
-   para los 3 primeros puestos)
    ========================================= */
 .ranking-tabla {
     width: 100%;
@@ -1586,9 +1582,6 @@ body {
     background: var(--bg-hover);
 }
 
-/* Fila activa (seleccionada)
-   NOTA: border-left no se pinta en <tr> con border-collapse: separate;
-   box-shadow inset logra la misma barra lateral azul */
 .ranking-tabla tbody tr.activo {
     background: var(--accent-soft);
     box-shadow: inset 3px 0 0 0 var(--accent);
@@ -1606,7 +1599,6 @@ body {
     border-bottom: none;
 }
 
-/* Número de posición (círculo) */
 .ranking-numero {
     display: inline-flex;
     align-items: center;
@@ -1620,7 +1612,6 @@ body {
     font-size: 0.75rem;
 }
 
-/* Medallas: oro (1°), plata (2°), bronce (3°) */
 .ranking-tabla tbody tr:nth-child(1) .ranking-numero {
     background: #fef3c7;
     color: #b45309;
@@ -1636,7 +1627,6 @@ body {
     color: #c2410c;
 }
 
-/* Barra de progreso */
 .ranking-barra-wrapper {
     display: flex;
     align-items: center;
@@ -1757,8 +1747,10 @@ body {
 
 .detalle-articulo-tabla tr:last-child td {
     border-bottom: none;
-}/* =========================================
-   FORMULARIO SALIDAS - Campo Destino con buscador
+}
+
+/* =========================================
+   32. FORMULARIO SALIDAS — Campo Destino
    ========================================= */
 .destino-wrapper {
     display: flex;
@@ -1810,7 +1802,7 @@ body {
 }
 
 /* =========================================
-   MODAL - Overlay
+   33. MODAL — Agregar nueva dirección
    ========================================= */
 .modal-overlay {
     position: fixed;
@@ -1829,9 +1821,6 @@ body {
     to   { opacity: 1; }
 }
 
-/* =========================================
-   MODAL - Contenido
-   ========================================= */
 .modal-contenido {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -1947,8 +1936,9 @@ body {
     margin-top: 0.5rem;
     min-height: 1rem;
 }
+
 /* =========================================
-   DASHBOARD - Tarjetas de resumen
+   34. DASHBOARD
    ========================================= */
 .dashboard-tarjetas {
     display: grid;
@@ -2026,9 +2016,6 @@ body {
     color: var(--text-muted);
 }
 
-/* =========================================
-   DASHBOARD - Acciones rápidas
-   ========================================= */
 .dashboard-acciones {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -2072,9 +2059,6 @@ body {
     line-height: 1;
 }
 
-/* =========================================
-   DASHBOARD - Grid de 2 columnas
-   ========================================= */
 .dashboard-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -2088,7 +2072,6 @@ body {
     }
 }
 
-/* Lista de últimos movimientos */
 .dash-mov-lista {
     list-style: none;
     padding: 0;
@@ -2161,7 +2144,6 @@ body {
     color: #dc2626;
 }
 
-/* Lista de artículos críticos */
 .dash-critico-lista {
     list-style: none;
     padding: 0;
@@ -2211,7 +2193,6 @@ body {
     color: #c2410c;
 }
 
-/* Tabla de salidas con remito */
 .dash-remito-tabla {
     width: 100%;
     border-collapse: separate;
@@ -2240,9 +2221,12 @@ body {
 .dash-remito-tabla tr:last-child td {
     border-bottom: none;
 }
+
 /* =========================================
-   PEDIDOS - Layout de dos columnas
+   35. PEDIDOS — Layout, carrito, seguimiento
    ========================================= */
+
+/* --- Layout de dos columnas --- */
 .pedidos-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -2276,9 +2260,7 @@ body {
     gap: 1rem;
 }
 
-/* =========================================
-   CARRITO - Buscador y lista
-   ========================================= */
+/* --- Carrito: buscador --- */
 .carrito-section {
     margin-bottom: 1rem;
 }
@@ -2325,9 +2307,7 @@ body {
     pointer-events: none;
 }
 
-/* =========================================
-   CARRITO - Contenedor y tabla
-   ========================================= */
+/* --- Carrito: contenedor y tabla --- */
 .carrito-contenedor {
     background: var(--bg);
     border: 1px dashed var(--border);
@@ -2390,30 +2370,7 @@ body {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
 }
 
-.carrito-btn-quitar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.15s;
-}
-
-.carrito-btn-quitar:hover {
-    background: #fee2e2;
-    color: #dc2626;
-    border-color: #fecaca;
-}
-
-/* =========================================
-   CARRITO - Resumen (total + botón)
-   ========================================= */
+/* --- Carrito: resumen --- */
 .carrito-resumen {
     display: flex;
     align-items: center;
@@ -2438,9 +2395,7 @@ body {
     padding: 0.7rem 1.5rem;
 }
 
-/* =========================================
-   PEDIDOS RECIENTES - Lista
-   ========================================= */
+/* --- Pedidos recientes: lista --- */
 .lista-pedidos {
     list-style: none;
     padding: 0;
@@ -2510,9 +2465,7 @@ body {
     color: var(--text-muted);
 }
 
-/* =========================================
-   BADGES DE ESTADO (Pendiente / Entregado)
-   ========================================= */
+/* --- Badges de estado del pedido --- */
 .badge-pendiente {
     background: #fef3c7;
     color: #b45309;
@@ -2535,9 +2488,7 @@ body {
     letter-spacing: 0.3px;
 }
 
-/* =========================================
-   DETALLE DEL PEDIDO
-   ========================================= */
+/* --- Detalle del pedido --- */
 .detalle-pedido-header {
     display: flex;
     flex-wrap: wrap;
@@ -2611,4 +2562,446 @@ body {
 .btn-peligro:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* --- Pestañas, seguimiento y rediseño --- */
+.pedidos-contenido { padding: 0 1.5rem 1.5rem; }
+
+.pedidos-tabs {
+    display: flex;
+    gap: .5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+}
+
+.pedidos-tab {
+    border: 0;
+    border-bottom: 3px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    padding: .85rem 1.1rem;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.pedidos-tab:hover,
+.pedidos-tab.activo { color: var(--accent); }
+.pedidos-tab.activo { border-bottom-color: var(--accent); }
+
+.pedidos-tab-panel[hidden],
+#detallePedidoSeccion[hidden] { display: none !important; }
+
+.pedidos-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(280px, .9fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.pedidos-form,
+.pedidos-sidebar .estadistica-seccion,
+.pedidos-detalle-seccion {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.pedidos-form h2 {
+    margin: 0 0 1.25rem;
+    color: var(--text);
+    font-size: 1.15rem;
+}
+
+.pedidos-sidebar { min-width: 0; }
+.pedidos-sidebar .estadistica-titulo { margin-top: 0; }
+
+.pedidos-resumen-tira {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+}
+
+.pedidos-resumen-item {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    padding: .25rem .75rem;
+    border-right: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: .8rem;
+}
+
+.pedidos-resumen-item:last-child { border-right: 0; }
+
+.pedidos-resumen-item strong {
+    color: var(--text);
+    font-size: 1.8rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+}
+
+.pedidos-resumen-label {
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+}
+
+.pedidos-filtros {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: .75rem;
+    margin: 1rem 0;
+}
+
+.pedidos-filtros-fecha,
+.pedidos-filtros-estado {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.pedidos-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-card);
+    color: var(--text-muted);
+    padding: .5rem .8rem;
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .15s ease;
+}
+
+.pedidos-chip:hover,
+.pedidos-chip.activo {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--bg-hover);
+}
+
+.pedidos-chip strong { color: var(--text); }
+
+.pedidos-punto {
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background: #f59e0b;
+}
+
+.pedidos-punto.confirmado { background: #16a34a; }
+
+.pedidos-hoja-contenedor {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pedidos-grupo-dia {
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+}
+
+.pedidos-grupo-titulo {
+    margin: 0;
+    padding: .85rem 1rem;
+    background: var(--bg-hover);
+    color: var(--text);
+    font-size: .85rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.pedidos-tabla-seguimiento {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pedidos-tabla-seguimiento th {
+    padding: .7rem .75rem;
+    color: var(--text-muted);
+    text-align: left;
+    font-size: .67rem;
+    letter-spacing: .06em;
+    white-space: nowrap;
+}
+
+.pedidos-tabla-seguimiento td {
+    padding: .75rem;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-size: .82rem;
+    vertical-align: middle;
+}
+
+.pedidos-tabla-seguimiento tr:hover td { background: var(--bg-hover); }
+
+.pedidos-direccion { display: block; font-weight: 750; }
+
+.pedidos-codigo,
+.pedidos-items-resumen,
+.pedidos-fecha-hora,
+.pedidos-unidades-label {
+    display: block;
+    margin-top: .2rem;
+    color: var(--text-muted);
+    font-size: .7rem;
+}
+
+.pedidos-items-resumen {
+    max-width: 250px;
+    line-height: 1.45;
+}
+
+.pedidos-unidades {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.badge-estado.pendiente {
+    display: inline-flex;
+    padding: .28rem .6rem;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #b45309;
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+.badge-estado.confirmado {
+    display: inline-flex;
+    padding: .28rem .6rem;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+.pedidos-acciones { display: flex; gap: .35rem; }
+
+.pedidos-acciones-icono {
+    display: inline-flex;
+    width: 2.2rem;
+    height: 2.2rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.pedidos-acciones-icono:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+}
+
+.pedido-card {
+    position: relative;
+    padding: .85rem .75rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.pedido-card:last-child { border-bottom: 0; }
+
+.pedido-card:hover,
+.pedido-card.activo { background: var(--bg-hover); }
+
+.pedido-card-titulo {
+    display: block;
+    padding-right: 4.2rem;
+    color: var(--accent);
+    font-weight: 750;
+}
+
+.pedido-card-id {
+    position: absolute;
+    top: .8rem;
+    right: .7rem;
+    padding: .2rem .4rem;
+    border-radius: 6px;
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    font-size: .65rem;
+    font-weight: 700;
+}
+
+.pedido-card-subtitulo,
+.pedido-card-meta {
+    display: block;
+    margin-top: .3rem;
+    color: var(--text-muted);
+    font-size: .72rem;
+}
+
+.pedido-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    margin-top: .55rem;
+}
+
+.carrito-item {
+    display: grid;
+    grid-template-columns: auto minmax(0,1fr) auto auto;
+    align-items: center;
+    gap: .7rem;
+    padding: .8rem .35rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.carrito-item:last-child { border-bottom: 0; }
+
+.carrito-item-emoji { font-size: 1.4rem; }
+
+.carrito-item-nombre {
+    color: var(--text);
+    font-weight: 700;
+}
+
+.carrito-item-stock {
+    display: block;
+    margin-top: .2rem;
+    color: var(--text-muted);
+    font-size: .7rem;
+}
+
+.carrito-stepper {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.carrito-cantidad-valor {
+    min-width: 1.8rem;
+    text-align: center;
+    color: var(--text);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.carrito-btn-stepper,
+.carrito-btn-quitar {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--bg-card);
+    color: var(--text);
+    font: inherit;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.carrito-btn-stepper:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.carrito-btn-quitar {
+    color: #dc2626;
+    font-size: 1rem;
+}
+
+.carrito-btn-quitar:hover {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.carrito-resumen { align-items: flex-end; }
+
+.carrito-total-bloque {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.carrito-total-label {
+    color: var(--text-muted);
+    font-size: .68rem !important;
+    font-weight: 800;
+    letter-spacing: .06em;
+}
+
+.carrito-total-bloque strong {
+    color: var(--text);
+    font-size: 1.55rem;
+}
+
+.carrito-resumen .btn-submit {
+    width: auto;
+    min-height: 3rem;
+    background: var(--accent);
+}
+
+.pedidos-detalle-seccion { margin-top: 1rem; }
+
+@media (max-width: 1050px) {
+    .pedidos-tabla-seguimiento { min-width: 850px; }
+    .pedidos-grupo-dia { overflow-x: auto; }
+}
+
+@media (max-width: 760px) {
+    .pedidos-contenido { padding: 0 1rem 1rem; }
+    .pedidos-grid { grid-template-columns: 1fr; }
+    .pedidos-resumen-tira {
+        grid-template-columns: 1fr;
+        gap: .35rem;
+    }
+    .pedidos-resumen-item {
+        flex-direction: row;
+        align-items: baseline;
+        gap: .5rem;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        padding: .65rem .25rem;
+    }
+    .pedidos-resumen-item:last-child { border-bottom: 0; }
+    .pedidos-resumen-item strong {
+        margin-left: auto;
+        font-size: 1.35rem;
+    }
+    .pedidos-filtros {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .carrito-item {
+        grid-template-columns: auto minmax(0,1fr) auto auto;
+        gap: .45rem;
+    }
+    .carrito-item-stock { grid-column: 2; }
+    .carrito-stepper { grid-column: 3; grid-row: 1 / span 2; }
+    .carrito-btn-quitar { grid-column: 4; grid-row: 1 / span 2; }
+    .carrito-resumen {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .carrito-resumen .btn-submit { width: 100%; }
 }

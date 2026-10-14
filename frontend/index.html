@@ -33,7 +33,6 @@
             </section>
             <section class="sidebar-nav-group">
                 <h2 class="sidebar-section-title">Gestión</h2>
-                <a href="#" class="sidebar-link" data-page="relevamiento">Relevamiento</a>
                 <a href="#" class="sidebar-link" data-page="movimientos">Movimientos</a>
                 <a href="#" class="sidebar-link" data-page="direcciones">Direcciones</a>
                 <a href="#" class="sidebar-link" data-page="dashboard">Dashboard</a>
@@ -466,102 +465,126 @@
         <div id="pagina-pedidos" class="pagina">
             <div class="page-header">
                 <h1>Pedidos</h1>
-                <p class="fecha-hoy">Carrito y seguimiento - <span id="fechaActualPedidos"></span></p>
+                <p class="fecha-hoy">Gestión de pedidos - <span id="fechaActualPedidos"></span></p>
             </div>
+            <div class="pedidos-contenido">
+                <div class="pedidos-tabs" role="tablist" aria-label="Secciones de pedidos">
+                    <button type="button" class="pedidos-tab" id="tabNuevoPedido" role="tab" aria-selected="false" aria-controls="pedidosTabNuevo" data-tab-pedidos="nuevo">Nuevo pedido</button>
+                    <button type="button" class="pedidos-tab activo" id="tabSeguimientoPedidos" role="tab" aria-selected="true" aria-controls="pedidosTabSeguimiento" data-tab-pedidos="seguimiento">Hoja de seguimiento</button>
+                </div>
 
-            <div style="padding: 0 1.5rem;">
-
-                <div class="pedidos-grid">
-
-                    <!-- ============ COLUMNA IZQUIERDA: FORMULARIO + CARRITO ============ -->
-                    <div class="pedidos-form">
-                        <h2>Nuevo pedido</h2>
-                        <form id="formPedido">
-
-                            <!-- Dirección (buscador) -->
-                            <div class="form-group buscador-articulo-group">
-                                <label for="inputDireccionPedido">DIRECCIÓN SOLICITANTE *</label>
-                                <div class="buscador-wrapper">
-                                    <input type="text" id="inputDireccionPedido" placeholder="Buscar dirección..." autocomplete="off" required>
-                                    <span class="icono-lupa">🔍</span>
-                                    <ul id="listaDireccionesPedido" class="dropdown-lista"></ul>
+                <section id="pedidosTabNuevo" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabNuevoPedido" hidden>
+                    <div class="pedidos-grid">
+                        <div class="pedidos-form">
+                            <h2>Datos del pedido</h2>
+                            <form id="formPedido">
+                                <div class="form-group buscador-articulo-group">
+                                    <label for="inputDireccionPedido">DIRECCIÓN SOLICITANTE *</label>
+                                    <div class="buscador-wrapper">
+                                        <input type="text" id="inputDireccionPedido" placeholder="Buscar dirección..." autocomplete="off" required>
+                                        <span class="icono-lupa">🔍</span>
+                                        <ul id="listaDireccionesPedido" class="dropdown-lista"></ul>
+                                    </div>
+                                    <input type="hidden" id="direccionPedido" value="">
                                 </div>
-                                <input type="hidden" id="direccionPedido" value="">
-                            </div>
-
-                            <!-- Director / Solicitante -->
-                            <div class="form-group">
-                                <label for="directorPedido">SOLICITADO POR</label>
-                                <input type="text" id="directorPedido" placeholder="Nombre del solicitante">
-                            </div>
-
-                            <!-- Referencia / Motivo -->
-                            <div class="form-group">
-                                <label for="referenciaPedido">REFERENCIA / MOTIVO</label>
-                                <input type="text" id="referenciaPedido" placeholder="Ej: Reposición mensual">
-                            </div>
-
-                            <!-- Buscador de artículos (misma estructura que Entradas) -->
-                            <div class="form-group buscador-articulo-group">
-                                <label for="inputArticuloPedido">AGREGAR ARTÍCULO AL CARRITO</label>
-                                <div class="buscador-wrapper">
-                                    <input type="text" id="inputArticuloPedido" placeholder="Escribí para buscar..." autocomplete="off">
-                                    <span class="icono-lupa">🔍</span>
-                                    <ul id="listaArticulosPedido" class="dropdown-lista"></ul>
+                                <div class="form-group">
+                                    <label for="directorPedido">SOLICITADO POR</label>
+                                    <input type="text" id="directorPedido" placeholder="Nombre del solicitante">
+                                </div>
+                                <div class="form-group">
+                                    <label for="referenciaPedido">REFERENCIA / MOTIVO</label>
+                                    <input type="text" id="referenciaPedido" placeholder="Ej: Reposición mensual">
+                                </div>
+                                <div class="form-group buscador-articulo-group">
+                                    <label for="inputArticuloPedido">AGREGAR ARTÍCULO AL CARRITO</label>
+                                    <div class="buscador-wrapper">
+                                        <input type="text" id="inputArticuloPedido" placeholder="Buscar artículo..." autocomplete="off">
+                                        <span class="icono-lupa">🔍</span>
+                                        <ul id="listaArticulosPedido" class="dropdown-lista"></ul>
+                                    </div>
+                                </div>
+                                <div id="carritoPedido" class="carrito-contenedor">
+                                    <p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>
+                                </div>
+                                <div class="carrito-resumen">
+                                    <div class="carrito-total-bloque">
+                                        <span class="carrito-total-label">TOTAL DEL PEDIDO</span>
+                                        <strong><span id="carritoTotal">0</span> unidades</strong>
+                                    </div>
+                                    <button type="submit" class="btn-submit" id="btnConfirmarPedido">Confirmar pedido →</button>
+                                </div>
+                            </form>
+                        </div>
+                        <aside class="pedidos-sidebar">
+                            <div class="estadistica-seccion">
+                                <h2 class="estadistica-titulo">Pedidos recientes</h2>
+                                <div id="listaPedidosRecientes">
+                                    <p class="placeholder">Cargando pedidos...</p>
                                 </div>
                             </div>
-
-                            <!-- Tabla del carrito -->
-                            <div id="carritoPedido" class="carrito-contenedor">
-                                <p class="placeholder">El carrito está vacío. Seleccioná artículos arriba.</p>
-                            </div>
-
-                            <!-- Total y botón -->
-                            <div class="carrito-resumen">
-                                <span>Total: <strong id="carritoTotal">0</strong> unidades</span>
-                                <button type="submit" class="btn-submit" id="btnConfirmarPedido">
-                                    Confirmar pedido
-                                </button>
-                            </div>
-
-                        </form>
+                        </aside>
                     </div>
+                </section>
 
-                    <!-- ============ COLUMNA DERECHA: PEDIDOS RECIENTES ============ -->
-                    <div class="pedidos-sidebar">
-                        <div class="estadistica-seccion">
-                            <h2 class="estadistica-titulo">Pedidos recientes</h2>
-
-                            <!-- Filtro por estado -->
-                            <select id="selectEstadoPedido" class="select-ubicacion" style="width: 100%; margin-bottom: 1rem;">
-                                <option value="todos">Todos los estados</option>
-                                <option value="Pendiente">Pendientes</option>
-                                <option value="Confirmado">Confirmados</option>
-                            </select>
-
-                            <div id="listaPedidosRecientes">
-                                <p class="placeholder">Cargando pedidos...</p>
-                            </div>
+                <section id="pedidosTabSeguimiento" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabSeguimientoPedidos">
+                    <div class="pedidos-resumen-tira" aria-live="polite">
+                        <div class="pedidos-resumen-item">
+                            <span class="pedidos-resumen-label">PEDIDOS PENDIENTES DE HOY</span>
+                            <strong id="pedidosPendientesHoy">0</strong>
+                            <span>pedidos</span>
+                        </div>
+                        <div class="pedidos-resumen-item">
+                            <span class="pedidos-resumen-label">A LLEVAR HOY</span>
+                            <strong id="pedidosUnidadesHoy">0</strong>
+                            <span>unidades</span>
+                        </div>
+                        <div class="pedidos-resumen-item">
+                            <span class="pedidos-resumen-label">CONFIRMADOS HOY</span>
+                            <strong id="pedidosConfirmadosHoy">0</strong>
+                            <span>pedidos</span>
                         </div>
                     </div>
 
-                </div>
+                    <div class="pedidos-filtros">
+                        <div class="pedidos-filtros-fecha" role="group" aria-label="Filtrar por fecha">
+                            <button type="button" class="pedidos-chip activo" data-filtro-fecha="hoy">Hoy</button>
+                            <button type="button" class="pedidos-chip" data-filtro-fecha="semana">Esta semana</button>
+                            <button type="button" class="pedidos-chip" data-filtro-fecha="todos">Todos</button>
+                        </div>
+                        <div class="pedidos-filtros-estado" role="group" aria-label="Filtrar por estado">
+                            <button type="button" class="pedidos-chip pedidos-chip-estado" data-filtro-estado="Pendiente">
+                                <span class="pedidos-punto pendiente"></span>Pendientes <strong id="contadorPendientes">0</strong>
+                            </button>
+                            <button type="button" class="pedidos-chip pedidos-chip-estado" data-filtro-estado="Confirmado">
+                                <span class="pedidos-punto confirmado"></span>Confirmados hoy <strong id="contadorConfirmadosHoy">0</strong>
+                            </button>
+                        </div>
+                    </div>
 
-                <!-- ============ DETALLE DEL PEDIDO (abajo, ancho completo) ============ -->
-                <div class="estadistica-seccion" style="margin-top: 1.5rem;">
+                    <div id="contenedorHojaSeguimiento" class="pedidos-hoja-contenedor">
+                        <p class="placeholder">Cargando hoja de seguimiento...</p>
+                    </div>
+                </section>
+
+                <section id="detallePedidoSeccion" class="estadistica-seccion pedidos-detalle-seccion" hidden>
                     <h2 class="estadistica-titulo">Detalle del pedido</h2>
                     <div id="detallePedido">
-                        <p class="placeholder">Seleccioná un pedido de la lista para ver el detalle.</p>
+                        <p class="placeholder">Seleccioná un pedido para ver el detalle.</p>
                     </div>
-                </div>
-
+                </section>
             </div>
         </div>
         <!-- ★ FIN PEDIDOS -->
 
         <!-- Otras páginas (placeholder) -->
-        <div id="pagina-reportes" class="pagina"><div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
-        <div id="pagina-configuracion" class="pagina"><div class="page-header"><h1>Configuración</h1><p class="fecha-hoy">Ajustes</p></div><p class="placeholder" style="padding:1.5rem;">Próximamente.</p></div>
+        <div id="pagina-reportes" class="pagina">
+            <div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div>
+            <p class="placeholder" style="padding:1.5rem;">Próximamente.</p>
+        </div>
+        <div id="pagina-configuracion" class="pagina">
+            <div class="page-header"><h1>Configuración</h1><p class="fecha-hoy">Ajustes</p></div>
+            <p class="placeholder" style="padding:1.5rem;">Próximamente.</p>
+        </div>
 
     </main>
 </div>

@@ -2,29 +2,6 @@
  * ============================================================
  * INVENTARIO PRO - SCRIPT PRINCIPAL
  * ============================================================
- *
- * ÍNDICE DE CONTENIDO:
- *
- *   00. Toast y utilidades globales
- *   01. Estado global
- *   02. Navegación entre páginas
- *   03. Carga de artículos
- *   04. Renderizado de tabla de inventario
- *   05. Utilidades de búsqueda y filtros
- *   06. Select de categorías
- *   07. Buscadores con dropdown
- *   08. Vista previa del artículo
- *   09. Registrar entrada
- *   10. Registrar salida
- *   11. Últimas entradas y salidas
- *   12. Movimientos (caché + render por lotes)
- *   13. Menú lateral colapsable
- *   14. Direcciones oficiales (buscador Salidas + modal) ⚠️ VERIFICAR
- *   15. Registrar relevamiento
- *   16. Direcciones - Ranking y detalle (backend real)
- *   17. Dashboard ★ NUEVO
- *   18. Inicialización
- * ============================================================
  */
 
 // ============================================================
@@ -84,12 +61,15 @@ function navegarAPagina(nombre) {
     document.querySelectorAll('.sidebar-link').forEach(e => e.classList.remove('is-active'));
     const activo = document.querySelector(`.sidebar-link[data-page="${nombre}"]`);
     if (activo) activo.classList.add('is-active');
-    if (nombre === 'pedidos') cargarPedidos();
+    if (nombre === 'pedidos') {
+        cambiarTabPedidos('seguimiento');
+        cargarPedidos();
+    }
 
     if (nombre === 'inventario') cargarArticulos();
     if (nombre === 'movimientos') cargarMovimientos();
     if (nombre === 'direcciones') cargarDirecciones();
-    if (nombre === 'dashboard') cargarDashboard();   // ★ NUEVO
+    if (nombre === 'dashboard') cargarDashboard();
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -199,7 +179,6 @@ function renderizarArticulos(datos) {
         </div>
     `;
 
-    // Listener para los botones de menú
     contenedor.querySelectorAll('.btn-menu').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -214,7 +193,6 @@ function renderizarArticulos(datos) {
         });
     });
 
-    // Listener para las opciones del menú
     contenedor.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -420,11 +398,6 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
     });
 }
 
-/**
- * ------------------------------------------------------------
- * Buscador específico para Relevamiento
- * ------------------------------------------------------------
- */
 function configurarBuscadorDropdownRelevamiento() {
     const input = document.getElementById('inputArticuloRelevamiento');
     const hidden = document.getElementById('articuloIdRelevamiento');
@@ -719,7 +692,6 @@ async function cargarUltimasSalidas() {
 // ============================================================
 // 12. MOVIMIENTOS - Carga con caché y render por lotes
 // ============================================================
-
 const MOV_POR_LOTE = 100;
 let movimientosFiltrados = [];
 let movimientosVisibles = 0;
@@ -960,17 +932,9 @@ function configurarMenu() {
 
 // ============================================================
 // 14. DIRECCIONES OFICIALES - Buscador de Salidas + Modal
-// ⚠️ VERIFICAR: esta sección la reconstruí porque tu paste se
-//    cortó acá. Si tu archivo original difiere, USÁ EL TUYO.
 // ============================================================
-
 let direccionesOficiales = [];
 
-/**
- * ------------------------------------------------------------
- * Cargar direcciones oficiales desde el backend
- * ------------------------------------------------------------
- */
 async function cargarDireccionesOficiales() {
     try {
         const resultado = await apiService.post({ accion: 'listarDirecciones' });
@@ -983,12 +947,6 @@ async function cargarDireccionesOficiales() {
     configurarBuscadorDestinos();
 }
 
-/**
- * ------------------------------------------------------------
- * Buscador de destinos (autocompletar con direcciones oficiales
- * + opción de texto libre)
- * ------------------------------------------------------------
- */
 function configurarBuscadorDestinos() {
     const input = document.getElementById('inputDestinoSalida');
     const hidden = document.getElementById('destinoSalida');
@@ -997,7 +955,7 @@ function configurarBuscadorDestinos() {
 
     input.addEventListener('input', function() {
         const valor = this.value.trim();
-        hidden.value = valor; // texto libre por defecto
+        hidden.value = valor;
 
         if (valor.length < 1) {
             dropdown.classList.remove('visible');
@@ -1031,7 +989,6 @@ function configurarBuscadorDestinos() {
                 dropdown.appendChild(li);
             });
 
-            // Opción final: usar el texto tal cual
             const liLibre = document.createElement('li');
             liLibre.innerHTML = `Usar: <strong>${escapeHtml(valor)}</strong> <span class="id-articulo">(texto libre)</span>`;
             liLibre.addEventListener('click', function() {
@@ -1051,11 +1008,6 @@ function configurarBuscadorDestinos() {
     });
 }
 
-/**
- * ------------------------------------------------------------
- * Validar destino antes de registrar la salida
- * ------------------------------------------------------------
- */
 function validarDestinoSalida() {
     const hidden = document.getElementById('destinoSalida');
     const input = document.getElementById('inputDestinoSalida');
@@ -1064,11 +1016,6 @@ function validarDestinoSalida() {
     return valor.length > 0;
 }
 
-/**
- * ------------------------------------------------------------
- * Modal: agregar nueva dirección
- * ------------------------------------------------------------
- */
 function configurarModalDireccion() {
     const btnAbrir = document.getElementById('btnAgregarDireccion');
     const modal = document.getElementById('modalNuevaDireccion');
@@ -1121,7 +1068,6 @@ function configurarModalDireccion() {
                 document.getElementById('nuevaDireccionSuperior').value = '';
                 await cargarDireccionesOficiales();
 
-                // Pre-seleccionar la dirección recién creada
                 const input = document.getElementById('inputDestinoSalida');
                 const hidden = document.getElementById('destinoSalida');
                 if (input) input.value = nombre;
@@ -1263,12 +1209,6 @@ function irARelevamientoConArticulo(id) {
 // ============================================================
 // 16. DIRECCIONES - Ranking y detalle (datos reales del backend)
 // ============================================================
-
-/**
- * ------------------------------------------------------------
- * Cargar Direcciones (datos reales desde el backend)
- * ------------------------------------------------------------
- */
 async function cargarDirecciones() {
     const contenedor = document.getElementById('contenedorRankingDirecciones');
     if (!contenedor) return;
@@ -1331,11 +1271,9 @@ async function cargarDirecciones() {
         </table>
     `;
 
-    // Marcar la primera fila como activa (su detalle se muestra por defecto)
     const primeraFila = contenedor.querySelector('tbody tr');
     if (primeraFila) primeraFila.classList.add('activo');
 
-    // Listener: al hacer clic en una fila, mostrar el detalle
     contenedor.querySelectorAll('tbody tr').forEach(tr => {
         tr.addEventListener('click', function() {
             const nombre = this.dataset.direccion;
@@ -1345,7 +1283,6 @@ async function cargarDirecciones() {
             contenedor.querySelectorAll('tbody tr').forEach(r => r.classList.remove('activo'));
             this.classList.add('activo');
 
-            // El backend devuelve "direccion"; el detalle espera "nombre"
             mostrarDetalleDireccion({
                 nombre: dir.direccion,
                 total: dir.total,
@@ -1354,7 +1291,6 @@ async function cargarDirecciones() {
         });
     });
 
-    // Mostrar el detalle de la primera dirección por defecto
     const primera = direccionesReales[0];
     mostrarDetalleDireccion({
         nombre: primera.direccion,
@@ -1362,7 +1298,6 @@ async function cargarDirecciones() {
         articulos: primera.articulos
     });
 
-    // Fecha del encabezado
     const fechaEl = document.getElementById('fechaActualDirecciones');
     if (fechaEl) {
         fechaEl.textContent = new Date().toLocaleDateString('es-AR', {
@@ -1371,12 +1306,6 @@ async function cargarDirecciones() {
     }
 }
 
-/**
- * ------------------------------------------------------------
- * Mostrar detalle de una dirección
- * ⚠️ VERIFICAR: reconstruida. Si tu versión difiere, usá la tuya.
- * ------------------------------------------------------------
- */
 function mostrarDetalleDireccion({ nombre, total, articulos }) {
     const contenedor = document.getElementById('contenedorDetalleDirecciones');
     if (!contenedor) return;
@@ -1419,19 +1348,12 @@ function mostrarDetalleDireccion({ nombre, total, articulos }) {
 }
 
 // ============================================================
-// 17. DASHBOARD - Tarjetas, listas y acciones rápidas ★ NUEVO
+// 17. DASHBOARD - Tarjetas, listas y acciones rápidas
 // ============================================================
-
-/**
- * ------------------------------------------------------------
- * Cargar todo el Dashboard desde el backend
- * ------------------------------------------------------------
- */
 async function cargarDashboard() {
     const contenedor = document.getElementById('pagina-dashboard');
     if (!contenedor) return;
 
-    // Fecha del encabezado
     const fechaEl = document.getElementById('fechaActualDashboard');
     if (fechaEl) {
         fechaEl.textContent = new Date().toLocaleDateString('es-AR', {
@@ -1439,7 +1361,6 @@ async function cargarDashboard() {
         });
     }
 
-    // Llamar al backend
     let datos;
     try {
         datos = await apiService.post({ accion: 'estadisticasDashboard' });
@@ -1455,7 +1376,6 @@ async function cargarDashboard() {
 
     if (!datos) return;
 
-    // --- 1. Llenar las tarjetas ---
     document.getElementById('dashTotalArticulos').textContent = datos.totalArticulos || 0;
     document.getElementById('dashCategorias').textContent =
         `${datos.categorias || 0} categorías · ${(datos.unidadesTotales || 0).toLocaleString('es-AR')} ud. totales`;
@@ -1465,21 +1385,11 @@ async function cargarDashboard() {
     document.getElementById('dashEntradasMes').textContent = (datos.entradasMes || 0).toLocaleString('es-AR');
     document.getElementById('dashSalidasMes').textContent = (datos.salidasMes || 0).toLocaleString('es-AR');
 
-    // --- 2. Últimos movimientos del día (entradas de hoy) ---
     renderizarDashUltimosMovimientos(datos.entradasHoy || []);
-
-    // --- 3. Artículos críticos (top 5) ---
     renderizarDashArticulosCriticos(datos.top5Criticos || []);
-
-    // --- 4. Salidas con remito ---
     renderizarDashSalidasConRemito(datos.salidasConRemito || []);
 }
 
-/**
- * ------------------------------------------------------------
- * Lista de últimos movimientos del día
- * ------------------------------------------------------------
- */
 function renderizarDashUltimosMovimientos(entradas) {
     const contenedor = document.getElementById('dashUltimosMovimientos');
     if (!contenedor) return;
@@ -1506,11 +1416,6 @@ function renderizarDashUltimosMovimientos(entradas) {
     contenedor.innerHTML = html;
 }
 
-/**
- * ------------------------------------------------------------
- * Lista de artículos críticos
- * ------------------------------------------------------------
- */
 function renderizarDashArticulosCriticos(criticos) {
     const contenedor = document.getElementById('dashArticulosCriticos');
     if (!contenedor) return;
@@ -1536,11 +1441,6 @@ function renderizarDashArticulosCriticos(criticos) {
     contenedor.innerHTML = html;
 }
 
-/**
- * ------------------------------------------------------------
- * Tabla de últimas salidas con remito
- * ------------------------------------------------------------
- */
 function renderizarDashSalidasConRemito(salidas) {
     const contenedor = document.getElementById('dashSalidasConRemito');
     if (!contenedor) return;
@@ -1582,35 +1482,27 @@ function renderizarDashSalidasConRemito(salidas) {
     `;
 }
 
-/**
- * ------------------------------------------------------------
- * Configurar botones de acciones rápidas
- * ------------------------------------------------------------
- */
 function configurarDashboard() {
-    const botones = document.querySelectorAll('.dashboard-btn-accion');
-    botones.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const destino = this.dataset.nav;
-            if (destino) navegarAPagina(destino);
-        });
-    });
+    document.querySelectorAll('.dashboard-btn-accion').forEach(btn => btn.addEventListener('click', function() {
+        const destino = this.dataset.nav;
+        if (!destino) return;
+        navegarAPagina(destino);
+        if (destino === 'pedidos') cambiarTabPedidos('nuevo');
+    }));
 }
 
 // ============================================================
 // 18. INICIALIZACIÓN
-// ⚠️ VERIFICAR: reconstruida. Compará con tu DOMContentLoaded
-//    original y ajustá IDs de buscadores si difieren.
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    // Configuración general
+    inicializarTema();
+
     configurarNavegacion();
     configurarMenu();
     configurarBuscador();
     configurarMovimientos();
     configurarModalDireccion();
 
-    // Buscadores con dropdown
     configurarBuscadorDropdown(
         'inputArticulo', 'articuloId',
         'listaArticulosCustom', 'vistaPreviaContenido'
@@ -1621,15 +1513,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     );
     configurarBuscadorDropdownRelevamiento();
 
-    // Dashboard
     cargarDashboard();
     configurarDashboard();
     configurarPedidos();
 
-    // Cargar direcciones oficiales para el buscador de Salidas
     await cargarDireccionesOficiales();
 
-    // Formularios
     const formEntrada = document.getElementById('formEntrada');
     if (formEntrada) formEntrada.addEventListener('submit', registrarEntrada);
 
@@ -1639,17 +1528,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formRelevamiento = document.getElementById('formRelevamiento');
     if (formRelevamiento) formRelevamiento.addEventListener('submit', registrarRelevamiento);
 
-    // Recalcular diferencia en vivo (Relevamiento)
     const stockRealInput = document.getElementById('stockReal');
     if (stockRealInput) stockRealInput.addEventListener('input', actualizarDiferencia);
 
-    // Fechas por defecto (hoy) en los inputs date
     const fechaEntrada = document.getElementById('fechaEntrada');
     if (fechaEntrada) fechaEntrada.value = obtenerFechaLocal();
     const fechaSalida = document.getElementById('fechaSalida');
     if (fechaSalida) fechaSalida.value = obtenerFechaLocal();
 
-    // Fechas de encabezados
     const f1 = document.getElementById('fechaActual');
     if (f1) f1.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
     const f2 = document.getElementById('fechaActualSalidas');
@@ -1657,27 +1543,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const f3 = document.getElementById('fechaActualRelevamiento');
     if (f3) f3.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
-    // Carga inicial de datos
     await cargarArticulos();
     await cargarUltimasEntradas();
     await cargarUltimasSalidas();
 
-    // Si la página inicial es otra (por hash), cargar sus datos
     const hash = window.location.hash.replace('#', '');
     if (hash === 'direcciones') cargarDirecciones();
     if (hash === 'dashboard') cargarDashboard();
 });
+
 // ============================================================
 // 19. PEDIDOS — Frontend real (conectado al backend)
 // ============================================================
 let carritoPedido = [];
 let pedidoSeleccionado = null;
 let pedidosCache = [];
-let modoEdicionPedido = null; // null = nuevo, o el ID del pedido que se edita
+let modoEdicionPedido = null;
 
-// ------------------------------------------------------------
-// Cargar página Pedidos
-// ------------------------------------------------------------
 async function cargarPedidos() {
     const fechaEl = document.getElementById('fechaActualPedidos');
     if (fechaEl) {
@@ -1689,9 +1571,6 @@ async function cargarPedidos() {
     renderizarCarrito();
 }
 
-// ------------------------------------------------------------
-// Traer pedidos del backend
-// ------------------------------------------------------------
 async function cargarListaPedidos() {
     const contenedor = document.getElementById('listaPedidosRecientes');
     if (contenedor) contenedor.innerHTML = '<p class="placeholder">Cargando pedidos...</p>';
@@ -1709,113 +1588,49 @@ async function cargarListaPedidos() {
     renderizarListaPedidos();
 }
 
-// ------------------------------------------------------------
-// Render: lista de pedidos recientes
-// ------------------------------------------------------------
 function renderizarListaPedidos() {
     const contenedor = document.getElementById('listaPedidosRecientes');
     if (!contenedor) return;
-
-    const filtro = document.getElementById('selectEstadoPedido')?.value || 'todos';
-    const filtrados = filtro === 'todos'
-        ? pedidosCache
-        : pedidosCache.filter(p => p.estado === filtro);
-
+    const filtrados = [...pedidosCache].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
     if (filtrados.length === 0) {
-        contenedor.innerHTML = '<p class="placeholder">No hay pedidos para este filtro.</p>';
-        return;
-    }
-
-    contenedor.innerHTML = filtrados.map(p => {
-        const fechaTxt = p.fecha ? new Date(p.fecha).toLocaleDateString('es-AR') : '—';
-        return `
-            <div class="pedido-item ${pedidoSeleccionado === p.id ? 'activo' : ''}" data-id="${escapeHtml(p.id)}">
-                <div class="pedido-item-top">
-                    <span class="pedido-item-id">#${escapeHtml(p.id)}</span>
-                    <span class="badge-estado ${p.estado.toLowerCase()}">${escapeHtml(p.estado)}</span>
-                </div>
-                <div class="pedido-item-direccion">${escapeHtml(p.direccion)} · ${escapeHtml(p.director || '—')}</div>
-                <div class="pedido-item-fecha">${fechaTxt} · ${p.totalUnidades || 0} ud.</div>
-            </div>
-        `;
-    }).join('');
-
-    contenedor.querySelectorAll('.pedido-item').forEach(el => {
-        el.addEventListener('click', () => {
-            pedidoSeleccionado = el.dataset.id;
-            renderizarListaPedidos();
-            renderizarDetallePedido();
+        contenedor.innerHTML = '<p class="placeholder">Todavía no hay pedidos registrados.</p>';
+    } else {
+        contenedor.innerHTML = filtrados.slice(0, 8).map(p => {
+            const fecha = p.fecha ? new Date(p.fecha) : null;
+            const fechaTxt = fecha && !Number.isNaN(fecha.getTime()) ? fecha.toLocaleDateString('es-AR') : '—';
+            const estadoClase = normalizarTexto(p.estado || '').replace(/\s+/g, '-');
+            return `<article class="pedido-card ${String(pedidoSeleccionado) === String(p.id) ? 'activo' : ''}" data-id="${escapeHtml(p.id)}" tabindex="0" role="button" aria-label="Ver pedido de ${escapeHtml(p.direccion || 'dirección sin nombre')}"><span class="pedido-card-id">#${escapeHtml(p.id)}</span><strong class="pedido-card-titulo">${escapeHtml(p.direccion || 'Sin dirección')}</strong><span class="pedido-card-subtitulo">Solicitado por ${escapeHtml(p.director || '—')}</span><span class="pedido-card-meta">${fechaTxt} · ${Number(p.totalUnidades) || 0} ud.</span><div class="pedido-card-footer"><span class="badge-estado ${estadoClase}">${escapeHtml(p.estado || 'Sin estado')}</span></div></article>`;
+        }).join('');
+        contenedor.querySelectorAll('.pedido-card').forEach(card => {
+            const seleccionar = () => { pedidoSeleccionado = card.dataset.id; renderizarListaPedidos(); renderizarDetallePedido(); };
+            card.addEventListener('click', seleccionar);
+            card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); seleccionar(); } });
         });
-    });
+    }
+    renderizarResumenSeguimiento();
+    renderizarHojaSeguimiento();
 }
 
-// ------------------------------------------------------------
-// Render: detalle de un pedido
-// ------------------------------------------------------------
 function renderizarDetallePedido() {
     const contenedor = document.getElementById('detallePedido');
+    const seccion = document.getElementById('detallePedidoSeccion');
     if (!contenedor) return;
-
-    if (!pedidoSeleccionado) {
-        contenedor.innerHTML = '<p class="placeholder">Seleccioná un pedido de la lista para ver el detalle.</p>';
-        return;
-    }
-
-    const p = pedidosCache.find(x => x.id === pedidoSeleccionado);
-    if (!p) return;
-
-    const filas = (p.items || []).map(it => `
-        <tr>
-            <td>${escapeHtml(it.articuloNombre)}</td>
-            <td><span class="badge-categoria">ID ${escapeHtml(it.articuloId)}</span></td>
-            <td style="font-weight:700;">${it.cantidad}</td>
-        </tr>
-    `).join('') || '<tr><td colspan="3"><p class="placeholder">Sin artículos.</p></td></tr>';
-
+    if (!pedidoSeleccionado) { if (seccion) seccion.hidden = true; contenedor.innerHTML = '<p class="placeholder">Seleccioná un pedido para ver el detalle.</p>'; return; }
+    const p = pedidosCache.find(x => String(x.id) === String(pedidoSeleccionado));
+    if (!p) { if (seccion) seccion.hidden = true; return; }
+    if (seccion) seccion.hidden = false;
+    const filas = (p.items || []).map(it => `<tr><td>${escapeHtml(it.articuloNombre)}</td><td><span class="badge-categoria">ID ${escapeHtml(it.articuloId)}</span></td><td style="font-weight:700;">${Number(it.cantidad) || 0}</td></tr>`).join('') || '<tr><td colspan="3"><p class="placeholder">Sin artículos.</p></td></tr>';
     const esPendiente = p.estado === 'Pendiente';
     const fechaTxt = p.fecha ? new Date(p.fecha).toLocaleDateString('es-AR') : '—';
-
-    contenedor.innerHTML = `
-        <div class="detalle-pedido-header">
-            <div class="detalle-pedido-meta">
-                <div><span class="label">Pedido</span><span class="valor">#${escapeHtml(p.id)}</span></div>
-                <div><span class="label">Dirección</span><span class="valor">${escapeHtml(p.direccion)}</span></div>
-                <div><span class="label">Solicitado por</span><span class="valor">${escapeHtml(p.director || '—')}</span></div>
-                <div><span class="label">Referencia</span><span class="valor">${escapeHtml(p.referencia || '—')}</span></div>
-                <div><span class="label">Fecha</span><span class="valor">${fechaTxt}</span></div>
-                <div><span class="label">Estado</span><span class="valor"><span class="badge-estado ${p.estado.toLowerCase()}">${escapeHtml(p.estado)}</span></span></div>
-            </div>
-            <div class="detalle-pedido-acciones">
-                ${esPendiente ? `
-                    <button class="btn-accion-pedido" data-accion="editar">✏️ Editar</button>
-                    <button class="btn-accion-pedido peligro" data-accion="cancelar">🗑️ Cancelar</button>
-                    <button class="btn-accion-pedido primario" data-accion="confirmar">✅ Confirmar pedido</button>
-                ` : `
-                    <button class="btn-accion-pedido primario" data-accion="pdf">📄 Descargar PDF</button>
-                `}
-            </div>
-        </div>
-        <div class="inventario-tabla-wrapper">
-            <table class="inventario-tabla">
-                <thead>
-                    <tr><th>Artículo</th><th>ID</th><th>Cantidad</th></tr>
-                </thead>
-                <tbody>${filas}</tbody>
-            </table>
-        </div>
-    `;
-
-    contenedor.querySelectorAll('[data-accion]').forEach(btn => {
-        btn.addEventListener('click', () => manejarAccionPedido(btn.dataset.accion, p));
-    });
+    const estadoClase = normalizarTexto(p.estado || '').replace(/\s+/g, '-');
+    contenedor.innerHTML = `<div class="detalle-pedido-header"><div class="detalle-pedido-meta"><div><span class="label">Pedido</span><span class="valor">#${escapeHtml(p.id)}</span></div><div><span class="label">Dirección</span><span class="valor">${escapeHtml(p.direccion)}</span></div><div><span class="label">Solicitado por</span><span class="valor">${escapeHtml(p.director || '—')}</span></div><div><span class="label">Referencia</span><span class="valor">${escapeHtml(p.referencia || '—')}</span></div><div><span class="label">Fecha</span><span class="valor">${fechaTxt}</span></div><div><span class="label">Estado</span><span class="valor"><span class="badge-estado ${estadoClase}">${escapeHtml(p.estado)}</span></span></div></div><div class="detalle-pedido-acciones">${esPendiente ? '<button class="btn-accion-pedido" data-accion="editar">✏️ Editar</button><button class="btn-accion-pedido peligro" data-accion="cancelar">🗑️ Cancelar</button><button class="btn-accion-pedido primario" data-accion="confirmar">✅ Confirmar pedido</button>' : '<button class="btn-accion-pedido primario" data-accion="pdf">📄 Descargar PDF</button>'}</div></div><div class="inventario-tabla-wrapper"><table class="inventario-tabla"><thead><tr><th>Artículo</th><th>ID</th><th>Cantidad</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+    contenedor.querySelectorAll('[data-accion]').forEach(btn => btn.addEventListener('click', () => manejarAccionPedido(btn.dataset.accion, p)));
 }
 
-// ------------------------------------------------------------
-// Acciones del detalle
-// ------------------------------------------------------------
 async function manejarAccionPedido(accion, pedido) {
     if (accion === 'editar') {
         modoEdicionPedido = pedido.id;
+        cambiarTabPedidos('nuevo');
         document.getElementById('directorPedido').value = pedido.director || '';
         document.getElementById('referenciaPedido').value = pedido.referencia || '';
         document.getElementById('inputDireccionPedido').value = pedido.direccion || '';
@@ -1855,7 +1670,7 @@ async function manejarAccionPedido(accion, pedido) {
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
             mostrarToast('Remito ' + r.nroRemito + ' generado', 'exito');
             await cargarListaPedidos();
-            await cargarArticulos(); // refrescar stock
+            await cargarArticulos();
             renderizarDetallePedido();
         } catch (e) {
             mostrarToast('Error: ' + e.message, 'error');
@@ -1872,77 +1687,34 @@ async function manejarAccionPedido(accion, pedido) {
     }
 }
 
-// ------------------------------------------------------------
-// Render: carrito
-// ------------------------------------------------------------
 function renderizarCarrito() {
     const contenedor = document.getElementById('carritoPedido');
     const totalEl = document.getElementById('carritoTotal');
     if (!contenedor) return;
-
-    if (carritoPedido.length === 0) {
-        contenedor.innerHTML = '<p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>';
-        if (totalEl) totalEl.textContent = '0';
-        return;
-    }
-
-    const filas = carritoPedido.map((it, idx) => `
-        <tr>
-            <td>${escapeHtml(it.nombre)}</td>
-            <td><input type="number" min="1" value="${it.cantidad}" class="carrito-input-cantidad" data-idx="${idx}"></td>
-            <td style="text-align:right;">
-                <button type="button" class="carrito-btn-quitar" data-idx="${idx}" title="Quitar">✕</button>
-            </td>
-        </tr>
-    `).join('');
-
-    contenedor.innerHTML = `
-        <table class="carrito-tabla">
-            <thead><tr><th>Artículo</th><th>Cantidad</th><th></th></tr></thead>
-            <tbody>${filas}</tbody>
-        </table>
-    `;
-
-    const total = carritoPedido.reduce((a, i) => a + (Number(i.cantidad) || 0), 0);
-    if (totalEl) totalEl.textContent = total;
-
-    contenedor.querySelectorAll('.carrito-input-cantidad').forEach(inp => {
-        inp.addEventListener('input', () => {
-            const idx = Number(inp.dataset.idx);
-            const val = Math.max(1, parseInt(inp.value) || 1);
-            carritoPedido[idx].cantidad = val;
-            inp.value = val;
-            if (totalEl) totalEl.textContent = carritoPedido.reduce((a, i) => a + (Number(i.cantidad) || 0), 0);
-        });
-    });
-
-    contenedor.querySelectorAll('.carrito-btn-quitar').forEach(btn => {
-        btn.addEventListener('click', () => {
-            carritoPedido.splice(Number(btn.dataset.idx), 1);
-            renderizarCarrito();
-        });
-    });
+    if (carritoPedido.length === 0) { contenedor.innerHTML = '<p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>'; if (totalEl) totalEl.textContent = '0'; return; }
+    contenedor.innerHTML = carritoPedido.map((it, idx) => {
+        const articulo = articulos.find(a => String(a.id) === String(it.id));
+        const emoji = (articulo?.imagen || '').trim() || '📦';
+        const stock = articulo ? obtenerStock(articulo) : '—';
+        return `<div class="carrito-item"><span class="carrito-item-emoji" aria-hidden="true">${escapeHtml(emoji)}</span><div><span class="carrito-item-nombre">${escapeHtml(it.nombre)}</span><span class="carrito-item-stock">Stock: ${stock}</span></div><div class="carrito-stepper" aria-label="Cantidad de ${escapeHtml(it.nombre)}"><button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}" aria-label="Restar una unidad">−</button><span class="carrito-cantidad-valor">${Number(it.cantidad) || 1}</span><button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}" aria-label="Agregar una unidad">+</button></div><button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" aria-label="Quitar ${escapeHtml(it.nombre)}">✕</button></div>`;
+    }).join('');
+    actualizarTotalCarrito();
+    contenedor.querySelectorAll('.carrito-btn-stepper').forEach(btn => btn.addEventListener('click', () => { const idx = Number(btn.dataset.idx); if (btn.dataset.step === 'mas') incrementarCantidadCarrito(idx); else decrementarCantidadCarrito(idx); }));
+    contenedor.querySelectorAll('[data-quitar]').forEach(btn => btn.addEventListener('click', () => { carritoPedido.splice(Number(btn.dataset.quitar), 1); renderizarCarrito(); }));
 }
 
-// ------------------------------------------------------------
-// Configurar: form, filtros, buscador
-// ------------------------------------------------------------
 function configurarPedidos() {
-    const sel = document.getElementById('selectEstadoPedido');
-    if (sel) sel.addEventListener('change', renderizarListaPedidos);
-
+    document.querySelectorAll('[data-tab-pedidos]').forEach(btn => btn.addEventListener('click', () => cambiarTabPedidos(btn.dataset.tabPedidos)));
+    document.querySelectorAll('[data-filtro-fecha]').forEach(btn => btn.addEventListener('click', () => { filtroFechaSeguimiento = btn.dataset.filtroFecha; document.querySelectorAll('[data-filtro-fecha]').forEach(chip => chip.classList.toggle('activo', chip === btn)); renderizarHojaSeguimiento(); }));
+    document.querySelectorAll('[data-filtro-estado]').forEach(btn => btn.addEventListener('click', () => { filtroEstadoSeguimiento = filtroEstadoSeguimiento === btn.dataset.filtroEstado ? 'todos' : btn.dataset.filtroEstado; document.querySelectorAll('[data-filtro-estado]').forEach(chip => chip.classList.toggle('activo', chip.dataset.filtroEstado === filtroEstadoSeguimiento)); renderizarHojaSeguimiento(); }));
     const form = document.getElementById('formPedido');
     if (form) form.addEventListener('submit', manejarSubmitPedido);
-
     configurarBuscadorArticulosPedido();
     configurarBuscadorDireccionesPedido();
-
+    cambiarTabPedidos('seguimiento');
     cargarPedidos();
 }
 
-// ------------------------------------------------------------
-// Submit: crear o editar pedido
-// ------------------------------------------------------------
 async function manejarSubmitPedido(e) {
     e.preventDefault();
 
@@ -1985,7 +1757,6 @@ async function manejarSubmitPedido(e) {
 
         mostrarToast(modoEdicionPedido ? 'Pedido actualizado' : 'Pedido creado', 'exito');
 
-        // Reset
         carritoPedido = [];
         modoEdicionPedido = null;
         document.getElementById('formPedido').reset();
@@ -2004,9 +1775,7 @@ async function manejarSubmitPedido(e) {
         if (modoEdicionPedido === null) btn.textContent = 'Confirmar pedido';
     }
 }
-// ------------------------------------------------------------
-// Buscador de artículos con dropdown (para el carrito)
-// ------------------------------------------------------------
+
 function configurarBuscadorArticulosPedido() {
     const input = document.getElementById('inputArticuloPedido');
     const dropdown = document.getElementById('listaArticulosPedido');
@@ -2094,9 +1863,6 @@ function configurarBuscadorArticulosPedido() {
     }
 }
 
-// ------------------------------------------------------------
-// Agregar un artículo al carrito
-// ------------------------------------------------------------
 function agregarAlCarrito(item) {
     const existente = carritoPedido.find(x => String(x.id) === String(item.id));
     if (existente) {
@@ -2112,9 +1878,6 @@ function agregarAlCarrito(item) {
     renderizarCarrito();
 }
 
-// ------------------------------------------------------------
-// Buscador de direcciones con dropdown
-// ------------------------------------------------------------
 function configurarBuscadorDireccionesPedido() {
     const input = document.getElementById('inputDireccionPedido');
     const hidden = document.getElementById('direccionPedido');
@@ -2157,12 +1920,209 @@ function configurarBuscadorDireccionesPedido() {
                 dropdown.appendChild(li);
             });
         }
+
         dropdown.classList.add('visible');
     });
 
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('#inputDireccionPedido')) {
+        if (!e.target.closest('#inputDireccionPedido')?.parentElement) {
             dropdown.classList.remove('visible');
         }
     });
+}
+
+// ============================================================
+// 20. PEDIDOS — Pestañas, seguimiento y cantidades del carrito
+// ============================================================
+let filtroFechaSeguimiento = 'hoy';
+let filtroEstadoSeguimiento = 'todos';
+
+function cambiarTabPedidos(tab) {
+    const seleccionado = tab === 'nuevo' ? 'nuevo' : 'seguimiento';
+    document.querySelectorAll('[data-tab-pedidos]').forEach(btn => {
+        const activo = btn.dataset.tabPedidos === seleccionado;
+        btn.classList.toggle('activo', activo);
+        btn.setAttribute('aria-selected', String(activo));
+    });
+    const nuevo = document.getElementById('pedidosTabNuevo');
+    const seguimiento = document.getElementById('pedidosTabSeguimiento');
+    if (nuevo) nuevo.hidden = seleccionado !== 'nuevo';
+    if (seguimiento) seguimiento.hidden = seleccionado !== 'seguimiento';
+}
+
+function actualizarTotalCarrito() {
+    const total = document.getElementById('carritoTotal');
+    if (total) total.textContent = carritoPedido.reduce((suma, item) => suma + (Number(item.cantidad) || 0), 0);
+}
+
+function incrementarCantidadCarrito(idx) {
+    if (!carritoPedido[idx]) return;
+    carritoPedido[idx].cantidad = (Number(carritoPedido[idx].cantidad) || 0) + 1;
+    renderizarCarrito();
+}
+
+function decrementarCantidadCarrito(idx) {
+    if (!carritoPedido[idx]) return;
+    carritoPedido[idx].cantidad = Math.max(1, (Number(carritoPedido[idx].cantidad) || 1) - 1);
+    renderizarCarrito();
+}
+
+function fechaLocalPedido(pedido) {
+    if (!pedido || !pedido.fecha) return null;
+    const fecha = new Date(pedido.fecha);
+    if (Number.isNaN(fecha.getTime())) return null;
+    return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+}
+
+function inicioDiaPedido(fecha = new Date()) {
+    return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
+}
+
+function filtrarPedidosPorFecha(pedidos, filtro) {
+    const lista = Array.isArray(pedidos) ? pedidos : [];
+    if (filtro === 'todos') return lista;
+    const hoy = inicioDiaPedido();
+    if (filtro === 'hoy') return lista.filter(p => { const fecha = fechaLocalPedido(p); return fecha && fecha.getTime() === hoy.getTime(); });
+    if (filtro === 'semana') {
+        const lunes = new Date(hoy);
+        lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
+        return lista.filter(p => { const fecha = fechaLocalPedido(p); return fecha && fecha >= lunes && fecha <= hoy; });
+    }
+    return lista;
+}
+
+function filtrarPedidosPorEstado(pedidos, estado) {
+    const lista = Array.isArray(pedidos) ? pedidos : [];
+    return !estado || estado === 'todos' ? lista : lista.filter(p => p.estado === estado);
+}
+
+function calcularContadoresEstado(pedidos) {
+    const lista = Array.isArray(pedidos) ? pedidos : [];
+    const hoy = filtrarPedidosPorFecha(lista, 'hoy');
+    const pendientesHoy = hoy.filter(p => p.estado === 'Pendiente');
+    return {
+        pendientes: lista.filter(p => p.estado === 'Pendiente').length,
+        pendientesHoy: pendientesHoy.length,
+        unidadesPendientesHoy: pendientesHoy.reduce((total, p) => total + (Number(p.totalUnidades) || (p.items || []).reduce((suma, item) => suma + (Number(item.cantidad) || 0), 0)), 0),
+        confirmadosHoy: hoy.filter(p => p.estado === 'Confirmado').length
+    };
+}
+
+function agruparPedidosPorDia(pedidos) {
+    const grupos = new Map();
+    [...(Array.isArray(pedidos) ? pedidos : [])].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0)).forEach(p => {
+        const fecha = fechaLocalPedido(p);
+        if (!fecha) return;
+        const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
+        if (!grupos.has(clave)) grupos.set(clave, { fecha, pedidos: [] });
+        grupos.get(clave).pedidos.push(p);
+    });
+    return [...grupos.values()];
+}
+
+function formatearFechaDia(fecha) {
+    const dia = inicioDiaPedido(fecha);
+    const hoy = inicioDiaPedido();
+    const ayer = new Date(hoy);
+    ayer.setDate(ayer.getDate() - 1);
+    const fechaTxt = dia.toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+    if (dia.getTime() === hoy.getTime()) return `HOY · ${fechaTxt}`;
+    if (dia.getTime() === ayer.getTime()) return `AYER · ${fechaTxt}`;
+    return `${dia.toLocaleDateString('es-AR', { weekday: 'long' }).toUpperCase()} · ${fechaTxt}`;
+}
+
+function renderizarResumenSeguimiento() {
+    const datos = calcularContadoresEstado(pedidosCache);
+    const asignaciones = {
+        pedidosPendientesHoy: datos.pendientesHoy,
+        pedidosUnidadesHoy: datos.unidadesPendientesHoy,
+        pedidosConfirmadosHoy: datos.confirmadosHoy,
+        contadorPendientes: datos.pendientes,
+        contadorConfirmadosHoy: datos.confirmadosHoy
+    };
+    Object.entries(asignaciones).forEach(([id, valor]) => {
+        const elemento = document.getElementById(id);
+        if (elemento) elemento.textContent = valor;
+    });
+}
+
+function renderizarHojaSeguimiento() {
+    const contenedor = document.getElementById('contenedorHojaSeguimiento');
+    if (!contenedor) return;
+    renderizarResumenSeguimiento();
+    const porFecha = filtrarPedidosPorFecha(pedidosCache, filtroFechaSeguimiento);
+    const filtrados = filtrarPedidosPorEstado(porFecha, filtroEstadoSeguimiento);
+    if (filtrados.length === 0) {
+        contenedor.innerHTML = '<div class="estadistica-seccion"><p class="placeholder">No hay pedidos para los filtros seleccionados.</p></div>';
+        return;
+    }
+
+    contenedor.innerHTML = agruparPedidosPorDia(filtrados).map(grupo => `
+        <section class="pedidos-grupo-dia">
+            <h2 class="pedidos-grupo-titulo">${escapeHtml(formatearFechaDia(grupo.fecha))}</h2>
+            <table class="pedidos-tabla-seguimiento">
+                <thead><tr><th>FECHA</th><th>DIRECCIÓN</th><th>SOLICITANTE</th><th>ITEMS</th><th>UNIDADES</th><th>ESTADO</th><th>ACCIONES</th></tr></thead>
+                <tbody>${grupo.pedidos.map(p => {
+                    const fecha = p.fecha ? new Date(p.fecha) : null;
+                    const hora = fecha && !Number.isNaN(fecha.getTime()) ? fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '—';
+                    const items = (p.items || []).map(item => `${escapeHtml(item.articuloNombre || 'Artículo')} (${Number(item.cantidad) || 0})`).join(', ') || 'Sin artículos';
+                    const unidades = Number(p.totalUnidades) || (p.items || []).reduce((suma, item) => suma + (Number(item.cantidad) || 0), 0);
+                    const estadoClase = normalizarTexto(p.estado || '').replace(/\s+/g, '-');
+                    const acciones = p.estado === 'Pendiente'
+                        ? `<button type="button" class="pedidos-acciones-icono" data-pedido-accion="ver" data-pedido-id="${escapeHtml(p.id)}" aria-label="Ver detalle">👁️</button><button type="button" class="pedidos-acciones-icono" data-pedido-accion="confirmar" data-pedido-id="${escapeHtml(p.id)}" aria-label="Confirmar pedido">✅</button>`
+                        : `<button type="button" class="pedidos-acciones-icono" data-pedido-accion="ver" data-pedido-id="${escapeHtml(p.id)}" aria-label="Ver detalle">👁️</button><button type="button" class="pedidos-acciones-icono" data-pedido-accion="pdf" data-pedido-id="${escapeHtml(p.id)}" aria-label="Abrir remito PDF">🖨️</button>`;
+                    return `<tr><td><span class="pedidos-fecha-hora">${escapeHtml(hora)}</span></td><td><strong class="pedidos-direccion">${escapeHtml(p.direccion || 'Sin dirección')}</strong><span class="pedidos-codigo">${escapeHtml(p.nota || `#${p.id}`)}</span></td><td>${escapeHtml(p.director || '—')}</td><td><span class="pedidos-items-resumen">${items}</span></td><td><strong class="pedidos-unidades">${unidades}</strong><span class="pedidos-unidades-label">ud.</span></td><td><span class="badge-estado ${estadoClase}">${escapeHtml(p.estado || 'Sin estado')}</span></td><td><div class="pedidos-acciones">${acciones}</div></td></tr>`;
+                }).join('')}</tbody>
+            </table>
+        </section>
+    `).join('');
+
+    contenedor.querySelectorAll('[data-pedido-accion]').forEach(btn => btn.addEventListener('click', () => {
+        const pedido = pedidosCache.find(p => String(p.id) === String(btn.dataset.pedidoId));
+        if (!pedido) return;
+        if (btn.dataset.pedidoAccion === 'ver') {
+            pedidoSeleccionado = pedido.id;
+            renderizarListaPedidos();
+            renderizarDetallePedido();
+            document.getElementById('detallePedidoSeccion')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else manejarAccionPedido(btn.dataset.pedidoAccion, pedido);
+    }));
+}
+
+// ============================================================
+// 21. TEMA CLARO / OSCURO
+// ============================================================
+function aplicarTema(tema) {
+    const html = document.documentElement;
+    html.setAttribute('data-theme', tema);
+    try { localStorage.setItem('inventario-tema', tema); } catch (e) {}
+    actualizarBotonTema(tema);
+}
+
+function actualizarBotonTema(tema) {
+    const btn = document.querySelector('.theme-toggle');
+    if (!btn) return;
+    btn.textContent = tema === 'dark' ? 'Modo claro' : 'Modo oscuro';
+}
+
+function inicializarTema() {
+    let tema = 'light';
+    try {
+        const guardado = localStorage.getItem('inventario-tema');
+        if (guardado === 'dark' || guardado === 'light') {
+            tema = guardado;
+        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            tema = 'dark';
+        }
+    } catch (e) {}
+
+    aplicarTema(tema);
+
+    const btn = document.querySelector('.theme-toggle');
+    if (btn) {
+        btn.addEventListener('click', () => {
+            const actual = document.documentElement.getAttribute('data-theme');
+            aplicarTema(actual === 'dark' ? 'light' : 'dark');
+        });
+    }
 }
