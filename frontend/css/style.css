@@ -15,30 +15,31 @@
    09. CONTENIDO PRINCIPAL Y PÁGINAS
    10. CABECERA DE PÁGINA
    11. ENTRADAS Y SALIDAS — LAYOUT (2 columnas)
-   12. PANELES LATERALES (vista previa, últimas entradas/salidas)
+   12. PANELES LATERALES
    13. FORMULARIOS
-   14. BUSCADOR DE ARTÍCULOS CON DROPDOWN (formularios)
-   15. BADGES (etiquetas de estado)
+   14. BUSCADOR DE ARTÍCULOS CON DROPDOWN
+   15. BADGES
    16. TABLA DE INVENTARIO GENERAL
    17. BOTONES DE ACCIÓN DE LA TABLA
    18. TOOLBAR DE INVENTARIO
-   19. BUSCADOR DE INVENTARIO (con brillo animado)
+   19. BUSCADOR DE INVENTARIO
    20. SELECT DE CATEGORÍAS
-   21. BOTONES DE TOOLBAR (exportar / nuevo)
+   21. BOTONES DE TOOLBAR
    22. MOVIMIENTOS — COLUMNAS PROPORCIONALES
    23. OVERLAY DEL MENÚ (móvil)
    24. UTILIDADES
    25. RESPONSIVE GENERAL (móvil ≤768px)
    26. TOAST — NOTIFICACIONES FLOTANTES
    27. RELEVAMIENTO — LAYOUT (2 columnas)
-   28. MENÚ DESPLEGABLE DE ACCIONES (tabla inventario)
+   28. MENÚ DESPLEGABLE DE ACCIONES
    29. ESTADÍSTICAS — SECCIONES Y TÍTULOS
-   30. DIRECCIONES — RANKING TOP 10 (tabla con barras y medallas)
+   30. DIRECCIONES — RANKING TOP 10
    31. DIRECCIONES — DETALLE (acordeón)
-   32. FORMULARIO SALIDAS — Campo Destino con buscador
+   32. FORMULARIO SALIDAS — Campo Destino
    33. MODAL — Agregar nueva dirección
    34. DASHBOARD — Tarjetas y acciones rápidas
-   35. PEDIDOS — Layout, carrito, seguimiento y rediseño
+   35. PEDIDOS — Layout, carrito, seguimiento
+   36. CARTEL DE ACCIÓN — Confirmaciones grandes
    ============================================================ */
 
 /* =========================================
@@ -86,19 +87,16 @@
     --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04), 0 1px 3px rgba(15, 23, 42, .06);
     --shadow-md: 0 1px 3px rgba(15, 23, 42, .06), 0 4px 12px rgba(15, 23, 42, .05);
 
-    /* Escala de espaciado */
     --space-xs: 0.5rem;
     --space-sm: 0.85rem;
     --space-md: 1.5rem;
     --space-lg: 2rem;
     --space-xl: 2.5rem;
 
-    /* Radios */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
 
-    /* Ancho máximo del contenido */
     --content-max-width: 1400px;
 }
 
@@ -2226,345 +2224,6 @@ body {
    35. PEDIDOS — Layout, carrito, seguimiento
    ========================================= */
 
-/* --- Layout de dos columnas --- */
-.pedidos-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
-}
-
-@media (max-width: 992px) {
-    .pedidos-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.pedidos-form {
-    background: var(--bg-card);
-    padding: 1.5rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-sm);
-}
-
-.pedidos-form h2 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 1.5rem;
-}
-
-.pedidos-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-/* --- Carrito: buscador --- */
-.carrito-section {
-    margin-bottom: 1rem;
-}
-
-.carrito-section label {
-    display: block;
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    margin-bottom: 0.4rem;
-}
-
-.carrito-buscador {
-    position: relative;
-}
-
-.carrito-buscador input {
-    width: 100%;
-    padding: 0.7rem 2.5rem 0.7rem 1rem;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-size: 0.95rem;
-    font-family: inherit;
-    box-sizing: border-box;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.carrito-buscador input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
-}
-
-.carrito-buscador .icono-lupa {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-soft);
-    pointer-events: none;
-}
-
-/* --- Carrito: contenedor y tabla --- */
-.carrito-contenedor {
-    background: var(--bg);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    margin-bottom: 1rem;
-    min-height: 80px;
-}
-
-.carrito-vacio {
-    text-align: center;
-    color: var(--text-muted);
-    font-style: italic;
-    font-size: 0.9rem;
-}
-
-.carrito-tabla {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.carrito-tabla th {
-    text-align: left;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    padding: 0.4rem 0.5rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.carrito-tabla td {
-    padding: 0.6rem 0.5rem;
-    font-size: 0.9rem;
-    color: var(--text);
-    border-bottom: 1px solid var(--border);
-    vertical-align: middle;
-}
-
-.carrito-tabla tr:last-child td {
-    border-bottom: none;
-}
-
-.carrito-cantidad {
-    width: 70px;
-    padding: 0.4rem 0.5rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-size: 0.9rem;
-    font-family: inherit;
-    text-align: center;
-}
-
-.carrito-cantidad:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
-}
-
-/* --- Carrito: resumen --- */
-.carrito-resumen {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.carrito-resumen span {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-}
-
-.carrito-resumen strong {
-    color: var(--text);
-    font-size: 1.2rem;
-    font-variant-numeric: tabular-nums;
-}
-
-.carrito-resumen .btn-submit {
-    width: auto;
-    padding: 0.7rem 1.5rem;
-}
-
-/* --- Pedidos recientes: lista --- */
-.lista-pedidos {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    max-height: 500px;
-    overflow-y: auto;
-}
-
-.lista-pedidos li {
-    padding: 0.9rem 0;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.15s;
-    border-radius: 6px;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-}
-
-.lista-pedidos li:hover {
-    background: var(--bg-hover);
-}
-
-.lista-pedidos li:last-child {
-    border-bottom: none;
-}
-
-.lista-pedidos li.activo {
-    background: var(--accent-soft);
-    border-left: 3px solid var(--accent);
-}
-
-.pedido-item-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.3rem;
-}
-
-.pedido-item-id {
-    font-weight: 700;
-    color: var(--text);
-    font-size: 0.9rem;
-    font-family: monospace;
-}
-
-.pedido-item-fecha {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-.pedido-item-info {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin-bottom: 0.3rem;
-}
-
-.pedido-item-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.pedido-item-cantidad {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-}
-
-/* --- Badges de estado del pedido --- */
-.badge-pendiente {
-    background: #fef3c7;
-    color: #b45309;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-.badge-entregado {
-    background: #dcfce7;
-    color: #15803d;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
-/* --- Detalle del pedido --- */
-.detalle-pedido-header {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 1rem;
-}
-
-.detalle-pedido-datos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-    font-size: 0.9rem;
-    color: var(--text);
-}
-
-.detalle-pedido-datos strong {
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: block;
-    margin-bottom: 0.2rem;
-}
-
-.detalle-pedido-acciones {
-    display: flex;
-    gap: 0.6rem;
-}
-
-.btn-peligro {
-    padding: 0.6rem 1.2rem;
-    background: var(--bg-card);
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-
-.btn-peligro:hover {
-    background: #fee2e2;
-    border-color: #dc2626;
-}
-
-.btn-exito {
-    padding: 0.6rem 1.2rem;
-    background: var(--accent);
-    border: none;
-    color: white;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-
-.btn-exito:hover {
-    background: var(--accent-hover);
-}
-
-.btn-exito:disabled,
-.btn-peligro:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* --- Pestañas, seguimiento y rediseño --- */
 .pedidos-contenido { padding: 0 1.5rem 1.5rem; }
 
 .pedidos-tabs {
@@ -2935,8 +2594,6 @@ body {
     border-color: #fecaca;
 }
 
-.carrito-resumen { align-items: flex-end; }
-
 .carrito-total-bloque {
     display: flex;
     flex-direction: column;
@@ -2953,6 +2610,14 @@ body {
 .carrito-total-bloque strong {
     color: var(--text);
     font-size: 1.55rem;
+}
+
+.carrito-resumen {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
 .carrito-resumen .btn-submit {
@@ -3004,4 +2669,189 @@ body {
         flex-direction: column;
     }
     .carrito-resumen .btn-submit { width: 100%; }
+}
+
+/* =========================================
+   36. CARTEL DE ACCIÓN — Confirmaciones grandes
+   =========================================
+   Contrato con el JS:
+   - .visible                    → mostrar | sin .visible → oculto
+   - .tipo-entrada               → verde   (#16a34a)
+   - .tipo-salida                → rojo    (#dc2626)
+   - .tipo-relevamiento          → azul    (#2563eb)
+   - .tipo-pedido-ok             → verde   (#16a34a)
+   - .tipo-pedido-cancel         → naranja (#ea580c)
+   ========================================= */
+:root {
+    --cartel-exito: #16a34a;
+    --cartel-exito-bg: #dcfce7;
+    --cartel-peligro: #dc2626;
+    --cartel-peligro-bg: #fee2e2;
+    --cartel-info: #2563eb;
+    --cartel-info-bg: #eff6ff;
+    --cartel-aviso: #ea580c;
+    --cartel-aviso-bg: #ffedd5;
+    --cartel-shadow:
+        0 2px 4px rgba(15, 23, 42, .06),
+        0 12px 24px rgba(15, 23, 42, .12),
+        0 20px 48px rgba(15, 23, 42, .10);
+}
+
+[data-theme="dark"] {
+    --cartel-exito-bg: rgba(22, 163, 74, 0.18);
+    --cartel-peligro-bg: rgba(220, 38, 38, 0.18);
+    --cartel-info-bg: rgba(59, 130, 246, 0.18);
+    --cartel-aviso-bg: rgba(234, 88, 12, 0.18);
+    --cartel-shadow:
+        0 2px 4px rgba(0, 0, 0, .35),
+        0 12px 24px rgba(0, 0, 0, .45),
+        0 20px 48px rgba(0, 0, 0, .35);
+}
+
+.cartel-accion {
+    position: fixed;
+    left: 50%;
+    bottom: 32px;
+    transform: translate(-50%, 20px);
+    z-index: 1300;
+
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    width: max-content;
+    max-width: 480px;
+    padding: 1.1rem 2rem 1.3rem 1.5rem;
+
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--cartel-exito);
+    border-radius: var(--radius-md);
+    box-shadow: var(--cartel-shadow);
+    overflow: hidden;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition:
+        opacity 0.25s ease,
+        transform 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.cartel-accion.visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    pointer-events: auto;
+
+    transition:
+        opacity 0.35s ease-out,
+        transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cartel-icono {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    font-size: 1.4rem;
+    line-height: 1;
+    background: var(--cartel-exito-bg);
+}
+
+.cartel-texto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.cartel-titulo {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text);
+}
+
+.cartel-subtitulo {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+}
+
+.cartel-progreso {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--cartel-exito);
+    transform: scaleX(0);
+    transform-origin: left;
+}
+
+.cartel-accion.visible .cartel-progreso {
+    animation: cartel-progreso 2.5s linear forwards;
+}
+
+@keyframes cartel-progreso {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+.cartel-accion.tipo-entrada,
+.cartel-accion.tipo-pedido-ok { border-left-color: var(--cartel-exito); }
+.cartel-accion.tipo-entrada .cartel-icono,
+.cartel-accion.tipo-pedido-ok .cartel-icono { background: var(--cartel-exito-bg); }
+.cartel-accion.tipo-entrada .cartel-progreso,
+.cartel-accion.tipo-pedido-ok .cartel-progreso { background: var(--cartel-exito); }
+
+.cartel-accion.tipo-salida { border-left-color: var(--cartel-peligro); }
+.cartel-accion.tipo-salida .cartel-icono { background: var(--cartel-peligro-bg); }
+.cartel-accion.tipo-salida .cartel-progreso { background: var(--cartel-peligro); }
+
+.cartel-accion.tipo-relevamiento { border-left-color: var(--cartel-info); }
+.cartel-accion.tipo-relevamiento .cartel-icono { background: var(--cartel-info-bg); }
+.cartel-accion.tipo-relevamiento .cartel-progreso { background: var(--cartel-info); }
+
+.cartel-accion.tipo-pedido-cancel { border-left-color: var(--cartel-aviso); }
+.cartel-accion.tipo-pedido-cancel .cartel-icono { background: var(--cartel-aviso-bg); }
+.cartel-accion.tipo-pedido-cancel .cartel-progreso { background: var(--cartel-aviso); }
+
+@media (max-width: 768px) {
+    .cartel-accion {
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        transform: translateY(20px);
+        width: auto;
+        max-width: none;
+        min-width: 0;
+        padding: 1rem 1.5rem 1.2rem 1.2rem;
+    }
+    .cartel-accion.visible {
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cartel-accion {
+        transition: opacity 0.2s ease;
+    }
+    .cartel-accion,
+    .cartel-accion.visible {
+        transform: translate(-50%, 0);
+    }
+    .cartel-accion.visible .cartel-progreso {
+        animation: none;
+    }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+    .cartel-accion,
+    .cartel-accion.visible {
+        transform: none;
+    }
 }

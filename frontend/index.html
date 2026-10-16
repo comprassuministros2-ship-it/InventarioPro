@@ -1,10 +1,24 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="dark">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InventarioPro</title>
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Anti-FOUC: aplicar el tema ANTES de que se renderice el body
+        (function() {
+            try {
+                var tema = localStorage.getItem('inventario-tema');
+                if (tema !== 'dark' && tema !== 'light') {
+                    tema = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', tema);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
 </head>
 <body>
 <div class="app-layout">
@@ -598,6 +612,18 @@
 </div>
 
 <!-- ========================================== -->
+<!-- CARTEL DE ACCIÓN                            -->
+<!-- ========================================== -->
+<div id="cartelAccion" class="cartel-accion" role="status" aria-live="polite">
+    <div class="cartel-icono" id="cartelIcono">✓</div>
+    <div class="cartel-texto">
+        <div class="cartel-titulo" id="cartelTitulo"></div>
+        <div class="cartel-subtitulo" id="cartelSubtitulo"></div>
+    </div>
+    <div class="cartel-progreso"></div>
+</div>
+
+<!-- ========================================== -->
 <!-- MODAL: AGREGAR NUEVA DIRECCIÓN             -->
 <!-- ========================================== -->
 <div id="modalNuevaDireccion" class="modal-overlay" style="display: none;">
@@ -631,6 +657,114 @@
         <div class="modal-footer">
             <button type="button" class="btn-cancelar" id="cancelarModalDireccion">Cancelar</button>
             <button type="button" class="btn-guardar" id="guardarModalDireccion">Guardar dirección</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL: NUEVO ARTÍCULO                      -->
+<!-- ========================================== -->
+<div id="modalNuevoArticulo" class="modal-overlay" style="display:none;">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3>Nuevo artículo</h3>
+            <button type="button" class="modal-cerrar" id="cerrarModalArticulo">✕</button>
+        </div>
+        <div class="modal-body">
+            <!-- Nombre -->
+            <div class="form-group">
+                <label for="nuevoArtNombre">NOMBRE *</label>
+                <input type="text" id="nuevoArtNombre" placeholder="Ej: Libreta A4">
+            </div>
+
+            <!-- Categoría + Emoji -->
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
+                <div class="form-group">
+                    <label for="nuevoArtCategoria">CATEGORÍA *</label>
+                    <input type="text" id="nuevoArtCategoria" placeholder="Ej: Librería" list="listaCategorias">
+                    <datalist id="listaCategorias"></datalist>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoArtImagen">EMOJI</label>
+                    <input type="text" id="nuevoArtImagen" value="📦" maxlength="8" style="text-align:center; font-size:1.4rem;">
+                </div>
+            </div>
+
+            <!-- Presentación -->
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
+                <div class="form-group">
+                    <label for="nuevoArtUnidad">UNIDAD DE MEDIDA *</label>
+                    <select id="nuevoArtUnidad">
+                        <option value="Unidad">Unidad</option>
+                        <option value="Caja">Caja</option>
+                        <option value="Pack">Pack</option>
+                        <option value="Resma">Resma</option>
+                        <option value="Frasco">Frasco</option>
+                        <option value="Docena">Docena</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nuevoArtMultiplicador">MULTIPLICADOR *</label>
+                    <input type="number" id="nuevoArtMultiplicador" value="1" min="1">
+                </div>
+            </div>
+            <p id="nuevoArtEquivalencia" style="font-size:0.8rem; color:var(--text-muted); margin-top:-0.8rem; margin-bottom:1rem;">
+                1 Unidad = 1 unidad
+            </p>
+
+            <!-- Cantidad que ingresa (solo en modo entrada) -->
+            <div id="nuevoArtBloqueCantidad">
+                <div class="form-group">
+                    <label for="nuevoArtCantidad">CANTIDAD QUE INGRESA *</label>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <input type="number" id="nuevoArtCantidad" value="1" min="1" style="flex:1;">
+                        <span id="nuevoArtCantidadUnidad" style="color:var(--text-muted); font-size:0.9rem;">unidades</span>
+                    </div>
+                </div>
+
+                <div id="nuevoArtTotalCaja" style="
+                    padding: 0.75rem 1rem;
+                    background: var(--accent-soft);
+                    border-left: 3px solid var(--accent);
+                    border-radius: 6px;
+                    margin-bottom: 1.25rem;
+                    font-size: 0.9rem;
+                    color: var(--text);
+                ">
+                    <strong>📦 Ingresarán 1 unidad</strong>
+                </div>
+            </div>
+
+            <!-- Stock mínimos -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                <div class="form-group">
+                    <label for="nuevoArtStockMin">STOCK MÍNIMO</label>
+                    <input type="number" id="nuevoArtStockMin" value="0" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="nuevoArtStockCritico">STOCK CRÍTICO</label>
+                    <input type="number" id="nuevoArtStockCritico" value="0" min="0">
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="form-group">
+                <label for="nuevoArtObservaciones">OBSERVACIONES</label>
+                <textarea id="nuevoArtObservaciones" rows="2" placeholder="Notas (opcional)..."></textarea>
+            </div>
+
+            <!-- Aviso de entrada (solo cuando viene de Entradas) -->
+            <div id="nuevoArtAvisoEntrada" style="display:none; padding:0.8rem; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:6px; margin-top:0.5rem;">
+                <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">
+                    📦 Al guardar también se registrará la entrada al stock.
+                </p>
+            </div>
+
+            <p class="modal-error" id="nuevoArtError"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" id="cancelarModalArticulo">Cancelar</button>
+            <button type="button" class="btn-guardar" id="guardarModalArticulo">Crear artículo</button>
         </div>
     </div>
 </div>

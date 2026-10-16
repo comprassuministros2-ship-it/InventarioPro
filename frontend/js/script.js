@@ -1,9 +1,3 @@
-/**
- * ============================================================
- * INVENTARIO PRO - SCRIPT PRINCIPAL
- * ============================================================
- */
-
 // ============================================================
 // 0. TOAST - Notificación flotante (FUNCIÓN GLOBAL)
 // ============================================================
@@ -32,6 +26,7 @@ function mostrarToast(mensaje, tipo = 'exito') {
 let articulos = [];
 let filtroActivo = "todos";
 let movimientos = [];
+let modoCreacionArticulo = null;
 
 function escapeHtml(texto) {
     return String(texto ?? '').replace(/[&<>"']/g, caracter => ({
@@ -153,6 +148,10 @@ function renderizarArticulos(datos) {
                                 <span class="menu-item-icono">✏️</span>
                                 <span class="menu-item-texto">Relevamiento</span>
                             </button>
+                            <button class="menu-item" data-action="eliminar" data-id="${item.id}">
+                                <span class="menu-item-icono">🗑️</span>
+                                <span class="menu-item-texto">Eliminar</span>
+                            </button>
                         </div>
                     </div>
                 </td>
@@ -205,6 +204,8 @@ function renderizarArticulos(datos) {
                 irARelevamientoConArticulo(id);
             } else if (accion === 'detalles') {
                 mostrarToast('Próximamente: página de detalles', 'exito');
+            } else if (accion === 'eliminar') {
+                eliminarArticulo(id);
             }
         });
     });
@@ -356,11 +357,29 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
         dropdown.innerHTML = "";
         if (resultados.length === 0) {
             const li = document.createElement("li");
-            li.textContent = "No se encontraron artículos";
+            li.innerHTML = `No se encontró "${escapeHtml(texto)}"`;
             li.style.color = "var(--text-muted)";
             li.style.fontStyle = "italic";
             li.style.cursor = "default";
+            li.style.borderBottom = "1px solid var(--border)";
             dropdown.appendChild(li);
+
+            if (inputId === 'inputArticulo') {
+                const liCrear = document.createElement("li");
+                liCrear.innerHTML = `➕ Crear "<strong>${escapeHtml(texto)}</strong>" ahora`;
+                liCrear.style.color = "var(--accent)";
+                liCrear.style.fontWeight = "600";
+                liCrear.style.cursor = "pointer";
+                liCrear.addEventListener("click", function() {
+                    dropdown.classList.remove("visible");
+                    abrirModalArticulo({
+                        origen: 'entrada',
+                        nombreSugerido: texto
+                    });
+                });
+                dropdown.appendChild(liCrear);
+            }
+
             dropdown.classList.add("visible");
             return;
         }
@@ -541,7 +560,12 @@ async function registrarEntrada(e) {
         if (resultado && resultado.exito === false) {
             throw new Error(resultado.error || 'Error desconocido');
         }
-        mostrarToast('Entrada registrada correctamente', 'exito');
+
+        const articuloSel = articulos.find(a => String(a.id) === String(id));
+        const nombreArticulo = articuloSel ? articuloSel.articulo : ('ID ' + id);
+        mostrarCartel('⬆️', 'ENTRADA REGISTRADA',
+            `${nombreArticulo} · +${cantidad} unidades`, 'entrada');
+
         document.getElementById('formEntrada').reset();
         document.getElementById('articuloId').value = '';
         document.getElementById('vistaPreviaContenido').innerHTML =
@@ -600,7 +624,12 @@ async function registrarSalida(e) {
             }
             return;
         }
-        mostrarToast('Salida registrada correctamente', 'exito');
+
+        const articuloSel = articulos.find(a => String(a.id) === String(id));
+        const nombreArticulo = articuloSel ? articuloSel.articulo : ('ID ' + id);
+        mostrarCartel('⬇️', 'SALIDA REGISTRADA',
+            `${nombreArticulo} · -${cantidad} unidades`, 'salida');
+
         document.getElementById('formSalida').reset();
         document.getElementById('articuloIdSalida').value = '';
         document.getElementById('vistaPreviaContenidoSalida').innerHTML =
@@ -690,7 +719,7 @@ async function cargarUltimasSalidas() {
 }
 
 // ============================================================
-// 12. MOVIMIENTOS - Carga con caché y render por lotes
+// 12. MOVIMIENTOS
 // ============================================================
 const MOV_POR_LOTE = 100;
 let movimientosFiltrados = [];
@@ -931,7 +960,7 @@ function configurarMenu() {
 }
 
 // ============================================================
-// 14. DIRECCIONES OFICIALES - Buscador de Salidas + Modal
+// 14. DIRECCIONES OFICIALES
 // ============================================================
 let direccionesOficiales = [];
 
@@ -952,6 +981,9 @@ function configurarBuscadorDestinos() {
     const hidden = document.getElementById('destinoSalida');
     const dropdown = document.getElementById('listaDestinosCustom');
     if (!input || !hidden || !dropdown) return;
+
+    if (input.dataset.listenerDestinos) return;
+    input.dataset.listenerDestinos = 'true';
 
     input.addEventListener('input', function() {
         const valor = this.value.trim();
@@ -1120,7 +1152,10 @@ async function registrarRelevamiento(e) {
             mostrarToast('El stock ya estaba correcto. Sin cambios.', 'exito');
         } else {
             const signo = dif > 0 ? '+' : '';
-            mostrarToast(`Relevamiento registrado. Ajuste: ${signo}${dif}`, 'exito');
+            const articuloSel = articulos.find(a => String(a.id) === String(id));
+            const nombreArticulo = articuloSel ? articuloSel.articulo : ('ID ' + id);
+            mostrarCartel('📋', 'RELEVAMIENTO REGISTRADO',
+                `${nombreArticulo} · ajuste ${signo}${dif}`, 'relevamiento');
         }
 
         document.getElementById('formRelevamiento').reset();
@@ -1207,7 +1242,7 @@ function irARelevamientoConArticulo(id) {
 }
 
 // ============================================================
-// 16. DIRECCIONES - Ranking y detalle (datos reales del backend)
+// 16. DIRECCIONES - Ranking y detalle
 // ============================================================
 async function cargarDirecciones() {
     const contenedor = document.getElementById('contenedorRankingDirecciones');
@@ -1348,7 +1383,7 @@ function mostrarDetalleDireccion({ nombre, total, articulos }) {
 }
 
 // ============================================================
-// 17. DASHBOARD - Tarjetas, listas y acciones rápidas
+// 17. DASHBOARD
 // ============================================================
 async function cargarDashboard() {
     const contenedor = document.getElementById('pagina-dashboard');
@@ -1492,68 +1527,7 @@ function configurarDashboard() {
 }
 
 // ============================================================
-// 18. INICIALIZACIÓN
-// ============================================================
-document.addEventListener('DOMContentLoaded', async () => {
-    inicializarTema();
-
-    configurarNavegacion();
-    configurarMenu();
-    configurarBuscador();
-    configurarMovimientos();
-    configurarModalDireccion();
-
-    configurarBuscadorDropdown(
-        'inputArticulo', 'articuloId',
-        'listaArticulosCustom', 'vistaPreviaContenido'
-    );
-    configurarBuscadorDropdown(
-        'inputArticuloSalida', 'articuloIdSalida',
-        'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida'
-    );
-    configurarBuscadorDropdownRelevamiento();
-
-    cargarDashboard();
-    configurarDashboard();
-    configurarPedidos();
-
-    await cargarDireccionesOficiales();
-
-    const formEntrada = document.getElementById('formEntrada');
-    if (formEntrada) formEntrada.addEventListener('submit', registrarEntrada);
-
-    const formSalida = document.getElementById('formSalida');
-    if (formSalida) formSalida.addEventListener('submit', registrarSalida);
-
-    const formRelevamiento = document.getElementById('formRelevamiento');
-    if (formRelevamiento) formRelevamiento.addEventListener('submit', registrarRelevamiento);
-
-    const stockRealInput = document.getElementById('stockReal');
-    if (stockRealInput) stockRealInput.addEventListener('input', actualizarDiferencia);
-
-    const fechaEntrada = document.getElementById('fechaEntrada');
-    if (fechaEntrada) fechaEntrada.value = obtenerFechaLocal();
-    const fechaSalida = document.getElementById('fechaSalida');
-    if (fechaSalida) fechaSalida.value = obtenerFechaLocal();
-
-    const f1 = document.getElementById('fechaActual');
-    if (f1) f1.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
-    const f2 = document.getElementById('fechaActualSalidas');
-    if (f2) f2.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
-    const f3 = document.getElementById('fechaActualRelevamiento');
-    if (f3) f3.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
-
-    await cargarArticulos();
-    await cargarUltimasEntradas();
-    await cargarUltimasSalidas();
-
-    const hash = window.location.hash.replace('#', '');
-    if (hash === 'direcciones') cargarDirecciones();
-    if (hash === 'dashboard') cargarDashboard();
-});
-
-// ============================================================
-// 19. PEDIDOS — Frontend real (conectado al backend)
+// 18. PEDIDOS — Frontend real
 // ============================================================
 let carritoPedido = [];
 let pedidoSeleccionado = null;
@@ -1653,7 +1627,10 @@ async function manejarAccionPedido(accion, pedido) {
         try {
             const r = await apiService.post({ accion: 'cancelarPedido', id: pedido.id });
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
-            mostrarToast('Pedido cancelado', 'exito');
+
+            mostrarCartel('🗑️', 'PEDIDO CANCELADO',
+                `#${pedido.id} · ${pedido.direccion || ''}`, 'pedido-cancel');
+
             pedidoSeleccionado = null;
             await cargarListaPedidos();
             renderizarDetallePedido();
@@ -1668,7 +1645,10 @@ async function manejarAccionPedido(accion, pedido) {
         try {
             const r = await apiService.post({ accion: 'confirmarPedido', id: pedido.id });
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
-            mostrarToast('Remito ' + r.nroRemito + ' generado', 'exito');
+
+            mostrarCartel('✅', 'PEDIDO CONFIRMADO',
+                `Remito ${r.nroRemito} generado`, 'pedido-ok');
+
             await cargarListaPedidos();
             await cargarArticulos();
             renderizarDetallePedido();
@@ -1932,7 +1912,7 @@ function configurarBuscadorDireccionesPedido() {
 }
 
 // ============================================================
-// 20. PEDIDOS — Pestañas, seguimiento y cantidades del carrito
+// 19. PEDIDOS — Pestañas, seguimiento y cantidades del carrito
 // ============================================================
 let filtroFechaSeguimiento = 'hoy';
 let filtroEstadoSeguimiento = 'todos';
@@ -2090,7 +2070,248 @@ function renderizarHojaSeguimiento() {
 }
 
 // ============================================================
-// 21. TEMA CLARO / OSCURO
+// 20. CARTEL DE ACCIÓN
+// ============================================================
+function mostrarCartel(icono, titulo, subtitulo, tipo = 'exito') {
+    const cartel = document.getElementById('cartelAccion');
+    if (!cartel) return;
+
+    const iconoEl = document.getElementById('cartelIcono');
+    const tituloEl = document.getElementById('cartelTitulo');
+    const subEl = document.getElementById('cartelSubtitulo');
+    if (!iconoEl || !tituloEl || !subEl) return;
+
+    iconoEl.textContent = icono;
+    tituloEl.textContent = titulo;
+    subEl.textContent = subtitulo || '';
+    subEl.style.display = subtitulo ? '' : 'none';
+
+    cartel.classList.remove(
+        'tipo-entrada', 'tipo-salida', 'tipo-relevamiento',
+        'tipo-pedido-ok', 'tipo-pedido-cancel'
+    );
+    if (tipo && tipo !== 'exito') {
+        cartel.classList.add('tipo-' + tipo);
+    }
+
+    cartel.classList.remove('visible');
+    void cartel.offsetWidth;
+    cartel.classList.add('visible');
+
+    clearTimeout(window._cartelTimeout);
+    window._cartelTimeout = setTimeout(() => {
+        cartel.classList.remove('visible');
+    }, 2500);
+}
+
+// ============================================================
+// 21. MODAL NUEVO ARTÍCULO
+// ============================================================
+function abrirModalArticulo(origen = null) {
+    modoCreacionArticulo = origen;
+    const modal = document.getElementById('modalNuevoArticulo');
+    if (!modal) return;
+
+    document.getElementById('nuevoArtNombre').value = '';
+    document.getElementById('nuevoArtCategoria').value = '';
+    document.getElementById('nuevoArtImagen').value = '📦';
+    document.getElementById('nuevoArtUnidad').value = 'Unidad';
+    document.getElementById('nuevoArtMultiplicador').value = 1;
+    document.getElementById('nuevoArtCantidad').value = 1;
+    document.getElementById('nuevoArtStockMin').value = 0;
+    document.getElementById('nuevoArtStockCritico').value = 0;
+    document.getElementById('nuevoArtObservaciones').value = '';
+    document.getElementById('nuevoArtError').textContent = '';
+
+    const esModoEntrada = origen && origen.origen === 'entrada';
+
+    const aviso = document.getElementById('nuevoArtAvisoEntrada');
+    aviso.style.display = esModoEntrada ? 'block' : 'none';
+
+    const bloqueCant = document.getElementById('nuevoArtBloqueCantidad');
+    if (bloqueCant) {
+        bloqueCant.style.display = esModoEntrada ? 'block' : 'none';
+    }
+
+    if (esModoEntrada && origen.nombreSugerido) {
+        document.getElementById('nuevoArtNombre').value = origen.nombreSugerido;
+    }
+
+    const datalist = document.getElementById('listaCategorias');
+    datalist.innerHTML = '';
+    const cats = new Set();
+    articulos.forEach(a => {
+        if (a.categoriaID && a.categoriaID.trim()) cats.add(a.categoriaID.trim());
+    });
+    Array.from(cats).sort().forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        datalist.appendChild(opt);
+    });
+
+    document.getElementById('guardarModalArticulo').textContent =
+        esModoEntrada ? 'Crear y registrar entrada' : 'Crear artículo';
+
+    actualizarEquivalenciaArticulo();
+    modal.style.display = 'flex';
+    setTimeout(() => document.getElementById('nuevoArtNombre').focus(), 100);
+}
+
+function actualizarEquivalenciaArticulo() {
+    const unidad = document.getElementById('nuevoArtUnidad').value;
+    const mult = parseInt(document.getElementById('nuevoArtMultiplicador').value) || 1;
+    const label = document.getElementById('nuevoArtEquivalencia');
+    if (mult > 1) {
+        label.textContent = `1 ${unidad} = ${mult} unidades`;
+    } else {
+        label.textContent = `1 ${unidad} = 1 unidad`;
+    }
+
+    const cantUnidad = document.getElementById('nuevoArtCantidadUnidad');
+    if (cantUnidad) {
+        cantUnidad.textContent = mult > 1 ? unidad.toLowerCase() + 's' : 'unidades';
+    }
+
+    actualizarTotalIngreso();
+}
+
+function actualizarTotalIngreso() {
+    const mult = parseInt(document.getElementById('nuevoArtMultiplicador').value) || 1;
+    const cantInput = document.getElementById('nuevoArtCantidad');
+    const cant = parseInt(cantInput?.value) || 1;
+    const total = cant * mult;
+
+    const caja = document.getElementById('nuevoArtTotalCaja');
+    if (!caja) return;
+
+    if (mult > 1) {
+        caja.innerHTML = `<strong>📦 Ingresarán ${total.toLocaleString('es-AR')} unidades</strong> (${cant} × ${mult})`;
+    } else {
+        caja.innerHTML = `<strong>📦 Ingresarán ${total.toLocaleString('es-AR')} unidades</strong>`;
+    }
+}
+
+function cerrarModalArticulo() {
+    document.getElementById('modalNuevoArticulo').style.display = 'none';
+    modoCreacionArticulo = null;
+}
+
+async function guardarNuevoArticulo() {
+    const nombre = document.getElementById('nuevoArtNombre').value.trim();
+    const categoria = document.getElementById('nuevoArtCategoria').value.trim();
+    const imagen = document.getElementById('nuevoArtImagen').value.trim() || '📦';
+    const unidadMedida = document.getElementById('nuevoArtUnidad').value;
+    const multiplicador = parseInt(document.getElementById('nuevoArtMultiplicador').value) || 1;
+    const stockMin = parseInt(document.getElementById('nuevoArtStockMin').value) || 0;
+    const stockCritico = parseInt(document.getElementById('nuevoArtStockCritico').value) || 0;
+    const observaciones = document.getElementById('nuevoArtObservaciones').value.trim();
+    const errorEl = document.getElementById('nuevoArtError');
+
+    if (!nombre) { errorEl.textContent = 'El nombre es obligatorio'; return; }
+    if (!categoria) { errorEl.textContent = 'La categoría es obligatoria'; return; }
+    if (multiplicador < 1) { errorEl.textContent = 'El multiplicador debe ser ≥ 1'; return; }
+
+    const datos = {
+        nombre, categoria, imagen, observaciones,
+        unidadMedida, multiplicador,
+        stockMin, stockCritico,
+        capacidadMax: 0
+    };
+
+    const esModoEntrada = modoCreacionArticulo && modoCreacionArticulo.origen === 'entrada';
+    if (esModoEntrada) {
+        const cantidadModal = parseInt(document.getElementById('nuevoArtCantidad').value) || 1;
+        datos.entrada = {
+            cantidad: cantidadModal,
+            proveedor: '',
+            factura: '',
+            observacionEntrada: '',
+            fecha: ''
+        };
+    }
+
+    const btn = document.getElementById('guardarModalArticulo');
+    const txtOrig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    errorEl.textContent = '';
+
+    try {
+        const r = await apiService.post({ accion: 'crearArticulo', datos });
+        if (!r || r.exito === false) throw new Error(r?.error || 'Error al crear el artículo');
+
+        const stockFinal = (typeof r.stockIni === 'number') ? r.stockIni : 0;
+
+        mostrarCartel('📦', 'ARTÍCULO CREADO',
+            `${nombre} · stock ${stockFinal} unidades`, 'exito');
+
+        cerrarModalArticulo();
+
+        await cargarArticulos();
+
+        if (esModoEntrada) {
+            document.getElementById('formEntrada').reset();
+            document.getElementById('articuloId').value = '';
+            document.getElementById('vistaPreviaContenido').innerHTML =
+                '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+            document.getElementById('registradoPor').value = 'Samuel Steves';
+            await cargarUltimasEntradas();
+            movimientos = [];
+        }
+
+    } catch (err) {
+        errorEl.textContent = err.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = txtOrig;
+    }
+}
+
+function configurarModalArticulo() {
+    document.getElementById('nuevoArtUnidad')?.addEventListener('change', actualizarEquivalenciaArticulo);
+    document.getElementById('nuevoArtMultiplicador')?.addEventListener('input', actualizarEquivalenciaArticulo);
+    document.getElementById('nuevoArtCantidad')?.addEventListener('input', actualizarTotalIngreso);
+    document.getElementById('cerrarModalArticulo')?.addEventListener('click', cerrarModalArticulo);
+    document.getElementById('cancelarModalArticulo')?.addEventListener('click', cerrarModalArticulo);
+    document.getElementById('guardarModalArticulo')?.addEventListener('click', guardarNuevoArticulo);
+
+    document.querySelector('.btn-nuevo')?.addEventListener('click', () => abrirModalArticulo());
+}
+
+// ============================================================
+// 22. ELIMINAR ARTÍCULO
+// ============================================================
+async function eliminarArticulo(id) {
+    const item = articulos.find(a => String(a.id) === String(id));
+    if (!item) return;
+
+    const nombre = item.articulo || `ID ${id}`;
+    const stock = obtenerStock(item);
+
+    let mensaje = `¿Eliminar el artículo?\n\n"${nombre}"\n\nStock actual: ${stock} unidades\n\nEsta acción no se puede deshacer.`;
+
+    if (stock > 0) {
+        mensaje += `\n\n⚠️ El artículo todavía tiene stock. Si lo eliminás, perdés el registro del stock actual.`;
+    }
+
+    if (!confirm(mensaje)) return;
+
+    try {
+        const r = await apiService.post({ accion: 'eliminarArticulo', id: id });
+        if (!r || r.exito === false) throw new Error(r?.error || 'Error al eliminar');
+
+        mostrarCartel('🗑️', 'ARTÍCULO ELIMINADO', nombre, 'pedido-cancel');
+
+        await cargarArticulos();
+        movimientos = [];
+
+    } catch (e) {
+        mostrarToast('Error: ' + e.message, 'error');
+    }
+}
+
+// ============================================================
+// 23. TEMA CLARO / OSCURO
 // ============================================================
 function aplicarTema(tema) {
     const html = document.documentElement;
@@ -2126,3 +2347,65 @@ function inicializarTema() {
         });
     }
 }
+
+// ============================================================
+// 24. INICIALIZACIÓN
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+    inicializarTema();
+
+    configurarNavegacion();
+    configurarMenu();
+    configurarBuscador();
+    configurarMovimientos();
+    configurarModalDireccion();
+    configurarModalArticulo();
+
+    configurarBuscadorDropdown(
+        'inputArticulo', 'articuloId',
+        'listaArticulosCustom', 'vistaPreviaContenido'
+    );
+    configurarBuscadorDropdown(
+        'inputArticuloSalida', 'articuloIdSalida',
+        'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida'
+    );
+    configurarBuscadorDropdownRelevamiento();
+
+    cargarDashboard();
+    configurarDashboard();
+    configurarPedidos();
+
+    await cargarDireccionesOficiales();
+
+    const formEntrada = document.getElementById('formEntrada');
+    if (formEntrada) formEntrada.addEventListener('submit', registrarEntrada);
+
+    const formSalida = document.getElementById('formSalida');
+    if (formSalida) formSalida.addEventListener('submit', registrarSalida);
+
+    const formRelevamiento = document.getElementById('formRelevamiento');
+    if (formRelevamiento) formRelevamiento.addEventListener('submit', registrarRelevamiento);
+
+    const stockRealInput = document.getElementById('stockReal');
+    if (stockRealInput) stockRealInput.addEventListener('input', actualizarDiferencia);
+
+    const fechaEntrada = document.getElementById('fechaEntrada');
+    if (fechaEntrada) fechaEntrada.value = obtenerFechaLocal();
+    const fechaSalida = document.getElementById('fechaSalida');
+    if (fechaSalida) fechaSalida.value = obtenerFechaLocal();
+
+    const f1 = document.getElementById('fechaActual');
+    if (f1) f1.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    const f2 = document.getElementById('fechaActualSalidas');
+    if (f2) f2.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+    const f3 = document.getElementById('fechaActualRelevamiento');
+    if (f3) f3.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
+
+    await cargarArticulos();
+    await cargarUltimasEntradas();
+    await cargarUltimasSalidas();
+
+    const hash = window.location.hash.replace('#', '');
+    if (hash === 'direcciones') cargarDirecciones();
+    if (hash === 'dashboard') cargarDashboard();
+});
