@@ -135,24 +135,16 @@ function renderizarArticulos(datos) {
                 <td class="td-centrado">—</td>
                 <td class="td-centrado">—</td>
                 <td>
-                    <div class="acciones-celda">
-                        <button class="btn-accion btn-menu" type="button" data-id="${item.id}" aria-label="Opciones" title="Opciones">
-                            ➡️
+                    <div class="acciones-celda" style="display: flex; gap: 0.4rem; justify-content: center;">
+                        <button class="btn-accion" type="button" title="Detalles" data-action="detalles" data-id="${item.id}">
+                            👁️
                         </button>
-                        <div class="menu-desplegable" data-id="${item.id}">
-                            <button class="menu-item" data-action="detalles" data-id="${item.id}">
-                                <span class="menu-item-icono">👁️</span>
-                                <span class="menu-item-texto">Detalles</span>
-                            </button>
-                            <button class="menu-item" data-action="relevamiento" data-id="${item.id}">
-                                <span class="menu-item-icono">✏️</span>
-                                <span class="menu-item-texto">Relevamiento</span>
-                            </button>
-                            <button class="menu-item" data-action="eliminar" data-id="${item.id}">
-                                <span class="menu-item-icono">🗑️</span>
-                                <span class="menu-item-texto">Eliminar</span>
-                            </button>
-                        </div>
+                        <button class="btn-accion" type="button" title="Relevamiento" data-action="relevamiento" data-id="${item.id}">
+                            ✏️
+                        </button>
+                        <button class="btn-accion" type="button" title="Eliminar" data-action="eliminar" data-id="${item.id}">
+                            🗑️
+                        </button>
                     </div>
                 </td>
             </tr>
@@ -178,27 +170,12 @@ function renderizarArticulos(datos) {
         </div>
     `;
 
-    contenedor.querySelectorAll('.btn-menu').forEach(btn => {
+    // Listener simplificado para los 3 botones directos (sin menú desplegable)
+    contenedor.querySelectorAll('.btn-accion[data-action]').forEach(btn => {
         btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const id = this.dataset.id;
-            const menu = contenedor.querySelector(`.menu-desplegable[data-id="${id}"]`);
-
-            contenedor.querySelectorAll('.menu-desplegable').forEach(m => {
-                if (m !== menu) m.classList.remove('visible');
-            });
-
-            menu.classList.toggle('visible');
-        });
-    });
-
-    contenedor.querySelectorAll('.menu-item').forEach(item => {
-        item.addEventListener('click', function(e) {
             e.stopPropagation();
             const accion = this.dataset.action;
             const id = this.dataset.id;
-
-            contenedor.querySelectorAll('.menu-desplegable').forEach(m => m.classList.remove('visible'));
 
             if (accion === 'relevamiento') {
                 irARelevamientoConArticulo(id);
