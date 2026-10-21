@@ -227,6 +227,113 @@ function obtenerStock(item) {
     return Number.isFinite(stock) ? stock : 0;
 }
 
+function obtenerMultiplicadorUnidades(item) {
+    const valor = Number.parseInt(item?.multiplicadorUnidades ?? item?.multiplicador, 10);
+    return Number.isFinite(valor) && valor > 0 ? valor : 1;
+}
+
+function obtenerNombrePresentacion(item) {
+    return String(item?.unidadMedida || 'Caja').trim() || 'Caja';
+}
+
+function formatearUnidades(cantidad) {
+    return Number(cantidad || 0).toLocaleString('es-AR');
+}
+
+function actualizarCalculoEntrada() {
+    const id = document.getElementById('articuloId')?.value;
+    const articulo = articulos.find(item => String(item.id) === String(id));
+    const multiplicador = obtenerMultiplicadorUnidades(articulo);
+    const packs = Math.max(0, Number.parseInt(document.getElementById('cantidadPacksEntrada')?.value, 10) || 0);
+    const sueltas = Math.max(0, Number.parseInt(document.getElementById('cantidadSueltasEntrada')?.value, 10) || 0);
+    const total = packs * multiplicador + sueltas;
+    const stockActual = obtenerStock(articulo);
+
+    const cantidad = document.getElementById('cantidad');
+    const totalEl = document.getElementById('textoCalculoEntrada');
+    const stockEl = document.getElementById('textoStockFuturoEntrada');
+    if (cantidad) cantidad.value = String(total);
+    if (totalEl) totalEl.textContent = `${formatearUnidades(total)} unidades`;
+    if (stockEl) {
+        stockEl.textContent = `Stock actual: ${formatearUnidades(stockActual)} → ${formatearUnidades(stockActual + total)}`;
+    }
+}
+
+function actualizarPresentacionEntrada(articulo) {
+    const multiplicador = obtenerMultiplicadorUnidades(articulo);
+    const presentacion = obtenerNombrePresentacion(articulo);
+    const aviso = document.getElementById('avisoPresentacionEntrada');
+    const texto = document.getElementById('textoPresentacionEntrada');
+    const contenedorPacks = document.getElementById('contenedorPacksEntrada');
+    const etiquetaPacks = document.getElementById('labelPacksEntrada');
+    const grilla = document.getElementById('cantidadEntradaGrid');
+    const packs = document.getElementById('cantidadPacksEntrada');
+
+    if (!articulo || multiplicador === 1) {
+        if (aviso) aviso.hidden = true;
+        if (contenedorPacks) contenedorPacks.hidden = true;
+        if (grilla) grilla.classList.add('unidad-simple');
+        if (packs) packs.value = '0';
+    } else {
+        if (aviso) aviso.hidden = false;
+        if (texto) texto.textContent = `${presentacion} de ${formatearUnidades(multiplicador)} unidades`;
+        if (contenedorPacks) contenedorPacks.hidden = false;
+        if (etiquetaPacks) etiquetaPacks.textContent = `${presentacion.toUpperCase()}S (×${formatearUnidades(multiplicador)})`;
+        if (grilla) grilla.classList.remove('unidad-simple');
+    }
+
+    actualizarCalculoEntrada();
+}
+
+function actualizarPresentacionSalida(articulo) {
+    const multiplicador = obtenerMultiplicadorUnidades(articulo);
+    const aviso = document.getElementById('avisoPresentacionSalida');
+    const texto = document.getElementById('textoStockActualSalida');
+    if (!articulo || multiplicador === 1) {
+        if (aviso) aviso.hidden = true;
+        return;
+    }
+
+    const stock = obtenerStock(articulo);
+    const equivalencia = stock / multiplicador;
+    const presentacion = obtenerNombrePresentacion(articulo);
+    if (texto) {
+        texto.textContent = `${formatearUnidades(stock)} unidades (equivale a ${formatearUnidades(equivalencia)} ${presentacion}${equivalencia === 1 ? '' : 's'})`;
+    }
+    if (aviso) aviso.hidden = false;
+}
+
+function sincronizarCantidadSalida() {
+    const input = document.getElementById('cantidadUnidadesSalida');
+    const hidden = document.getElementById('cantidadSalida');
+    if (input && hidden) hidden.value = input.value;
+}
+
+function restablecerCantidadEntrada() {
+    const packs = document.getElementById('cantidadPacksEntrada');
+    const sueltas = document.getElementById('cantidadSueltasEntrada');
+    const cantidad = document.getElementById('cantidad');
+    const aviso = document.getElementById('avisoPresentacionEntrada');
+    const contenedorPacks = document.getElementById('contenedorPacksEntrada');
+    const grilla = document.getElementById('cantidadEntradaGrid');
+    if (packs) packs.value = '0';
+    if (sueltas) sueltas.value = '0';
+    if (cantidad) cantidad.value = '0';
+    if (aviso) aviso.hidden = true;
+    if (contenedorPacks) contenedorPacks.hidden = true;
+    if (grilla) grilla.classList.add('unidad-simple');
+    actualizarCalculoEntrada();
+}
+
+function restablecerCantidadSalida() {
+    const cantidad = document.getElementById('cantidadUnidadesSalida');
+    const hidden = document.getElementById('cantidadSalida');
+    const aviso = document.getElementById('avisoPresentacionSalida');
+    if (cantidad) cantidad.value = '1';
+    if (hidden) hidden.value = '1';
+    if (aviso) aviso.hidden = true;
+}
+
 function aplicarFiltro(datos) {
     if (!Array.isArray(datos)) return [];
     return datos.filter(item => {
@@ -316,6 +423,8 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
             hidden.value = "";
             const preview = document.getElementById(previewId);
             if (preview) preview.innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+            if (inputId === 'inputArticulo') restablecerCantidadEntrada();
+            if (inputId === 'inputArticuloSalida') restablecerCantidadSalida();
         }
     });
 
@@ -369,6 +478,8 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
                 hidden.value = item.id;
                 dropdown.classList.remove("visible");
                 mostrarVistaPrevia(item.id, previewId);
+                if (inputId === 'inputArticulo') actualizarPresentacionEntrada(item);
+                if (inputId === 'inputArticuloSalida') actualizarPresentacionSalida(item);
             });
             dropdown.appendChild(li);
         });
@@ -509,9 +620,11 @@ function mostrarVistaPrevia(id, contenedorId) {
 async function registrarEntrada(e) {
     e.preventDefault();
     const id = document.getElementById("articuloId").value;
-    const cantidad = parseInt(document.getElementById("cantidad").value);
+    actualizarCalculoEntrada();
+    const cantidad = Number.parseInt(document.getElementById("cantidad").value, 10);
     const proveedor = document.getElementById("proveedor").value.trim();
     const factura = document.getElementById("factura").value.trim();
+    const tipoCompra = document.getElementById("tipoCompra").value.trim();
     const observaciones = document.getElementById("observaciones").value.trim();
     const fecha = document.getElementById("fechaEntrada").value;
 
@@ -529,7 +642,7 @@ async function registrarEntrada(e) {
             cantidad: cantidad,
             proveedor: proveedor,
             ordenCompra: factura,
-            tipoCompra: '',
+            tipoCompra: tipoCompra,
             observacion: observaciones,
             fecha: fecha
         };
@@ -548,6 +661,7 @@ async function registrarEntrada(e) {
         document.getElementById('vistaPreviaContenido').innerHTML =
             '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         document.getElementById('registradoPor').value = 'Samuel Steves';
+        restablecerCantidadEntrada();
         await cargarArticulos();
         await cargarUltimasEntradas();
         movimientos = [];
@@ -566,7 +680,8 @@ async function registrarEntrada(e) {
 async function registrarSalida(e) {
     e.preventDefault();
     const id = document.getElementById("articuloIdSalida").value;
-    const cantidad = parseInt(document.getElementById("cantidadSalida").value);
+    sincronizarCantidadSalida();
+    const cantidad = Number.parseInt(document.getElementById("cantidadSalida").value, 10);
     if (!validarDestinoSalida()) {
         mostrarToast('Ingresá el destino o dirección', 'error');
         return;
@@ -612,6 +727,7 @@ async function registrarSalida(e) {
         document.getElementById('vistaPreviaContenidoSalida').innerHTML =
             '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         document.getElementById('registradoPorSalida').value = 'Samuel Steves';
+        restablecerCantidadSalida();
         await cargarArticulos();
         await cargarUltimasSalidas();
         movimientos = [];
@@ -2359,6 +2475,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const formSalida = document.getElementById('formSalida');
     if (formSalida) formSalida.addEventListener('submit', registrarSalida);
+
+    const cantidadPacksEntrada = document.getElementById('cantidadPacksEntrada');
+    const cantidadSueltasEntrada = document.getElementById('cantidadSueltasEntrada');
+    const cantidadUnidadesSalida = document.getElementById('cantidadUnidadesSalida');
+    if (cantidadPacksEntrada) cantidadPacksEntrada.addEventListener('input', actualizarCalculoEntrada);
+    if (cantidadSueltasEntrada) cantidadSueltasEntrada.addEventListener('input', actualizarCalculoEntrada);
+    if (cantidadUnidadesSalida) cantidadUnidadesSalida.addEventListener('input', sincronizarCantidadSalida);
+    restablecerCantidadEntrada();
+    restablecerCantidadSalida();
 
     const formRelevamiento = document.getElementById('formRelevamiento');
     if (formRelevamiento) formRelevamiento.addEventListener('submit', registrarRelevamiento);

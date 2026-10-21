@@ -654,6 +654,110 @@ body {
 .lista-entradas .item-cantidad { font-weight: 700; color: #16a34a; }
 .lista-salidas .item-cantidad { font-weight: 700; color: #dc2626; }
 
+/* Cantidades por presentación */
+.aviso-presentacion {
+    margin-bottom: 12px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.cantidad-entrada-grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 14px;
+}
+
+.cantidad-entrada-grid:not(.unidad-simple)::after {
+    position: absolute;
+    top: 43px;
+    left: calc(50% - 4px);
+    content: '+';
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.cantidad-entrada-grid.unidad-simple {
+    grid-template-columns: 1fr;
+}
+
+#grupoCantidadEntrada .cantidad-entrada-grid label {
+    color: var(--text);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+#grupoCantidadEntrada .cantidad-entrada-grid input {
+    min-height: 42px;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+#contenedorPacksEntrada:not([hidden])::after,
+.cantidad-entrada-grid > div:last-child::after {
+    display: block;
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 400;
+    line-height: 1.25;
+}
+
+#contenedorPacksEntrada:not([hidden])::after {
+    content: 'Cerradas, sin abrir';
+}
+
+.cantidad-entrada-grid > div:last-child::after {
+    content: 'Sueltas, de cajas rotas o abiertas';
+}
+
+.recuadro-calculo-cantidad {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    background: var(--accent-soft);
+}
+
+.recuadro-calculo-etiqueta {
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.recuadro-calculo-total {
+    margin-top: 0.5rem;
+    color: var(--text);
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.recuadro-calculo-total .numero-grande {
+    color: var(--accent);
+    font-size: 2.4rem;
+    font-weight: 800;
+}
+
+.recuadro-calculo-stock {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--accent-border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
 /* =========================================
    13. FORMULARIOS
    ========================================= */
@@ -2223,7 +2327,6 @@ body {
 /* =========================================
    35. PEDIDOS — Layout, carrito, seguimiento
    ========================================= */
-
 .pedidos-contenido { padding: 0 1.5rem 1.5rem; }
 
 .pedidos-tabs {
@@ -2673,14 +2776,6 @@ body {
 
 /* =========================================
    36. CARTEL DE ACCIÓN — Confirmaciones grandes
-   =========================================
-   Contrato con el JS:
-   - .visible                    → mostrar | sin .visible → oculto
-   - .tipo-entrada               → verde   (#16a34a)
-   - .tipo-salida                → rojo    (#dc2626)
-   - .tipo-relevamiento          → azul    (#2563eb)
-   - .tipo-pedido-ok             → verde   (#16a34a)
-   - .tipo-pedido-cancel         → naranja (#ea580c)
    ========================================= */
 :root {
     --cartel-exito: #16a34a;
@@ -2822,6 +2917,14 @@ body {
 .cartel-accion.tipo-pedido-cancel .cartel-progreso { background: var(--cartel-aviso); }
 
 @media (max-width: 768px) {
+    .cantidad-entrada-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .cantidad-entrada-grid:not(.unidad-simple)::after {
+        display: none;
+    }
+
     .cartel-accion {
         left: 16px;
         right: 16px;
