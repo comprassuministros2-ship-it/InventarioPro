@@ -244,6 +244,7 @@ function actualizarCalculoEntrada() {
     const id = document.getElementById('articuloId')?.value;
     const articulo = articulos.find(item => String(item.id) === String(id));
     const multiplicador = obtenerMultiplicadorUnidades(articulo);
+    const presentacion = obtenerNombrePresentacion(articulo);
     const packs = Math.max(0, Number.parseInt(document.getElementById('cantidadPacksEntrada')?.value, 10) || 0);
     const sueltas = Math.max(0, Number.parseInt(document.getElementById('cantidadSueltasEntrada')?.value, 10) || 0);
     const total = packs * multiplicador + sueltas;
@@ -253,9 +254,33 @@ function actualizarCalculoEntrada() {
     const totalEl = document.getElementById('textoCalculoEntrada');
     const stockEl = document.getElementById('textoStockFuturoEntrada');
     if (cantidad) cantidad.value = String(total);
-    if (totalEl) totalEl.textContent = `${formatearUnidades(total)} unidades`;
+
+    if (totalEl) {
+        const unidadesLabel = total === 1 ? 'unidad' : 'unidades';
+        if (multiplicador > 1) {
+            const presentacionBase = presentacion.toLowerCase();
+            const presentacionLabel = packs === 1 ? presentacionBase : `${presentacionBase}s`;
+            const sueltasLabel = sueltas === 1 ? 'suelta' : 'sueltas';
+            totalEl.innerHTML = `
+                ${formatearUnidades(packs)} ${escapeHtml(presentacionLabel)} × ${formatearUnidades(multiplicador)} + ${formatearUnidades(sueltas)} ${sueltasLabel} =<br>
+                <span class="numero-grande">${formatearUnidades(total)}</span> ${unidadesLabel}
+            `;
+        } else {
+            totalEl.innerHTML = `<span class="numero-grande">${formatearUnidades(total)}</span> ${unidadesLabel}`;
+        }
+    }
+
     if (stockEl) {
-        stockEl.textContent = `Stock actual: ${formatearUnidades(stockActual)} → ${formatearUnidades(stockActual + total)}`;
+        let texto = `Stock: ${formatearUnidades(stockActual)} → ${formatearUnidades(stockActual + total)}`;
+        if (multiplicador > 1) {
+            const cajasEquivalentes = Math.floor(stockActual / multiplicador);
+            const sueltasEquivalentes = stockActual - (cajasEquivalentes * multiplicador);
+            const presentacionBase = presentacion.toLowerCase();
+            const presentacionLabel = cajasEquivalentes === 1 ? presentacionBase : `${presentacionBase}s`;
+            const sueltasLabel = sueltasEquivalentes === 1 ? 'suelta' : 'sueltas';
+            texto += ` (hoy equivale a ${formatearUnidades(cajasEquivalentes)} ${presentacionLabel} y ${formatearUnidades(sueltasEquivalentes)} ${sueltasLabel})`;
+        }
+        stockEl.textContent = texto;
     }
 }
 
@@ -599,6 +624,13 @@ function mostrarVistaPrevia(id, contenedorId) {
     if (stock === 0) { estadoClase = 'badge-sin-stock'; estadoTexto = 'Sin stock'; }
     else if (stock <= 5) { estadoClase = 'badge-critico'; estadoTexto = 'Crítico'; }
     else if (stock <= 10) { estadoClase = 'badge-bajo'; estadoTexto = 'Bajo'; }
+
+    const multiplicador = obtenerMultiplicadorUnidades(item);
+    const presentacion = obtenerNombrePresentacion(item);
+    const presentacionHTML = multiplicador > 1
+        ? `<div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);">Presentación: ${escapeHtml(presentacion)} de ${formatearUnidades(multiplicador)}</div>`
+        : '';
+
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) return;
     contenedor.innerHTML = `
@@ -610,6 +642,7 @@ function mostrarVistaPrevia(id, contenedorId) {
                 <span class="badge ${estadoClase}">${estadoTexto}</span>
                 ${item.stockMin ? `<span style="color:var(--text-muted);font-size:0.85rem;">Mínimo: ${item.stockMin}</span>` : ''}
             </div>
+            ${presentacionHTML}
         </div>
     `;
 }
