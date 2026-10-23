@@ -225,23 +225,29 @@ function obtenerCeldaArticuloHTML(articulo) {
     
     let contenidoVisual = '';
     
-    let driveId = imgData;
-    if (imgData.includes('id=')) {
-        driveId = imgData.split('id=')[1].split('&')[0];
-    } else if (imgData.includes('/d/')) {
-        driveId = imgData.split('/d/')[1].split('/')[0];
-    }
-
-    if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
-        const urlBackend = `${CONFIG.API.BASE_URL}?imgId=${driveId}&t=${Date.now()}`;
-        
+    // 1. Si dice "img/1.jpg", lo buscamos en GitHub
+    if (imgData.startsWith('img/')) {
+        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
+        contenidoVisual = `<img src="${urlGitHub}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
+    } 
+    // 2. Si es un link de Drive o un ID (por si alguno quedó viejo)
+    else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
+        let driveId = imgData;
+        if (imgData.includes('id=')) driveId = imgData.split('id=')[1].split('&')[0];
+        else if (imgData.includes('/d/')) driveId = imgData.split('/d/')[1].split('/')[0];
+        const urlBackend = `${CONFIG.API.BASE_URL}?imgId=${driveId}`;
         contenidoVisual = `<img src="${urlBackend}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
-    } else if (imgData !== '') {
+    } 
+    // 3. Si es un emoji
+    else if (imgData !== '') {
         contenidoVisual = `<span class="emoji-articulo">${imgData}</span>`;
-    } else {
+    } 
+    // 4. Si no hay nada
+    else {
         contenidoVisual = '';
     }
 
+    // Alerta ⚠️
     const obs = articulo.observaciones || '';
     const alertaHTML = obs.includes('⚠️') 
         ? `<span title="${escapeHtml(obs)}" style="margin-left: 8px; font-size: 1.1rem; cursor: help; color: #dc2626;">⚠️</span>` 
