@@ -1,4 +1,36 @@
 // ============================================================
+// INVENTARIO PRO — LÓGICA PRINCIPAL
+// ============================================================
+// ÍNDICE DE CONTENIDO:
+//
+// 00. TOAST — Notificaciones flotantes
+// 01. ESTADO GLOBAL Y UTILIDADES
+// 02. NAVEGACIÓN ENTRE PÁGINAS
+// 03. CARGA DE ARTÍCULOS
+// 04. RENDERIZADO DE INVENTARIO
+// 05. UTILIDADES DE BÚSQUEDA, FILTROS Y PRESENTACIÓN
+// 06. SELECT DE CATEGORÍAS
+// 07. BUSCADORES CON DROPDOWN
+// 08. VISTA PREVIA DEL ARTÍCULO
+// 09. REGISTRO DE ENTRADAS
+// 10. REGISTRO DE SALIDAS
+// 11. ÚLTIMAS ENTRADAS Y SALIDAS
+// 12. MOVIMIENTOS
+// 13. MENÚ LATERAL COLAPSABLE
+// 14. DIRECCIONES OFICIALES
+// 15. REGISTRAR RELEVAMIENTO
+// 16. DIRECCIONES — Ranking y detalle
+// 17. DASHBOARD
+// 18. PEDIDOS — Gestión y acciones
+// 19. PEDIDOS — Pestañas, seguimiento y carrito
+// 20. CARTEL DE ACCIÓN
+// 21. MODAL NUEVO ARTÍCULO
+// 22. ELIMINAR ARTÍCULO
+// 23. TEMA CLARO / OSCURO
+// 24. INICIALIZACIÓN
+// ============================================================
+
+// ============================================================
 // 0. TOAST - Notificación flotante (FUNCIÓN GLOBAL)
 // ============================================================
 function mostrarToast(mensaje, tipo = 'exito') {
@@ -170,7 +202,7 @@ function renderizarArticulos(datos) {
         </div>
     `;
 
-    // Listener simplificado para los 3 botones directos (sin menú desplegable)
+    // Listener simplificado para los 3 botones directos
     contenedor.querySelectorAll('.btn-accion[data-action]').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -189,19 +221,43 @@ function renderizarArticulos(datos) {
 }
 
 function obtenerCeldaArticuloHTML(articulo) {
-    const emoji = (articulo.imagen || '').trim() || '📦';
+    const imgData = (articulo.imagen || '').trim();
+    
+    let contenidoVisual = '';
+    
+    let driveId = imgData;
+    if (imgData.includes('id=')) {
+        driveId = imgData.split('id=')[1].split('&')[0];
+    } else if (imgData.includes('/d/')) {
+        driveId = imgData.split('/d/')[1].split('/')[0];
+    }
+
+    if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
+        const urlBackend = `${CONFIG.API.BASE_URL}?imgId=${driveId}&t=${Date.now()}`;
+        
+        contenidoVisual = `<img src="${urlBackend}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
+    } else if (imgData !== '') {
+        contenidoVisual = `<span class="emoji-articulo">${imgData}</span>`;
+    } else {
+        contenidoVisual = '';
+    }
+
+    const obs = articulo.observaciones || '';
+    const alertaHTML = obs.includes('⚠️') 
+        ? `<span title="${escapeHtml(obs)}" style="margin-left: 8px; font-size: 1.1rem; cursor: help; color: #dc2626;">⚠️</span>` 
+        : '';
+
     return `
         <div class="articulo-celda">
             <div class="articulo-imagen">
-                <span class="emoji-articulo">${emoji}</span>
+                ${contenidoVisual}
             </div>
             <div class="articulo-info">
-                <span class="articulo-nombre">${escapeHtml(articulo.articulo)}</span>
+                <span class="articulo-nombre">${escapeHtml(articulo.articulo)} ${alertaHTML}</span>
             </div>
         </div>
     `;
 }
-
 // ============================================================
 // 5. UTILIDADES DE BÚSQUEDA Y FILTROS
 // ============================================================
@@ -655,15 +711,20 @@ async function registrarEntrada(e) {
     const id = document.getElementById("articuloId").value;
     actualizarCalculoEntrada();
     const cantidad = Number.parseInt(document.getElementById("cantidad").value, 10);
+    
+    // Leemos los campos (sin obligatoriedad)
     const proveedor = document.getElementById("proveedor").value.trim();
     const factura = document.getElementById("factura").value.trim();
     const tipoCompra = document.getElementById("tipoCompra").value.trim();
     const observaciones = document.getElementById("observaciones").value.trim();
-    const fecha = document.getElementById("fechaEntrada").value;
+    const fecha = document.getElementById("fechaEntrada").value || obtenerFechaLocal();
 
+    // Solo validamos lo indispensable para que no rompa
     if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
     if (isNaN(cantidad) || cantidad <= 0) { mostrarToast('Cantidad inválida', 'error'); return; }
-    if (!proveedor) { mostrarToast('Ingresá el proveedor', 'error'); return; }
+
+    // Verificamos si falta algún dato
+    const hayDatosFaltantes = !proveedor || !factura || !tipoCompra;
 
     const btn = document.getElementById('btnRegistrar');
     btn.disabled = true;
@@ -673,21 +734,21 @@ async function registrarEntrada(e) {
             accion: 'registrarEntrada',
             id: id,
             cantidad: cantidad,
-            proveedor: proveedor,
-            ordenCompra: factura,
-            tipoCompra: tipoCompra,
+            proveedor: proveedor || 'S/D', // S/D = Sin Datos
+            ordenCompra: factura || 'S/D',
+            tipoCompra: tipoCompra || 'S/D',
             observacion: observaciones,
-            fecha: fecha
+            fecha: fecha,
+            incompleto: hayDatosFaltantes // <-- Enviamos el aviso al backend
         };
+        
         const resultado = await apiService.post(payload);
-        if (resultado && resultado.exito === false) {
-            throw new Error(resultado.error || 'Error desconocido');
-        }
+        if (resultado && resultado.exito === false) throw new Error(resultado.error || 'Error desconocido');
 
         const articuloSel = articulos.find(a => String(a.id) === String(id));
         const nombreArticulo = articuloSel ? articuloSel.articulo : ('ID ' + id);
-        mostrarCartel('⬆️', 'ENTRADA REGISTRADA',
-            `${nombreArticulo} · +${cantidad} unidades`, 'entrada');
+        
+        mostrarCartel('⬆️', 'ENTRADA REGISTRADA', `${nombreArticulo} · +${cantidad} unidades`, 'entrada');
 
         document.getElementById('formEntrada').reset();
         document.getElementById('articuloId').value = '';
@@ -706,7 +767,6 @@ async function registrarEntrada(e) {
         btn.textContent = 'Registrar entrada';
     }
 }
-
 // ============================================================
 // 10. REGISTRAR SALIDA
 // ============================================================

@@ -4,6 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InventarioPro</title>
+
+    <!-- ========================================== -->
+    <!-- INVENTARIO PRO — ESTRUCTURA HTML           -->
+    <!-- ========================================== -->
+    <!-- ÍNDICE DE CONTENIDO:                       -->
+    <!-- 01. HEAD — Metadatos, favicon y tema       -->
+    <!-- 02. SIDEBAR — Navegación lateral           -->
+    <!-- 03. CONTENIDO PRINCIPAL                    -->
+    <!-- 04. PÁGINA — Inventario general            -->
+    <!-- 05. PÁGINA — Entradas                      -->
+    <!-- 06. PÁGINA — Salidas                       -->
+    <!-- 07. PÁGINA — Movimientos                   -->
+    <!-- 08. PÁGINA — Direcciones                   -->
+    <!-- 09. PÁGINA — Dashboard                     -->
+    <!-- 10. PÁGINA — Relevamiento                  -->
+    <!-- 11. PÁGINA — Pedidos                       -->
+    <!-- 12. PÁGINAS — Reportes y configuración     -->
+    <!-- 13. TOAST Y CARTEL DE ACCIÓN               -->
+    <!-- 14. MODAL — Nueva dirección                -->
+    <!-- 15. MODAL — Nuevo artículo                 -->
+    <!-- 16. SCRIPTS                                -->
+    <!-- ========================================== -->
     
     <!-- ★ Favicon (Cubo con check) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%232563eb%22/><path fill=%22%23fff%22 d=%22M50 20l30 17-30 17-30-17zM20 46l27 15.5V87L20 71zM80 46 53 61.5V87l27-16z%22/><path d=%22M41 37l6 6 12-12%22 fill=%22none%22 stroke=%22%232563eb%22 stroke-width=%226%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
@@ -151,17 +173,19 @@
                             <input type="date" id="fechaEntrada" required>
                         </div>
                         <div class="form-group">
-                            <label for="proveedor">PROVEEDOR *</label>
-                            <input type="text" id="proveedor" placeholder="Nombre del proveedor" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
-                            <input type="text" id="factura" placeholder="Ej: FAC-00234">
-                        </div>
-                        <div class="form-group">
-                            <label for="tipoCompra">TIPO DE ORDEN DE COMPRA</label>
-                            <input type="text" id="tipoCompra" placeholder="Ej: Orden de Compra, Compra Directa...">
-                        </div>
+    <label for="proveedor">PROVEEDOR</label>
+    <input type="text" id="proveedor" placeholder="Nombre del proveedor">
+</div>
+
+<div class="form-group">
+    <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
+    <input type="text" id="factura" placeholder="Ej: FAC-00234">
+</div>
+
+<div class="form-group">
+    <label for="tipoCompra">TIPO DE ORDEN DE COMPRA</label>
+    <input type="text" id="tipoCompra" placeholder="Ej: Orden de Compra, Compra Directa...">
+</div>
                         <div class="form-group">
                             <label for="observaciones">OBSERVACIONES</label>
                             <textarea id="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
