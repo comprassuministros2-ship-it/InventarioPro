@@ -45,6 +45,37 @@
             }
         })();
     </script>
+    <!-- ═══ MIGAS DE PAN (breadcrumb) — estilos autónomos, usan tus variables si existen ═══ -->
+    <style>
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            font-size: 0.82rem;
+            margin-bottom: 0.45rem;
+        }
+        .breadcrumb a {
+            color: var(--accent, #2563eb);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+        .breadcrumb a:hover {
+            background: var(--accent-soft, #eff6ff);
+            text-decoration: underline;
+        }
+        .breadcrumb-separador {
+            color: var(--text-muted, #94a3b8);
+            font-weight: 700;
+            user-select: none;
+        }
+        .breadcrumb-actual {
+            color: var(--text-muted, #64748b);
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body>
 <div class="app-layout">
@@ -130,6 +161,11 @@
         <!-- ============ PÁGINA: ENTRADAS ============ -->
         <div id="pagina-entradas" class="pagina">
             <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
+                    <span class="breadcrumb-separador">›</span>
+                    <span class="breadcrumb-actual">Entradas</span>
+                </div>
                 <h1>Entradas de stock</h1>
                 <p class="fecha-hoy">Panel de control - <span id="fechaActual"></span></p>
             </div>
@@ -218,6 +254,11 @@
         <!-- ============ PÁGINA: SALIDAS ============ -->
         <div id="pagina-salidas" class="pagina">
             <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
+                    <span class="breadcrumb-separador">›</span>
+                    <span class="breadcrumb-actual">Salidas</span>
+                </div>
                 <h1>Salidas de stock</h1>
                 <p class="fecha-hoy">Panel de control - <span id="fechaActualSalidas"></span></p>
             </div>
@@ -297,6 +338,11 @@
         <!-- ============ PÁGINA: MOVIMIENTOS ============ -->
         <div id="pagina-movimientos" class="pagina">
             <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
+                    <span class="breadcrumb-separador">›</span>
+                    <span class="breadcrumb-actual">Movimientos</span>
+                </div>
                 <h1>Movimientos</h1>
                 <p class="fecha-hoy">Historial de entradas y salidas</p>
             </div>
@@ -329,6 +375,11 @@
         <!-- ============ PÁGINA: DIRECCIONES ============ -->
         <div id="pagina-direcciones" class="pagina">
             <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
+                    <span class="breadcrumb-separador">›</span>
+                    <span class="breadcrumb-actual">Direcciones</span>
+                </div>
                 <h1>Direcciones</h1>
                 <p class="fecha-hoy">Destinos que más reciben - <span id="fechaActualDirecciones"></span></p>
             </div>
@@ -374,6 +425,11 @@
         <!-- ============ PÁGINA: DASHBOARD ============ -->
         <div id="pagina-dashboard" class="pagina">
             <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
+                    <span class="breadcrumb-separador">›</span>
+                    <span class="breadcrumb-actual">Dashboard</span>
+                </div>
                 <h1>Dashboard</h1>
                 <p class="fecha-hoy">Panel de control - <span id="fechaActualDashboard"></span></p>
             </div>
@@ -469,6 +525,11 @@
         <!-- ============ PÁGINA: RELEVAMIENTO ============ -->
         <div id="pagina-relevamiento" class="pagina">
             <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
+                    <span class="breadcrumb-separador">›</span>
+                    <span class="breadcrumb-actual">Relevamiento</span>
+                </div>
                 <h1>Relevamiento de stock</h1>
                 <p class="fecha-hoy">Ajuste de inventario físico - <span id="fechaActualRelevamiento"></span></p>
             </div>
@@ -531,6 +592,11 @@
         <!-- ============ PÁGINA: PEDIDOS ============ -->
         <div id="pagina-pedidos" class="pagina">
             <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
+                    <span class="breadcrumb-separador">›</span>
+                    <span class="breadcrumb-actual">Pedidos</span>
+                </div>
                 <h1>Pedidos</h1>
                 <p class="fecha-hoy">Gestión de pedidos - <span id="fechaActualPedidos"></span></p>
             </div>
@@ -828,6 +894,17 @@
 <script src="js/services/ArticulosService.js"></script>
 <script src="js/sidebar.js"></script>
 <script src="js/script.js"></script>
+
+<!-- Respaldo de navegación para las migas: si tu PASO 1 ya definió
+     navegarAPagina() en script.js o sidebar.js, este bloque no pisa nada -->
+<script>
+    if (typeof window.navegarAPagina !== 'function') {
+        window.navegarAPagina = function (pagina) {
+            var link = document.querySelector('.sidebar-link[data-page="' + pagina + '"]');
+            if (link) { link.click(); }
+        };
+    }
+</script>
 
 </body>
 </html>

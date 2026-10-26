@@ -2958,3 +2958,36 @@ body {
         transform: none;
     }
 }
+/* =========================================
+   MIGAS DE PAN (BREADCRUMBS)
+   ========================================= */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.8rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.breadcrumb a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+}
+
+.breadcrumb-separador {
+    color: var(--text-soft);
+    font-size: 1rem;
+}
+
+.breadcrumb-actual {
+    color: var(--text-muted);
+    font-weight: 600;
+}
