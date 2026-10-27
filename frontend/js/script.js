@@ -2,7 +2,6 @@
 // INVENTARIO PRO — LÓGICA PRINCIPAL
 // ============================================================
 // ÍNDICE DE CONTENIDO:
-//
 // 00. TOAST — Notificaciones flotantes
 // 01. ESTADO GLOBAL Y UTILIDADES
 // 02. NAVEGACIÓN ENTRE PÁGINAS
@@ -202,7 +201,6 @@ function renderizarArticulos(datos) {
         </div>
     `;
 
-    // Listener simplificado para los 3 botones directos
     contenedor.querySelectorAll('.btn-accion[data-action]').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -225,12 +223,10 @@ function obtenerCeldaArticuloHTML(articulo) {
     
     let contenidoVisual = '';
     
-    // 1. Si dice "img/1.jpg", lo buscamos en GitHub
     if (imgData.startsWith('img/')) {
         const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
         contenidoVisual = `<img src="${urlGitHub}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
     } 
-    // 2. Si es un link de Drive o un ID (por si alguno quedó viejo)
     else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
         let driveId = imgData;
         if (imgData.includes('id=')) driveId = imgData.split('id=')[1].split('&')[0];
@@ -238,16 +234,13 @@ function obtenerCeldaArticuloHTML(articulo) {
         const urlBackend = `${CONFIG.API.BASE_URL}?imgId=${driveId}`;
         contenidoVisual = `<img src="${urlBackend}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
     } 
-    // 3. Si es un emoji
     else if (imgData !== '') {
         contenidoVisual = `<span class="emoji-articulo">${imgData}</span>`;
     } 
-    // 4. Si no hay nada
     else {
         contenidoVisual = '';
     }
 
-    // Alerta ⚠️
     const obs = articulo.observaciones || '';
     const alertaHTML = obs.includes('⚠️') 
         ? `<span title="${escapeHtml(obs)}" style="margin-left: 8px; font-size: 1.1rem; cursor: help; color: #dc2626;">⚠️</span>` 
@@ -264,6 +257,7 @@ function obtenerCeldaArticuloHTML(articulo) {
         </div>
     `;
 }
+
 // ============================================================
 // 5. UTILIDADES DE BÚSQUEDA Y FILTROS
 // ============================================================
@@ -376,8 +370,15 @@ function actualizarPresentacionSalida(articulo) {
     const multiplicador = obtenerMultiplicadorUnidades(articulo);
     const aviso = document.getElementById('avisoPresentacionSalida');
     const texto = document.getElementById('textoStockActualSalida');
+    const select = document.getElementById('selectTipoSalida');
+    const optPack = document.getElementById('optPackSalida');
+
     if (!articulo || multiplicador === 1) {
         if (aviso) aviso.hidden = true;
+        if (select) {
+            select.style.display = 'none';
+            select.value = 'unidad';
+        }
         return;
     }
 
@@ -388,6 +389,13 @@ function actualizarPresentacionSalida(articulo) {
         texto.textContent = `${formatearUnidades(stock)} unidades (equivale a ${formatearUnidades(equivalencia)} ${presentacion}${equivalencia === 1 ? '' : 's'})`;
     }
     if (aviso) aviso.hidden = false;
+    
+    if (select) {
+        select.style.display = 'block';
+        if (optPack) {
+            optPack.textContent = `${presentacion}s (x${multiplicador})`;
+        }
+    }
 }
 
 function sincronizarCantidadSalida() {
@@ -416,9 +424,14 @@ function restablecerCantidadSalida() {
     const cantidad = document.getElementById('cantidadUnidadesSalida');
     const hidden = document.getElementById('cantidadSalida');
     const aviso = document.getElementById('avisoPresentacionSalida');
+    const select = document.getElementById('selectTipoSalida');
     if (cantidad) cantidad.value = '1';
     if (hidden) hidden.value = '1';
     if (aviso) aviso.hidden = true;
+    if (select) {
+        select.style.display = 'none';
+        select.value = 'unidad';
+    }
 }
 
 function aplicarFiltro(datos) {
@@ -718,18 +731,15 @@ async function registrarEntrada(e) {
     actualizarCalculoEntrada();
     const cantidad = Number.parseInt(document.getElementById("cantidad").value, 10);
     
-    // Leemos los campos (sin obligatoriedad)
     const proveedor = document.getElementById("proveedor").value.trim();
     const factura = document.getElementById("factura").value.trim();
     const tipoCompra = document.getElementById("tipoCompra").value.trim();
     const observaciones = document.getElementById("observaciones").value.trim();
     const fecha = document.getElementById("fechaEntrada").value || obtenerFechaLocal();
 
-    // Solo validamos lo indispensable para que no rompa
     if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
     if (isNaN(cantidad) || cantidad <= 0) { mostrarToast('Cantidad inválida', 'error'); return; }
 
-    // Verificamos si falta algún dato
     const hayDatosFaltantes = !proveedor || !factura || !tipoCompra;
 
     const btn = document.getElementById('btnRegistrar');
@@ -740,12 +750,12 @@ async function registrarEntrada(e) {
             accion: 'registrarEntrada',
             id: id,
             cantidad: cantidad,
-            proveedor: proveedor || 'S/D', // S/D = Sin Datos
+            proveedor: proveedor || 'S/D',
             ordenCompra: factura || 'S/D',
             tipoCompra: tipoCompra || 'S/D',
             observacion: observaciones,
             fecha: fecha,
-            incompleto: hayDatosFaltantes // <-- Enviamos el aviso al backend
+            incompleto: hayDatosFaltantes
         };
         
         const resultado = await apiService.post(payload);
@@ -773,25 +783,42 @@ async function registrarEntrada(e) {
         btn.textContent = 'Registrar entrada';
     }
 }
+
 // ============================================================
 // 10. REGISTRAR SALIDA
 // ============================================================
 async function registrarSalida(e) {
     e.preventDefault();
     const id = document.getElementById("articuloIdSalida").value;
-    sincronizarCantidadSalida();
-    const cantidad = Number.parseInt(document.getElementById("cantidadSalida").value, 10);
+    
+    const inputCantidad = document.getElementById("cantidadUnidadesSalida");
+    const selectTipo = document.getElementById("selectTipoSalida");
+    const cantIngresada = Number.parseInt(inputCantidad.value, 10);
+    const tipoSeleccionado = selectTipo ? selectTipo.value : 'unidad';
+    
     if (!validarDestinoSalida()) {
         mostrarToast('Ingresá el destino o dirección', 'error');
         return;
     }
+    
     const destino = document.getElementById("destinoSalida").value.trim();
     const factura = document.getElementById("facturaSalida").value.trim();
-    const observaciones = document.getElementById("observacionesSalida").value.trim();
+    let observaciones = document.getElementById("observacionesSalida").value.trim();
     const fecha = document.getElementById("fechaSalida").value;
 
     if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
-    if (isNaN(cantidad) || cantidad <= 0) { mostrarToast('Cantidad inválida', 'error'); return; }
+    if (isNaN(cantIngresada) || cantIngresada <= 0) { mostrarToast('Cantidad inválida', 'error'); return; }
+
+    const articuloSel = articulos.find(a => String(a.id) === String(id));
+    const multiplicador = obtenerMultiplicadorUnidades(articuloSel);
+    const nombreArticulo = articuloSel ? articuloSel.articulo : ('ID ' + id);
+    
+    let cantidadUnidadesReales = cantIngresada;
+    if (tipoSeleccionado === 'pack' && multiplicador > 1) {
+        cantidadUnidadesReales = cantIngresada * multiplicador;
+        const textoPack = `[Salida: ${cantIngresada} ${obtenerNombrePresentacion(articuloSel)}(s)]`;
+        observaciones = observaciones ? `${textoPack} ${observaciones}` : textoPack;
+    }
 
     const btn = document.getElementById('btnRegistrarSalida');
     btn.disabled = true;
@@ -800,13 +827,14 @@ async function registrarSalida(e) {
         const payload = {
             accion: 'registrarSalida',
             id: id,
-            cantidad: cantidad,
+            cantidad: cantidadUnidadesReales,
             destino: destino,
             factura: factura,
             observacion: observaciones,
             fecha: fecha
         };
         const resultado = await apiService.post(payload);
+        
         if (resultado && resultado.exito === false) {
             if (resultado.error && resultado.error.toLowerCase().includes('stock insuficiente')) {
                 mostrarToast(resultado.error, 'error');
@@ -816,16 +844,15 @@ async function registrarSalida(e) {
             return;
         }
 
-        const articuloSel = articulos.find(a => String(a.id) === String(id));
-        const nombreArticulo = articuloSel ? articuloSel.articulo : ('ID ' + id);
         mostrarCartel('⬇️', 'SALIDA REGISTRADA',
-            `${nombreArticulo} · -${cantidad} unidades`, 'salida');
+            `${nombreArticulo} · -${cantidadUnidadesReales} unidades`, 'salida');
 
         document.getElementById('formSalida').reset();
         document.getElementById('articuloIdSalida').value = '';
         document.getElementById('vistaPreviaContenidoSalida').innerHTML =
             '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         document.getElementById('registradoPorSalida').value = 'Samuel Steves';
+        
         restablecerCantidadSalida();
         await cargarArticulos();
         await cargarUltimasSalidas();
@@ -1781,15 +1808,82 @@ function renderizarDetallePedido() {
     const contenedor = document.getElementById('detallePedido');
     const seccion = document.getElementById('detallePedidoSeccion');
     if (!contenedor) return;
-    if (!pedidoSeleccionado) { if (seccion) seccion.hidden = true; contenedor.innerHTML = '<p class="placeholder">Seleccioná un pedido para ver el detalle.</p>'; return; }
+    
+    if (!pedidoSeleccionado) { 
+        if (seccion) seccion.hidden = true; 
+        contenedor.innerHTML = '<p class="placeholder">Seleccioná un pedido para ver el detalle.</p>'; 
+        return; 
+    }
+    
     const p = pedidosCache.find(x => String(x.id) === String(pedidoSeleccionado));
     if (!p) { if (seccion) seccion.hidden = true; return; }
     if (seccion) seccion.hidden = false;
-    const filas = (p.items || []).map(it => `<tr><td>${escapeHtml(it.articuloNombre)}</td><td><span class="badge-categoria">ID ${escapeHtml(it.articuloId)}</span></td><td style="font-weight:700;">${Number(it.cantidad) || 0}</td></tr>`).join('') || '<tr><td colspan="3"><p class="placeholder">Sin artículos.</p></td></tr>';
+    
+    const filas = (p.items || []).map(it => `
+        <tr>
+            <td>${escapeHtml(it.articuloNombre)}</td>
+            <td><span class="badge-categoria">ID ${escapeHtml(it.articuloId)}</span></td>
+            <td style="font-weight:700;">${Number(it.cantidad) || 0}</td>
+        </tr>
+    `).join('') || '<tr><td colspan="3"><p class="placeholder">Sin artículos.</p></td></tr>';
+    
     const esPendiente = p.estado === 'Pendiente';
-    const fechaTxt = p.fecha ? new Date(p.fecha).toLocaleDateString('es-AR') : '—';
+    
+    const fechaTxt = p.fecha ? new Date(p.fecha).toLocaleDateString('es-AR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }) : '—';
+    
     const estadoClase = normalizarTexto(p.estado || '').replace(/\s+/g, '-');
-    contenedor.innerHTML = `<div class="detalle-pedido-header"><div class="detalle-pedido-meta"><div><span class="label">Pedido</span><span class="valor">#${escapeHtml(p.id)}</span></div><div><span class="label">Dirección</span><span class="valor">${escapeHtml(p.direccion)}</span></div><div><span class="label">Solicitado por</span><span class="valor">${escapeHtml(p.director || '—')}</span></div><div><span class="label">Referencia</span><span class="valor">${escapeHtml(p.referencia || '—')}</span></div><div><span class="label">Fecha</span><span class="valor">${fechaTxt}</span></div><div><span class="label">Estado</span><span class="valor"><span class="badge-estado ${estadoClase}">${escapeHtml(p.estado)}</span></span></div></div><div class="detalle-pedido-acciones">${esPendiente ? '<button class="btn-accion-pedido" data-accion="editar">✏️ Editar</button><button class="btn-accion-pedido peligro" data-accion="cancelar">🗑️ Cancelar</button><button class="btn-accion-pedido primario" data-accion="confirmar">✅ Confirmar pedido</button>' : '<button class="btn-accion-pedido primario" data-accion="pdf">📄 Descargar PDF</button>'}</div></div><div class="inventario-tabla-wrapper"><table class="inventario-tabla"><thead><tr><th>Artículo</th><th>ID</th><th>Cantidad</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+    
+    contenedor.innerHTML = `
+        <div class="detalle-pedido-card">
+            
+            <div class="detalle-pedido-grid">
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Pedido</span>
+                    <span class="detalle-pedido-valor">#${escapeHtml(p.id)}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Dirección</span>
+                    <span class="detalle-pedido-valor">${escapeHtml(p.direccion)}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Solicitado por</span>
+                    <span class="detalle-pedido-valor">${escapeHtml(p.director || '—')}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Referencia</span>
+                    <span class="detalle-pedido-valor">${escapeHtml(p.referencia || '—')}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Fecha</span>
+                    <span class="detalle-pedido-valor fecha">${fechaTxt}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Estado</span>
+                    <div><span class="badge-estado ${estadoClase}">${escapeHtml(p.estado)}</span></div>
+                </div>
+            </div>
+
+            <div class="detalle-pedido-acciones">
+                ${esPendiente ? `
+                    <button class="btn-detalle editar" data-accion="editar">✏️ Editar</button>
+                    <button class="btn-detalle cancelar" data-accion="cancelar">🗑️ Cancelar</button>
+                    <button class="btn-detalle primario" data-accion="confirmar">✅ Confirmar pedido</button>
+                ` : `
+                    <button class="btn-detalle primario" data-accion="pdf">📄 Descargar PDF</button>
+                `}
+            </div>
+        </div>
+        
+        <div class="inventario-tabla-wrapper" style="margin-top: 0;">
+            <table class="inventario-tabla">
+                <thead><tr><th>Artículo</th><th>ID</th><th>Cantidad</th></tr></thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>
+    `;
+    
     contenedor.querySelectorAll('[data-accion]').forEach(btn => btn.addEventListener('click', () => manejarAccionPedido(btn.dataset.accion, p)));
 }
 
@@ -1863,16 +1957,83 @@ function renderizarCarrito() {
     const contenedor = document.getElementById('carritoPedido');
     const totalEl = document.getElementById('carritoTotal');
     if (!contenedor) return;
-    if (carritoPedido.length === 0) { contenedor.innerHTML = '<p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>'; if (totalEl) totalEl.textContent = '0'; return; }
+
+    if (carritoPedido.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>';
+        if (totalEl) totalEl.textContent = '0';
+        return;
+    }
+
     contenedor.innerHTML = carritoPedido.map((it, idx) => {
         const articulo = articulos.find(a => String(a.id) === String(it.id));
-        const emoji = (articulo?.imagen || '').trim() || '📦';
+        const imgData = (articulo?.imagen || '').trim();
+
+        let imgHTML = '📦';
+        if (imgData.startsWith('img/')) {
+            imgHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">`;
+        } else if (imgData !== '') {
+            imgHTML = imgData;
+        }
+
         const stock = articulo ? obtenerStock(articulo) : '—';
-        return `<div class="carrito-item"><span class="carrito-item-emoji" aria-hidden="true">${escapeHtml(emoji)}</span><div><span class="carrito-item-nombre">${escapeHtml(it.nombre)}</span><span class="carrito-item-stock">Stock: ${stock}</span></div><div class="carrito-stepper" aria-label="Cantidad de ${escapeHtml(it.nombre)}"><button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}" aria-label="Restar una unidad">−</button><span class="carrito-cantidad-valor">${Number(it.cantidad) || 1}</span><button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}" aria-label="Agregar una unidad">+</button></div><button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" aria-label="Quitar ${escapeHtml(it.nombre)}">✕</button></div>`;
+        const multiplicador = obtenerMultiplicadorUnidades(articulo);
+        const nombrePresentacion = obtenerNombrePresentacion(articulo);
+
+        let selectorTipo = '';
+        if (multiplicador > 1) {
+            const tipoActual = it.tipo || 'unidad';
+            const textoBoton = tipoActual === 'pack' ? nombrePresentacion.toUpperCase() : 'UNIDAD';
+            selectorTipo = `<button type="button" class="btn-tipo-cantidad" data-tipo-idx="${idx}" style="background: var(--bg-hover, #f1f5f9); border: 1px solid var(--border, #e2e8f0); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; margin-left: 8px;">${textoBoton}</button>`;
+        }
+
+        const cantMostrar = it.cantidad || 1;
+
+        let equivalenciaHTML = '';
+        if ((it.tipo || 'unidad') === 'pack' && multiplicador > 1) {
+            const totalUnidades = cantMostrar * multiplicador;
+            equivalenciaHTML = `<span class="carrito-item-stock">(${totalUnidades} unidades)</span>`;
+        } else {
+            equivalenciaHTML = `<span class="carrito-item-stock">Stock: ${stock}</span>`;
+        }
+
+        return `
+            <div class="carrito-item">
+                <span class="carrito-item-emoji" aria-hidden="true">${imgHTML}</span>
+                <div>
+                    <span class="carrito-item-nombre">${escapeHtml(it.nombre)}${selectorTipo}</span>
+                    ${equivalenciaHTML}
+                </div>
+                <div class="carrito-stepper" aria-label="Cantidad de ${escapeHtml(it.nombre)}">
+                    <button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}" aria-label="Restar una unidad">−</button>
+                    <span class="carrito-cantidad-valor">${cantMostrar}</span>
+                    <button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}" aria-label="Agregar una unidad">+</button>
+                </div>
+                <button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" aria-label="Quitar ${escapeHtml(it.nombre)}">✕</button>
+            </div>`;
     }).join('');
+
     actualizarTotalCarrito();
-    contenedor.querySelectorAll('.carrito-btn-stepper').forEach(btn => btn.addEventListener('click', () => { const idx = Number(btn.dataset.idx); if (btn.dataset.step === 'mas') incrementarCantidadCarrito(idx); else decrementarCantidadCarrito(idx); }));
-    contenedor.querySelectorAll('[data-quitar]').forEach(btn => btn.addEventListener('click', () => { carritoPedido.splice(Number(btn.dataset.quitar), 1); renderizarCarrito(); }));
+
+    contenedor.querySelectorAll('.carrito-btn-stepper').forEach(btn => btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.idx);
+        if (btn.dataset.step === 'mas') incrementarCantidadCarrito(idx);
+        else decrementarCantidadCarrito(idx);
+    }));
+
+    contenedor.querySelectorAll('.btn-tipo-cantidad').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = Number(btn.dataset.tipoIdx);
+            if (carritoPedido[idx]) {
+                carritoPedido[idx].tipo = (carritoPedido[idx].tipo === 'pack') ? 'unidad' : 'pack';
+                renderizarCarrito();
+            }
+        });
+    });
+
+    contenedor.querySelectorAll('[data-quitar]').forEach(btn => btn.addEventListener('click', () => {
+        carritoPedido.splice(Number(btn.dataset.quitar), 1);
+        renderizarCarrito();
+    }));
 }
 
 function configurarPedidos() {
@@ -1895,56 +2056,98 @@ async function manejarSubmitPedido(e) {
     const director = document.getElementById('directorPedido')?.value?.trim() || '';
     const referencia = document.getElementById('referenciaPedido')?.value?.trim() || '';
 
-    if (!direccion) { mostrarToast('Seleccioná una dirección', 'error'); return; }
-    if (carritoPedido.length === 0) { mostrarToast('El carrito está vacío', 'error'); return; }
+    if (!direccion) {
+        mostrarToast('Seleccioná una dirección', 'error');
+        return;
+    }
+
+    if (!Array.isArray(carritoPedido) || carritoPedido.length === 0) {
+        mostrarToast('El carrito está vacío', 'error');
+        return;
+    }
 
     const btn = document.getElementById('btnConfirmarPedido');
-    const txtOriginal = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Guardando...';
+    const txtOriginal = btn?.textContent || 'Confirmar pedido';
+
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+    }
 
     try {
-        const items = carritoPedido.map(it => ({
-            id: it.id,
-            nombre: it.nombre,
-            categoria: it.categoria,
-            cantidad: it.cantidad
-        }));
+        const items = carritoPedido.map(it => {
+            const articulo = articulos.find(a => String(a.id) === String(it.id));
+            const multiplicador = obtenerMultiplicadorUnidades(articulo);
+            const cantidadPresentacion = Math.max(1, Number(it.cantidad) || 1);
+            const tipo = it.tipo || 'unidad';
+            const esPack = tipo === 'pack' && multiplicador > 1;
+            const unidadesTotales = esPack
+                ? cantidadPresentacion * multiplicador
+                : cantidadPresentacion;
 
-        let r;
-        if (modoEdicionPedido) {
-            r = await apiService.post({
+            const presentacion = obtenerNombrePresentacion(articulo);
+            const textoCantidad = esPack
+                ? `${cantidadPresentacion} ${presentacion}${cantidadPresentacion === 1 ? '' : 's'} (${unidadesTotales} unidades)`
+                : `${unidadesTotales} ${unidadesTotales === 1 ? 'unidad' : 'unidades'}`;
+
+            return {
+                id: it.id,
+                nombre: it.nombre,
+                categoria: it.categoria,
+                cantidad: unidadesTotales,
+                textoCantidad: textoCantidad
+            };
+        });
+
+        const payload = {
+            direccion,
+            director,
+            referencia,
+            items
+        };
+
+        const resultado = modoEdicionPedido
+            ? await apiService.post({
                 accion: 'editarPedido',
                 id: modoEdicionPedido,
-                direccion, director, referencia, items
-            });
-        } else {
-            r = await apiService.post({
+                ...payload
+            })
+            : await apiService.post({
                 accion: 'crearPedido',
-                direccion, director, referencia, items
+                ...payload
             });
+
+        if (!resultado || resultado.exito === false) {
+            throw new Error(resultado?.error || 'No se pudo guardar el pedido');
         }
 
-        if (!r || r.exito === false) throw new Error(r?.error || 'Error');
-
-        mostrarToast(modoEdicionPedido ? 'Pedido actualizado' : 'Pedido creado', 'exito');
+        const estabaEditando = Boolean(modoEdicionPedido);
+        mostrarToast(estabaEditando ? 'Pedido actualizado' : 'Pedido creado', 'exito');
 
         carritoPedido = [];
         modoEdicionPedido = null;
-        document.getElementById('formPedido').reset();
-        document.getElementById('direccionPedido').value = '';
-        document.getElementById('directorPedido').value = '';
-        document.getElementById('referenciaPedido').value = '';
-        btn.textContent = 'Confirmar pedido';
-        renderizarCarrito();
 
+        document.getElementById('formPedido')?.reset();
+
+        const direccionPedido = document.getElementById('direccionPedido');
+        const directorPedido = document.getElementById('directorPedido');
+        const referenciaPedido = document.getElementById('referenciaPedido');
+
+        if (direccionPedido) direccionPedido.value = '';
+        if (directorPedido) directorPedido.value = '';
+        if (referenciaPedido) referenciaPedido.value = '';
+
+        if (btn) btn.textContent = 'Confirmar pedido';
+        renderizarCarrito();
         await cargarListaPedidos();
     } catch (err) {
-        mostrarToast('Error: ' + err.message, 'error');
-        btn.textContent = txtOriginal;
+        mostrarToast('Error: ' + (err?.message || 'No se pudo guardar el pedido'), 'error');
+        if (btn) btn.textContent = txtOriginal;
     } finally {
-        btn.disabled = false;
-        if (modoEdicionPedido === null) btn.textContent = 'Confirmar pedido';
+        if (btn) {
+            btn.disabled = false;
+            if (modoEdicionPedido === null) btn.textContent = 'Confirmar pedido';
+        }
     }
 }
 
@@ -2040,11 +2243,13 @@ function agregarAlCarrito(item) {
     if (existente) {
         existente.cantidad += 1;
     } else {
+        const multiplicador = obtenerMultiplicadorUnidades(item);
         carritoPedido.push({
             id: item.id,
             nombre: item.articulo,
             categoria: item.categoriaID || '',
-            cantidad: 1
+            cantidad: 1,
+            tipo: multiplicador > 1 ? 'unidad' : 'unidad'
         });
     }
     renderizarCarrito();
@@ -2124,7 +2329,23 @@ function cambiarTabPedidos(tab) {
 
 function actualizarTotalCarrito() {
     const total = document.getElementById('carritoTotal');
-    if (total) total.textContent = carritoPedido.reduce((suma, item) => suma + (Number(item.cantidad) || 0), 0);
+    if (!total) return;
+
+    let totalUnidades = 0;
+
+    carritoPedido.forEach(item => {
+        const articulo = articulos.find(a => String(a.id) === String(item.id));
+        const multiplicador = obtenerMultiplicadorUnidades(articulo);
+        const cant = Number(item.cantidad) || 0;
+
+        if ((item.tipo || 'unidad') === 'pack' && multiplicador > 1) {
+            totalUnidades += cant * multiplicador;
+        } else {
+            totalUnidades += cant;
+        }
+    });
+
+    total.textContent = totalUnidades;
 }
 
 function incrementarCantidadCarrito(idx) {
