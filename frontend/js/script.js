@@ -1,36 +1,9 @@
 // ============================================================
 // INVENTARIO PRO — LÓGICA PRINCIPAL
 // ============================================================
-// ÍNDICE DE CONTENIDO:
-// 00. TOAST — Notificaciones flotantes
-// 01. ESTADO GLOBAL Y UTILIDADES
-// 02. NAVEGACIÓN ENTRE PÁGINAS
-// 03. CARGA DE ARTÍCULOS
-// 04. RENDERIZADO DE INVENTARIO
-// 05. UTILIDADES DE BÚSQUEDA, FILTROS Y PRESENTACIÓN
-// 06. SELECT DE CATEGORÍAS
-// 07. BUSCADORES CON DROPDOWN
-// 08. VISTA PREVIA DEL ARTÍCULO
-// 09. REGISTRO DE ENTRADAS
-// 10. REGISTRO DE SALIDAS
-// 11. ÚLTIMAS ENTRADAS Y SALIDAS
-// 12. MOVIMIENTOS
-// 13. MENÚ LATERAL COLAPSABLE
-// 14. DIRECCIONES OFICIALES
-// 15. REGISTRAR RELEVAMIENTO
-// 16. DIRECCIONES — Ranking y detalle
-// 17. DASHBOARD
-// 18. PEDIDOS — Gestión y acciones
-// 19. PEDIDOS — Pestañas, seguimiento y carrito
-// 20. CARTEL DE ACCIÓN
-// 21. MODAL NUEVO ARTÍCULO
-// 22. ELIMINAR ARTÍCULO
-// 23. TEMA CLARO / OSCURO
-// 24. INICIALIZACIÓN
-// ============================================================
 
 // ============================================================
-// 0. TOAST - Notificación flotante (FUNCIÓN GLOBAL)
+// 0. TOAST - Notificación flotante
 // ============================================================
 function mostrarToast(mensaje, tipo = 'exito') {
     const toast = document.getElementById('toast');
@@ -61,11 +34,7 @@ let modoCreacionArticulo = null;
 
 function escapeHtml(texto) {
     return String(texto ?? '').replace(/[&<>"']/g, caracter => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[caracter]));
 }
 
@@ -91,7 +60,6 @@ function navegarAPagina(nombre) {
         cambiarTabPedidos('seguimiento');
         cargarPedidos();
     }
-
     if (nombre === 'inventario') cargarArticulos();
     if (nombre === 'movimientos') cargarMovimientos();
     if (nombre === 'direcciones') cargarDirecciones();
@@ -130,9 +98,7 @@ async function cargarArticulos() {
     } catch (error) {
         console.error("Error cargando artículos:", error);
         const contenedor = document.getElementById("contenedorInventario");
-        if (contenedor) {
-            contenedor.innerHTML = `<p class="placeholder">Error al cargar inventario: ${error.message}</p>`;
-        }
+        if (contenedor) contenedor.innerHTML = `<p class="placeholder">Error al cargar inventario: ${error.message}</p>`;
         return [];
     }
 }
@@ -150,7 +116,6 @@ function renderizarArticulos(datos) {
     }
 
     let filas = "";
-
     datos.forEach(item => {
         const stock = obtenerStock(item);
         const estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
@@ -167,95 +132,60 @@ function renderizarArticulos(datos) {
                 <td class="td-centrado">—</td>
                 <td>
                     <div class="acciones-celda" style="display: flex; gap: 0.4rem; justify-content: center;">
-                        <button class="btn-accion" type="button" title="Detalles" data-action="detalles" data-id="${item.id}">
-                            👁️
-                        </button>
-                        <button class="btn-accion" type="button" title="Relevamiento" data-action="relevamiento" data-id="${item.id}">
-                            ✏️
-                        </button>
-                        <button class="btn-accion" type="button" title="Eliminar" data-action="eliminar" data-id="${item.id}">
-                            🗑️
-                        </button>
+                        <button class="btn-accion" type="button" title="Historial" data-action="historial" data-id="${item.id}">👁️</button>
+                        <button class="btn-accion" type="button" title="Relevamiento" data-action="relevamiento" data-id="${item.id}">✏️</button>
+                        <button class="btn-accion" type="button" title="Eliminar" data-action="eliminar" data-id="${item.id}">🗑️</button>
                     </div>
                 </td>
-            </tr>
-        `;
+            </tr>`;
     });
 
     contenedor.innerHTML = `
         <div class="inventario-tabla-wrapper">
             <table class="inventario-tabla">
                 <thead>
-                    <tr>
-                        <th>Artículo</th>
-                        <th>Stock</th>
-                        <th>Estado</th>
-                        <th>Categoría</th>
-                        <th>Ubicación</th>
-                        <th>Tipo</th>
-                        <th>Acciones</th>
-                    </tr>
+                    <tr><th>Artículo</th><th>Stock</th><th>Estado</th><th>Categoría</th><th>Ubicación</th><th>Tipo</th><th>Acciones</th></tr>
                 </thead>
                 <tbody>${filas}</tbody>
             </table>
-        </div>
-    `;
+        </div>`;
 
     contenedor.querySelectorAll('.btn-accion[data-action]').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const accion = this.dataset.action;
             const id = this.dataset.id;
-
-            if (accion === 'relevamiento') {
-                irARelevamientoConArticulo(id);
-            } else if (accion === 'detalles') {
-                mostrarToast('Próximamente: página de detalles', 'exito');
-            } else if (accion === 'eliminar') {
-                eliminarArticulo(id);
-            }
+            if (accion === 'relevamiento') irARelevamientoConArticulo(id);
+            else if (accion === 'historial') abrirModalHistorial(id);
+            else if (accion === 'eliminar') eliminarArticulo(id);
         });
     });
 }
 
 function obtenerCeldaArticuloHTML(articulo) {
     const imgData = (articulo.imagen || '').trim();
-    
     let contenidoVisual = '';
-    
     if (imgData.startsWith('img/')) {
         const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
         contenidoVisual = `<img src="${urlGitHub}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
-    } 
-    else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
+    } else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
         let driveId = imgData;
         if (imgData.includes('id=')) driveId = imgData.split('id=')[1].split('&')[0];
         else if (imgData.includes('/d/')) driveId = imgData.split('/d/')[1].split('/')[0];
         const urlBackend = `${CONFIG.API.BASE_URL}?imgId=${driveId}`;
         contenidoVisual = `<img src="${urlBackend}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
-    } 
-    else if (imgData !== '') {
+    } else if (imgData !== '') {
         contenidoVisual = `<span class="emoji-articulo">${imgData}</span>`;
-    } 
-    else {
-        contenidoVisual = '';
     }
 
     const obs = articulo.observaciones || '';
-    const alertaHTML = obs.includes('⚠️') 
-        ? `<span title="${escapeHtml(obs)}" style="margin-left: 8px; font-size: 1.1rem; cursor: help; color: #dc2626;">⚠️</span>` 
-        : '';
+    const alertaHTML = obs.includes('⚠️') ? `<span title="${escapeHtml(obs)}" style="margin-left: 8px; font-size: 1.1rem; cursor: help; color: #dc2626;">⚠️</span>` : '';
 
     return `
         <div class="articulo-celda">
-            <div class="articulo-imagen">
-                ${contenidoVisual}
-            </div>
-            <div class="articulo-info">
-                <span class="articulo-nombre">${escapeHtml(articulo.articulo)} ${alertaHTML}</span>
-            </div>
-        </div>
-    `;
+            <div class="articulo-imagen">${contenidoVisual}</div>
+            <div class="articulo-info"><span class="articulo-nombre">${escapeHtml(articulo.articulo)} ${alertaHTML}</span></div>
+        </div>`;
 }
 
 // ============================================================
@@ -317,10 +247,7 @@ function actualizarCalculoEntrada() {
             const presentacionBase = presentacion.toLowerCase();
             const presentacionLabel = packs === 1 ? presentacionBase : `${presentacionBase}s`;
             const sueltasLabel = sueltas === 1 ? 'suelta' : 'sueltas';
-            totalEl.innerHTML = `
-                ${formatearUnidades(packs)} ${escapeHtml(presentacionLabel)} × ${formatearUnidades(multiplicador)} + ${formatearUnidades(sueltas)} ${sueltasLabel} =<br>
-                <span class="numero-grande">${formatearUnidades(total)}</span> ${unidadesLabel}
-            `;
+            totalEl.innerHTML = `${formatearUnidades(packs)} ${escapeHtml(presentacionLabel)} × ${formatearUnidades(multiplicador)} + ${formatearUnidades(sueltas)} ${sueltasLabel} =<br><span class="numero-grande">${formatearUnidades(total)}</span> ${unidadesLabel}`;
         } else {
             totalEl.innerHTML = `<span class="numero-grande">${formatearUnidades(total)}</span> ${unidadesLabel}`;
         }
@@ -362,7 +289,6 @@ function actualizarPresentacionEntrada(articulo) {
         if (etiquetaPacks) etiquetaPacks.textContent = `${presentacion.toUpperCase()}S (×${formatearUnidades(multiplicador)})`;
         if (grilla) grilla.classList.remove('unidad-simple');
     }
-
     actualizarCalculoEntrada();
 }
 
@@ -375,26 +301,19 @@ function actualizarPresentacionSalida(articulo) {
 
     if (!articulo || multiplicador === 1) {
         if (aviso) aviso.hidden = true;
-        if (select) {
-            select.style.display = 'none';
-            select.value = 'unidad';
-        }
+        if (select) { select.style.display = 'none'; select.value = 'unidad'; }
         return;
     }
 
     const stock = obtenerStock(articulo);
     const equivalencia = stock / multiplicador;
     const presentacion = obtenerNombrePresentacion(articulo);
-    if (texto) {
-        texto.textContent = `${formatearUnidades(stock)} unidades (equivale a ${formatearUnidades(equivalencia)} ${presentacion}${equivalencia === 1 ? '' : 's'})`;
-    }
+    if (texto) texto.textContent = `${formatearUnidades(stock)} unidades (equivale a ${formatearUnidades(equivalencia)} ${presentacion}${equivalencia === 1 ? '' : 's'})`;
     if (aviso) aviso.hidden = false;
     
     if (select) {
         select.style.display = 'block';
-        if (optPack) {
-            optPack.textContent = `${presentacion}s (x${multiplicador})`;
-        }
+        if (optPack) optPack.textContent = `${presentacion}s (x${multiplicador})`;
     }
 }
 
@@ -428,10 +347,7 @@ function restablecerCantidadSalida() {
     if (cantidad) cantidad.value = '1';
     if (hidden) hidden.value = '1';
     if (aviso) aviso.hidden = true;
-    if (select) {
-        select.style.display = 'none';
-        select.value = 'unidad';
-    }
+    if (select) { select.style.display = 'none'; select.value = 'unidad'; }
 }
 
 function aplicarFiltro(datos) {
@@ -474,9 +390,7 @@ function renderizarSelectCategorias() {
 
     const categorias = new Set();
     articulos.forEach(item => {
-        if (item.categoriaID && item.categoriaID.trim() !== '') {
-            categorias.add(item.categoriaID.trim());
-        }
+        if (item.categoriaID && item.categoriaID.trim() !== '') categorias.add(item.categoriaID.trim());
     });
 
     Array.from(categorias).sort().forEach(cat => {
@@ -486,9 +400,7 @@ function renderizarSelectCategorias() {
         select.appendChild(option);
     });
 
-    if (Array.from(select.options).some(o => o.value === valorActual)) {
-        select.value = valorActual;
-    }
+    if (Array.from(select.options).some(o => o.value === valorActual)) select.value = valorActual;
 
     if (!select.dataset.listener) {
         select.addEventListener('change', () => {
@@ -501,7 +413,7 @@ function renderizarSelectCategorias() {
 }
 
 // ============================================================
-// 7. BUSCADOR GENÉRICO CON DROPDOWN
+// 7. BUSCADORES CON DROPDOWN
 // ============================================================
 function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
     const input = document.getElementById(inputId);
@@ -529,16 +441,13 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
     });
 
     document.addEventListener("click", function(e) {
-        if (!e.target.closest(".buscador-articulo-group")) {
-            dropdown.classList.remove("visible");
-        }
+        if (!e.target.closest(".buscador-articulo-group")) dropdown.classList.remove("visible");
     });
 
     function filtrar(texto) {
         const termino = normalizarTexto(texto);
         const resultados = articulos.filter(item =>
-            normalizarTexto(item.articulo).includes(termino) ||
-            String(item.id).includes(termino)
+            normalizarTexto(item.articulo).includes(termino) || String(item.id).includes(termino)
         );
         dropdown.innerHTML = "";
         if (resultados.length === 0) {
@@ -547,9 +456,7 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
             li.style.color = "var(--text-muted)";
             li.style.fontStyle = "italic";
             li.style.cursor = "default";
-            li.style.borderBottom = "1px solid var(--border)";
             dropdown.appendChild(li);
-
             if (inputId === 'inputArticulo') {
                 const liCrear = document.createElement("li");
                 liCrear.innerHTML = `➕ Crear "<strong>${escapeHtml(texto)}</strong>" ahora`;
@@ -558,14 +465,10 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
                 liCrear.style.cursor = "pointer";
                 liCrear.addEventListener("click", function() {
                     dropdown.classList.remove("visible");
-                    abrirModalArticulo({
-                        origen: 'entrada',
-                        nombreSugerido: texto
-                    });
+                    abrirModalArticulo({ origen: 'entrada', nombreSugerido: texto });
                 });
                 dropdown.appendChild(liCrear);
             }
-
             dropdown.classList.add("visible");
             return;
         }
@@ -625,22 +528,18 @@ function configurarBuscadorDropdownRelevamiento() {
             hidden.value = "";
             document.getElementById('stockSistema').value = '—';
             document.getElementById('diferencia').value = '—';
-            document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML =
-                '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+            document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         }
     });
 
     document.addEventListener("click", function(e) {
-        if (!e.target.closest(".buscador-articulo-group")) {
-            dropdown.classList.remove("visible");
-        }
+        if (!e.target.closest(".buscador-articulo-group")) dropdown.classList.remove("visible");
     });
 
     function filtrar(texto) {
         const termino = normalizarTexto(texto);
         const resultados = articulos.filter(item =>
-            normalizarTexto(item.articulo).includes(termino) ||
-            String(item.id).includes(termino)
+            normalizarTexto(item.articulo).includes(termino) || String(item.id).includes(termino)
         );
         dropdown.innerHTML = "";
         if (resultados.length === 0) {
@@ -702,9 +601,7 @@ function mostrarVistaPrevia(id, contenedorId) {
 
     const multiplicador = obtenerMultiplicadorUnidades(item);
     const presentacion = obtenerNombrePresentacion(item);
-    const presentacionHTML = multiplicador > 1
-        ? `<div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);">Presentación: ${escapeHtml(presentacion)} de ${formatearUnidades(multiplicador)}</div>`
-        : '';
+    const presentacionHTML = multiplicador > 1 ? `<div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);">Presentación: ${escapeHtml(presentacion)} de ${formatearUnidades(multiplicador)}</div>` : '';
 
     const contenedor = document.getElementById(contenedorId);
     if (!contenedor) return;
@@ -718,19 +615,17 @@ function mostrarVistaPrevia(id, contenedorId) {
                 ${item.stockMin ? `<span style="color:var(--text-muted);font-size:0.85rem;">Mínimo: ${item.stockMin}</span>` : ''}
             </div>
             ${presentacionHTML}
-        </div>
-    `;
+        </div>`;
 }
 
 // ============================================================
-// 9. REGISTRAR ENTRADA
+// 9. REGISTRO DE ENTRADAS
 // ============================================================
 async function registrarEntrada(e) {
     e.preventDefault();
     const id = document.getElementById("articuloId").value;
     actualizarCalculoEntrada();
     const cantidad = Number.parseInt(document.getElementById("cantidad").value, 10);
-    
     const proveedor = document.getElementById("proveedor").value.trim();
     const factura = document.getElementById("factura").value.trim();
     const tipoCompra = document.getElementById("tipoCompra").value.trim();
@@ -739,7 +634,6 @@ async function registrarEntrada(e) {
 
     if (!id) { mostrarToast('Seleccioná un artículo', 'error'); return; }
     if (isNaN(cantidad) || cantidad <= 0) { mostrarToast('Cantidad inválida', 'error'); return; }
-
     const hayDatosFaltantes = !proveedor || !factura || !tipoCompra;
 
     const btn = document.getElementById('btnRegistrar');
@@ -747,29 +641,21 @@ async function registrarEntrada(e) {
     btn.textContent = 'Registrando...';
     try {
         const payload = {
-            accion: 'registrarEntrada',
-            id: id,
-            cantidad: cantidad,
-            proveedor: proveedor || 'S/D',
-            ordenCompra: factura || 'S/D',
-            tipoCompra: tipoCompra || 'S/D',
-            observacion: observaciones,
-            fecha: fecha,
-            incompleto: hayDatosFaltantes
+            accion: 'registrarEntrada', id, cantidad,
+            proveedor: proveedor || 'S/D', ordenCompra: factura || 'S/D',
+            tipoCompra: tipoCompra || 'S/D', observacion: observaciones,
+            fecha: fecha, incompleto: hayDatosFaltantes
         };
-        
         const resultado = await apiService.post(payload);
         if (resultado && resultado.exito === false) throw new Error(resultado.error || 'Error desconocido');
 
         const articuloSel = articulos.find(a => String(a.id) === String(id));
         const nombreArticulo = articuloSel ? articuloSel.articulo : ('ID ' + id);
-        
         mostrarCartel('⬆️', 'ENTRADA REGISTRADA', `${nombreArticulo} · +${cantidad} unidades`, 'entrada');
 
         document.getElementById('formEntrada').reset();
         document.getElementById('articuloId').value = '';
-        document.getElementById('vistaPreviaContenido').innerHTML =
-            '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+        document.getElementById('vistaPreviaContenido').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         document.getElementById('registradoPor').value = 'Samuel Steves';
         restablecerCantidadEntrada();
         await cargarArticulos();
@@ -785,21 +671,17 @@ async function registrarEntrada(e) {
 }
 
 // ============================================================
-// 10. REGISTRAR SALIDA
+// 10. REGISTRO DE SALIDAS
 // ============================================================
 async function registrarSalida(e) {
     e.preventDefault();
     const id = document.getElementById("articuloIdSalida").value;
-    
     const inputCantidad = document.getElementById("cantidadUnidadesSalida");
     const selectTipo = document.getElementById("selectTipoSalida");
     const cantIngresada = Number.parseInt(inputCantidad.value, 10);
     const tipoSeleccionado = selectTipo ? selectTipo.value : 'unidad';
     
-    if (!validarDestinoSalida()) {
-        mostrarToast('Ingresá el destino o dirección', 'error');
-        return;
-    }
+    if (!validarDestinoSalida()) { mostrarToast('Ingresá el destino o dirección', 'error'); return; }
     
     const destino = document.getElementById("destinoSalida").value.trim();
     const factura = document.getElementById("facturaSalida").value.trim();
@@ -825,32 +707,21 @@ async function registrarSalida(e) {
     btn.textContent = 'Registrando...';
     try {
         const payload = {
-            accion: 'registrarSalida',
-            id: id,
-            cantidad: cantidadUnidadesReales,
-            destino: destino,
-            factura: factura,
-            observacion: observaciones,
-            fecha: fecha
+            accion: 'registrarSalida', id, cantidad: cantidadUnidadesReales,
+            destino, factura, observacion: observaciones, fecha
         };
         const resultado = await apiService.post(payload);
-        
         if (resultado && resultado.exito === false) {
-            if (resultado.error && resultado.error.toLowerCase().includes('stock insuficiente')) {
-                mostrarToast(resultado.error, 'error');
-            } else {
-                throw new Error(resultado.error || 'Error desconocido');
-            }
+            if (resultado.error && resultado.error.toLowerCase().includes('stock insuficiente')) mostrarToast(resultado.error, 'error');
+            else throw new Error(resultado.error || 'Error desconocido');
             return;
         }
 
-        mostrarCartel('⬇️', 'SALIDA REGISTRADA',
-            `${nombreArticulo} · -${cantidadUnidadesReales} unidades`, 'salida');
+        mostrarCartel('⬇️', 'SALIDA REGISTRADA', `${nombreArticulo} · -${cantidadUnidadesReales} unidades`, 'salida');
 
         document.getElementById('formSalida').reset();
         document.getElementById('articuloIdSalida').value = '';
-        document.getElementById('vistaPreviaContenidoSalida').innerHTML =
-            '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+        document.getElementById('vistaPreviaContenidoSalida').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         document.getElementById('registradoPorSalida').value = 'Samuel Steves';
         
         restablecerCantidadSalida();
@@ -876,31 +747,15 @@ async function cargarUltimasEntradas() {
         const resultado = await apiService.post({ accion: 'ultimasEntradas', cantidad: 5 });
         if (resultado && resultado.exito === false) throw new Error(resultado.error);
         const datos = Array.isArray(resultado) ? resultado : [];
-        if (datos.length === 0) {
-            contenedor.innerHTML = '<p class="placeholder">Sin movimientos recientes</p>';
-            return;
-        }
+        if (datos.length === 0) { contenedor.innerHTML = '<p class="placeholder">Sin movimientos recientes</p>'; return; }
         let html = '<ul class="lista-entradas">';
         datos.forEach(mov => {
             const fecha = mov.fecha ? new Date(mov.fecha).toLocaleDateString('es-AR') : '';
-            const proveedor = mov.proveedor || '—';
-            const orden = mov.orden || '';
-            const cantidad = mov.cantidad || 0;
-            const nombre = mov.nombre || mov.articulo || `ID ${mov.id}`;
-            html += `
-                <li>
-                    <div class="item-nombre">${escapeHtml(nombre)}</div>
-                    <div class="item-detalle">${fecha} · ${escapeHtml(proveedor)} ${orden ? '· '+escapeHtml(orden) : ''}</div>
-                    <div class="item-cantidad">+${cantidad}</div>
-                </li>
-            `;
+            html += `<li><div class="item-nombre">${escapeHtml(mov.nombre || mov.articulo || `ID ${mov.id}`)}</div><div class="item-detalle">${fecha} · ${escapeHtml(mov.proveedor || '—')}</div><div class="item-cantidad">+${mov.cantidad || 0}</div></li>`;
         });
         html += '</ul>';
         contenedor.innerHTML = html;
-    } catch (error) {
-        console.error('Error cargando últimas entradas:', error);
-        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
-    }
+    } catch (error) { contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`; }
 }
 
 async function cargarUltimasSalidas() {
@@ -910,31 +765,15 @@ async function cargarUltimasSalidas() {
         const resultado = await apiService.post({ accion: 'ultimasSalidas', cantidad: 5 });
         if (resultado && resultado.exito === false) throw new Error(resultado.error);
         const datos = Array.isArray(resultado) ? resultado : [];
-        if (datos.length === 0) {
-            contenedor.innerHTML = '<p class="placeholder">Sin movimientos recientes</p>';
-            return;
-        }
+        if (datos.length === 0) { contenedor.innerHTML = '<p class="placeholder">Sin movimientos recientes</p>'; return; }
         let html = '<ul class="lista-salidas">';
         datos.forEach(mov => {
             const fecha = mov.fecha ? new Date(mov.fecha).toLocaleDateString('es-AR') : '';
-            const destino = mov.destino || '—';
-            const factura = mov.factura || '';
-            const cantidad = mov.cantidad || 0;
-            const nombre = mov.nombre || mov.articulo || `ID ${mov.id}`;
-            html += `
-                <li>
-                    <div class="item-nombre">${escapeHtml(nombre)}</div>
-                    <div class="item-detalle">${fecha} · ${escapeHtml(destino)} ${factura ? '· '+escapeHtml(factura) : ''}</div>
-                    <div class="item-cantidad" style="color: #dc2626;">-${cantidad}</div>
-                </li>
-            `;
+            html += `<li><div class="item-nombre">${escapeHtml(mov.nombre || mov.articulo || `ID ${mov.id}`)}</div><div class="item-detalle">${fecha} · ${escapeHtml(mov.destino || '—')}</div><div class="item-cantidad" style="color: #dc2626;">-${mov.cantidad || 0}</div></li>`;
         });
         html += '</ul>';
         contenedor.innerHTML = html;
-    } catch (error) {
-        console.error('Error cargando últimas salidas:', error);
-        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
-    }
+    } catch (error) { contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`; }
 }
 
 // ============================================================
@@ -947,76 +786,46 @@ let movimientosVisibles = 0;
 async function cargarMovimientos() {
     const contenedor = document.getElementById('contenedorMovimientos');
     if (!contenedor) return;
-
-    if (movimientos.length > 0) {
-        renderizarMovimientos(movimientos);
-        return;
-    }
-
+    if (movimientos.length > 0) { renderizarMovimientos(movimientos); return; }
     contenedor.innerHTML = '<p class="placeholder">Cargando movimientos...</p>';
-
     try {
         const resultado = await apiService.post({ accion: 'listarMovimientos' });
-        if (resultado && resultado.exito === false) {
-            throw new Error(resultado.error || 'Error al obtener movimientos');
-        }
+        if (resultado && resultado.exito === false) throw new Error(resultado.error || 'Error al obtener movimientos');
         movimientos = Array.isArray(resultado) ? resultado : [];
-
         prepararTimestampsMovimientos(movimientos);
-
         renderizarMovimientos(movimientos);
-    } catch (error) {
-        console.error('Error cargando movimientos:', error);
-        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
-    }
+    } catch (error) { contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`; }
 }
 
 function prepararTimestampsMovimientos(datos) {
-    datos.forEach(m => {
-        m._ts = m.fecha ? new Date(m.fecha).getTime() : 0;
-    });
+    datos.forEach(m => { m._ts = m.fecha ? new Date(m.fecha).getTime() : 0; });
 }
 
 function renderizarMovimientos(datos) {
     const contenedor = document.getElementById('contenedorMovimientos');
     if (!contenedor) return;
-
     const texto = (document.getElementById('inputBusquedaMov')?.value || '').trim().toLowerCase();
     const tipo = document.getElementById('selectTipoMov')?.value || 'todos';
 
     let filtrados = datos;
-
-    if (tipo !== 'todos') {
-        filtrados = filtrados.filter(m => m.tipo === tipo);
-    }
-
+    if (tipo !== 'todos') filtrados = filtrados.filter(m => m.tipo === tipo);
     if (texto) {
         const t = normalizarTexto(texto);
         filtrados = filtrados.filter(m => {
-            const campos = [
-                m.nombre,
-                m.proveedor,
-                m.destino,
-                m.observacion,
-                m.ordenCompra,
-                m.factura
-            ].filter(Boolean);
+            const campos = [m.nombre, m.proveedor, m.destino, m.observacion, m.ordenCompra, m.factura].filter(Boolean);
             return campos.some(c => normalizarTexto(c).includes(t));
         });
     }
 
     filtrados = [...filtrados].sort((a, b) => (b._ts ?? 0) - (a._ts ?? 0));
-
     if (filtrados.length === 0) {
-        movimientosFiltrados = [];
-        movimientosVisibles = 0;
+        movimientosFiltrados = []; movimientosVisibles = 0;
         contenedor.innerHTML = '<p class="placeholder">No hay movimientos para mostrar.</p>';
         return;
     }
 
     movimientosFiltrados = filtrados;
     movimientosVisibles = Math.min(MOV_POR_LOTE, filtrados.length);
-
     const filas = generarFilasMovimientos(filtrados.slice(0, movimientosVisibles));
     const hayMas = filtrados.length > movimientosVisibles;
 
@@ -1024,77 +833,35 @@ function renderizarMovimientos(datos) {
         <p class="placeholder" style="margin: 0.5rem 0;">Mostrando ${movimientosVisibles} de ${filtrados.length} movimientos</p>
         <div class="inventario-tabla-wrapper">
             <table class="inventario-tabla">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th>Artículo</th>
-                        <th>Cantidad</th>
-                        <th>Origen / Destino</th>
-                        <th>Detalle</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Fecha</th><th>Tipo</th><th>Artículo</th><th>Cantidad</th><th>Origen / Destino</th><th>Detalle</th></tr></thead>
                 <tbody>${filas}</tbody>
             </table>
         </div>
-        ${hayMas ? `
-        <div style="text-align: center; margin: 1rem 0;">
-            <button class="btn-exportar" id="btnVerMasMov" type="button">Ver más (${filtrados.length - movimientosVisibles} restantes)</button>
-        </div>` : ''}
-    `;
+        ${hayMas ? `<div style="text-align: center; margin: 1rem 0;"><button class="btn-exportar" id="btnVerMasMov" type="button">Ver más (${filtrados.length - movimientosVisibles} restantes)</button></div>` : ''}`;
 
     const btnVerMas = document.getElementById('btnVerMasMov');
-    if (btnVerMas) {
-        btnVerMas.addEventListener('click', verMasMovimientos);
-    }
+    if (btnVerMas) btnVerMas.addEventListener('click', verMasMovimientos);
 }
 
 function generarFilasMovimientos(datos) {
     let filas = '';
     datos.forEach(m => {
-        const fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', {
-            day: '2-digit', month: '2-digit', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        }) : '—';
-
+        const fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
         const esEntrada = m.tipo === 'Entrada';
         const tipoClase = esEntrada ? 'badge-disponible' : 'badge-sin-stock';
-        const tipoTexto = m.tipo || '—';
-
-        const origenDestino = esEntrada
-            ? (m.proveedor || '—')
-            : (m.destino || m.proveedor || '—');
-
+        const origenDestino = esEntrada ? (m.proveedor || '—') : (m.destino || m.proveedor || '—');
         const nota = m.ordenCompra || m.factura || '—';
         const detalle = m.observacion || '—';
+        let cantTexto = ''; let cantColor = '#dc2626';
 
-        let cantTexto = '';
-        let cantColor = '#dc2626';
-
-        if (m.tipo === 'Entrada') {
-            cantTexto = `+${m.cantidad}`;
-            cantColor = '#16a34a';
-        } else if (m.tipo === 'Salida') {
-            cantTexto = `-${m.cantidad}`;
-            cantColor = '#dc2626';
-        } else if (m.tipo === 'Relevamiento') {
-            const dif = Number(m.cantidad) || 0;
-            cantTexto = dif > 0 ? `+${dif}` : `${dif}`;
+        if (m.tipo === 'Entrada') { cantTexto = `+${m.cantidad}`; cantColor = '#16a34a'; }
+        else if (m.tipo === 'Salida') { cantTexto = `-${m.cantidad}`; cantColor = '#dc2626'; }
+        else if (m.tipo === 'Relevamiento') {
+            const dif = Number(m.cantidad) || 0; cantTexto = dif > 0 ? `+${dif}` : `${dif}`;
             cantColor = dif > 0 ? '#16a34a' : '#dc2626';
-        } else {
-            cantTexto = String(m.cantidad);
-        }
+        } else { cantTexto = String(m.cantidad); }
 
-        filas += `
-            <tr>
-                <td>${fecha}</td>
-                <td><span class="badge ${tipoClase}">${tipoTexto}</span></td>
-                <td><strong>${escapeHtml(m.nombre || m.idArticulo || '—')}</strong></td>
-                <td style="font-weight:700;color:${cantColor};">${cantTexto}</td>
-                <td>${escapeHtml(origenDestino)}</td>
-                <td>${escapeHtml(nota)}${detalle !== '—' ? ' · ' + escapeHtml(detalle) : ''}</td>
-            </tr>
-        `;
+        filas += `<tr><td>${fecha}</td><td><span class="badge ${tipoClase}">${m.tipo || '—'}</span></td><td><strong>${escapeHtml(m.nombre || m.idArticulo || '—')}</strong></td><td style="font-weight:700;color:${cantColor};">${cantTexto}</td><td>${escapeHtml(origenDestino)}</td><td>${escapeHtml(nota)}${detalle !== '—' ? ' · ' + escapeHtml(detalle) : ''}</td></tr>`;
     });
     return filas;
 }
@@ -1102,28 +869,19 @@ function generarFilasMovimientos(datos) {
 function verMasMovimientos() {
     const contenedor = document.getElementById('contenedorMovimientos');
     if (!contenedor) return;
-
     const total = movimientosFiltrados.length;
-
     const nuevos = movimientosFiltrados.slice(movimientosVisibles, movimientosVisibles + MOV_POR_LOTE);
     if (nuevos.length === 0) return;
-
     const tbody = contenedor.querySelector('.inventario-tabla tbody');
     if (!tbody) return;
-
     tbody.insertAdjacentHTML('beforeend', generarFilasMovimientos(nuevos));
     movimientosVisibles += nuevos.length;
-
     const contador = contenedor.querySelector('.placeholder');
     if (contador) contador.textContent = `Mostrando ${movimientosVisibles} de ${total} movimientos`;
-
     const btn = document.getElementById('btnVerMasMov');
     if (btn) {
-        if (movimientosVisibles >= total) {
-            btn.closest('div').remove();
-        } else {
-            btn.textContent = `Ver más (${total - movimientosVisibles} restantes)`;
-        }
+        if (movimientosVisibles >= total) btn.closest('div').remove();
+        else btn.textContent = `Ver más (${total - movimientosVisibles} restantes)`;
     }
 }
 
@@ -1131,24 +889,14 @@ function configurarMovimientos() {
     const inputBusqueda = document.getElementById('inputBusquedaMov');
     const selectTipo = document.getElementById('selectTipoMov');
     const btnActualizar = document.getElementById('btnActualizarMov');
-
     if (inputBusqueda) {
         inputBusqueda.addEventListener('input', () => {
             clearTimeout(window._movBusquedaTimeout);
-            window._movBusquedaTimeout = setTimeout(() => {
-                renderizarMovimientos(movimientos);
-            }, 300);
+            window._movBusquedaTimeout = setTimeout(() => renderizarMovimientos(movimientos), 300);
         });
     }
-    if (selectTipo) {
-        selectTipo.addEventListener('change', () => renderizarMovimientos(movimientos));
-    }
-    if (btnActualizar) {
-        btnActualizar.addEventListener('click', () => {
-            movimientos = [];
-            cargarMovimientos();
-        });
-    }
+    if (selectTipo) selectTipo.addEventListener('change', () => renderizarMovimientos(movimientos));
+    if (btnActualizar) btnActualizar.addEventListener('click', () => { movimientos = []; cargarMovimientos(); });
 }
 
 // ============================================================
@@ -1189,7 +937,6 @@ async function cargarDireccionesOficiales() {
         if (resultado && resultado.exito === false) throw new Error(resultado.error);
         direccionesOficiales = Array.isArray(resultado) ? resultado : [];
     } catch (error) {
-        console.error('Error cargando direcciones oficiales:', error);
         direccionesOficiales = [];
     }
     configurarBuscadorDestinos();
@@ -1200,62 +947,42 @@ function configurarBuscadorDestinos() {
     const hidden = document.getElementById('destinoSalida');
     const dropdown = document.getElementById('listaDestinosCustom');
     if (!input || !hidden || !dropdown) return;
-
     if (input.dataset.listenerDestinos) return;
     input.dataset.listenerDestinos = 'true';
 
     input.addEventListener('input', function() {
         const valor = this.value.trim();
         hidden.value = valor;
-
-        if (valor.length < 1) {
-            dropdown.classList.remove('visible');
-            return;
-        }
+        if (valor.length < 1) { dropdown.classList.remove('visible'); return; }
 
         const termino = normalizarTexto(valor);
-        const coincidencias = direccionesOficiales.filter(d =>
-            normalizarTexto(d.nombre).includes(termino)
-        );
-
+        const coincidencias = direccionesOficiales.filter(d => normalizarTexto(d.nombre).includes(termino));
         dropdown.innerHTML = '';
 
         if (coincidencias.length === 0) {
             const li = document.createElement('li');
             li.innerHTML = `Usar: <strong>${escapeHtml(valor)}</strong> <span class="id-articulo">(texto libre)</span>`;
-            li.addEventListener('click', function() {
-                hidden.value = valor;
-                dropdown.classList.remove('visible');
-            });
+            li.addEventListener('click', function() { hidden.value = valor; dropdown.classList.remove('visible'); });
             dropdown.appendChild(li);
         } else {
             coincidencias.forEach(dir => {
                 const li = document.createElement('li');
                 li.innerHTML = `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`;
                 li.addEventListener('click', function() {
-                    input.value = dir.nombre;
-                    hidden.value = dir.nombre;
-                    dropdown.classList.remove('visible');
+                    input.value = dir.nombre; hidden.value = dir.nombre; dropdown.classList.remove('visible');
                 });
                 dropdown.appendChild(li);
             });
-
             const liLibre = document.createElement('li');
             liLibre.innerHTML = `Usar: <strong>${escapeHtml(valor)}</strong> <span class="id-articulo">(texto libre)</span>`;
-            liLibre.addEventListener('click', function() {
-                hidden.value = valor;
-                dropdown.classList.remove('visible');
-            });
+            liLibre.addEventListener('click', function() { hidden.value = valor; dropdown.classList.remove('visible'); });
             dropdown.appendChild(liLibre);
         }
-
         dropdown.classList.add('visible');
     });
 
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.destino-input-wrapper')) {
-            dropdown.classList.remove('visible');
-        }
+        if (!e.target.closest('.destino-input-wrapper')) dropdown.classList.remove('visible');
     });
 }
 
@@ -1263,8 +990,7 @@ function validarDestinoSalida() {
     const hidden = document.getElementById('destinoSalida');
     const input = document.getElementById('inputDestinoSalida');
     if (!hidden || !input) return false;
-    const valor = (hidden.value || input.value || '').trim();
-    return valor.length > 0;
+    return (hidden.value || input.value || '').trim().length > 0;
 }
 
 function configurarModalDireccion() {
@@ -1276,15 +1002,8 @@ function configurarModalDireccion() {
     const errorEl = document.getElementById('modalDireccionError');
     if (!btnAbrir || !modal) return;
 
-    function abrir() {
-        if (errorEl) errorEl.textContent = '';
-        modal.style.display = 'flex';
-        const nombre = document.getElementById('nuevaDireccionNombre');
-        if (nombre) nombre.focus();
-    }
-    function cerrar() {
-        modal.style.display = 'none';
-    }
+    function abrir() { if (errorEl) errorEl.textContent = ''; modal.style.display = 'flex'; document.getElementById('nuevaDireccionNombre')?.focus(); }
+    function cerrar() { modal.style.display = 'none'; }
 
     btnAbrir.addEventListener('click', abrir);
     if (btnCerrar) btnCerrar.addEventListener('click', cerrar);
@@ -1295,40 +1014,21 @@ function configurarModalDireccion() {
             const nombre = document.getElementById('nuevaDireccionNombre').value.trim();
             const tipo = document.getElementById('nuevaDireccionTipo').value;
             const superior = document.getElementById('nuevaDireccionSuperior').value.trim();
+            if (!nombre) { if (errorEl) errorEl.textContent = 'El nombre es obligatorio'; return; }
 
-            if (!nombre) {
-                if (errorEl) errorEl.textContent = 'El nombre es obligatorio';
-                return;
-            }
-
-            btnGuardar.disabled = true;
-            btnGuardar.textContent = 'Guardando...';
+            btnGuardar.disabled = true; btnGuardar.textContent = 'Guardando...';
             try {
-                const resultado = await apiService.post({
-                    accion: 'guardarDireccion',
-                    nombre: nombre,
-                    tipo: tipo,
-                    dependenciaSuperior: superior
-                });
-                if (resultado && resultado.exito === false) {
-                    throw new Error(resultado.error || 'Error al guardar');
-                }
+                const resultado = await apiService.post({ accion: 'guardarDireccion', nombre, tipo, dependenciaSuperior: superior });
+                if (resultado && resultado.exito === false) throw new Error(resultado.error || 'Error al guardar');
                 mostrarToast('Dirección guardada correctamente', 'exito');
                 cerrar();
                 document.getElementById('nuevaDireccionNombre').value = '';
                 document.getElementById('nuevaDireccionSuperior').value = '';
                 await cargarDireccionesOficiales();
-
-                const input = document.getElementById('inputDestinoSalida');
-                const hidden = document.getElementById('destinoSalida');
-                if (input) input.value = nombre;
-                if (hidden) hidden.value = nombre;
-            } catch (error) {
-                if (errorEl) errorEl.textContent = error.message;
-            } finally {
-                btnGuardar.disabled = false;
-                btnGuardar.textContent = 'Guardar dirección';
-            }
+                document.getElementById('inputDestinoSalida').value = nombre;
+                document.getElementById('destinoSalida').value = nombre;
+            } catch (error) { if (errorEl) errorEl.textContent = error.message; }
+            finally { btnGuardar.disabled = false; btnGuardar.textContent = 'Guardar dirección'; }
         });
     }
 }
@@ -1338,7 +1038,6 @@ function configurarModalDireccion() {
 // ============================================================
 async function registrarRelevamiento(e) {
     e.preventDefault();
-
     const id = document.getElementById("articuloIdRelevamiento").value;
     const stockReal = parseFloat(document.getElementById("stockReal").value);
     const observaciones = document.getElementById("observacionesRelevamiento").value.trim();
@@ -1348,33 +1047,19 @@ async function registrarRelevamiento(e) {
     if (isNaN(stockReal) || stockReal < 0) { mostrarToast('El stock real debe ser un número mayor o igual a 0', 'error'); return; }
 
     const btn = document.getElementById('btnRegistrarRelevamiento');
-    btn.disabled = true;
-    btn.textContent = 'Registrando...';
+    btn.disabled = true; btn.textContent = 'Registrando...';
 
     try {
-        const payload = {
-            accion: 'registrarRelevamiento',
-            id: id,
-            stockReal: stockReal,
-            observacion: observaciones,
-            fecha: fecha
-        };
-
+        const payload = { accion: 'registrarRelevamiento', id, stockReal, observacion: observaciones, fecha };
         const resultado = await apiService.post(payload);
-
-        if (resultado && resultado.exito === false) {
-            throw new Error(resultado.error || 'Error desconocido');
-        }
+        if (resultado && resultado.exito === false) throw new Error(resultado.error || 'Error desconocido');
 
         const dif = resultado.diferencia || 0;
-        if (dif === 0) {
-            mostrarToast('El stock ya estaba correcto. Sin cambios.', 'exito');
-        } else {
+        if (dif === 0) mostrarToast('El stock ya estaba correcto. Sin cambios.', 'exito');
+        else {
             const signo = dif > 0 ? '+' : '';
             const articuloSel = articulos.find(a => String(a.id) === String(id));
-            const nombreArticulo = articuloSel ? articuloSel.articulo : ('ID ' + id);
-            mostrarCartel('📋', 'RELEVAMIENTO REGISTRADO',
-                `${nombreArticulo} · ajuste ${signo}${dif}`, 'relevamiento');
+            mostrarCartel('📋', 'RELEVAMIENTO REGISTRADO', `${articuloSel ? articuloSel.articulo : 'ID ' + id} · ajuste ${signo}${dif}`, 'relevamiento');
         }
 
         document.getElementById('formRelevamiento').reset();
@@ -1382,19 +1067,12 @@ async function registrarRelevamiento(e) {
         document.getElementById('stockSistema').value = '—';
         document.getElementById('diferencia').value = '—';
         document.getElementById('registradoPorRelevamiento').value = 'Samuel Steves';
-        document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML =
-            '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+        document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
 
         await cargarArticulos();
         movimientos = [];
-
-    } catch (error) {
-        mostrarToast(`Error: ${error.message}`, 'error');
-        console.error(error);
-    } finally {
-        btn.disabled = false;
-        btn.textContent = 'Registrar relevamiento';
-    }
+    } catch (error) { mostrarToast(`Error: ${error.message}`, 'error'); }
+    finally { btn.disabled = false; btn.textContent = 'Registrar relevamiento'; }
 }
 
 function actualizarDiferencia() {
@@ -1402,61 +1080,37 @@ function actualizarDiferencia() {
     const stockRealInput = document.getElementById('stockReal');
     const diferenciaInput = document.getElementById('diferencia');
     if (!stockSistemaInput || !stockRealInput || !diferenciaInput) return;
-
     const sistema = parseFloat(stockSistemaInput.value);
     const real = parseFloat(stockRealInput.value);
-
     if (isNaN(sistema) || isNaN(real)) {
-        diferenciaInput.value = '—';
-        diferenciaInput.style.color = 'var(--text-muted)';
-        return;
+        diferenciaInput.value = '—'; diferenciaInput.style.color = 'var(--text-muted)'; return;
     }
-
     const dif = real - sistema;
-    const signo = dif > 0 ? '+' : '';
-
-    diferenciaInput.value = `${signo}${dif}`;
-
-    if (dif > 0) {
-        diferenciaInput.style.color = '#16a34a';
-    } else if (dif < 0) {
-        diferenciaInput.style.color = '#dc2626';
-    } else {
-        diferenciaInput.style.color = 'var(--text-muted)';
-    }
+    diferenciaInput.value = `${dif > 0 ? '+' : ''}${dif}`;
+    diferenciaInput.style.color = dif > 0 ? '#16a34a' : dif < 0 ? '#dc2626' : 'var(--text-muted)';
 }
 
 function mostrarStockSistemaRelevamiento(id) {
     const item = articulos.find(a => String(a.id) === String(id));
     if (!item) return;
-
-    const stock = obtenerStock(item);
     const input = document.getElementById('stockSistema');
-    if (input) input.value = stock;
-
+    if (input) input.value = obtenerStock(item);
     mostrarVistaPrevia(id, 'vistaPreviaContenidoRelevamiento');
     actualizarDiferencia();
 }
 
 function irARelevamientoConArticulo(id) {
     navegarAPagina('relevamiento');
-
     setTimeout(() => {
         const item = articulos.find(a => String(a.id) === String(id));
         if (!item) return;
-
         const input = document.getElementById('inputArticuloRelevamiento');
         const hidden = document.getElementById('articuloIdRelevamiento');
         if (input) input.value = `${item.articulo} (ID ${item.id})`;
         if (hidden) hidden.value = item.id;
-
         mostrarStockSistemaRelevamiento(item.id);
-
         const stockReal = document.getElementById('stockReal');
-        if (stockReal) {
-            stockReal.focus();
-            stockReal.value = '';
-        }
+        if (stockReal) { stockReal.focus(); stockReal.value = ''; }
     }, 100);
 }
 
@@ -1466,22 +1120,14 @@ function irARelevamientoConArticulo(id) {
 async function cargarDirecciones() {
     const contenedor = document.getElementById('contenedorRankingDirecciones');
     if (!contenedor) return;
-
     contenedor.innerHTML = '<p class="placeholder">Cargando ranking...</p>';
 
     let direccionesReales = [];
-
     try {
         const resultado = await apiService.post({ accion: 'estadisticasDirecciones' });
-
-        if (resultado && resultado.exito === false) {
-            throw new Error(resultado.error || 'Error al obtener direcciones');
-        }
-
+        if (resultado && resultado.exito === false) throw new Error(resultado.error || 'Error al obtener direcciones');
         direccionesReales = Array.isArray(resultado) ? resultado : [];
-
     } catch (error) {
-        console.error('Error cargando direcciones:', error);
         contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
         return;
     }
@@ -1492,7 +1138,6 @@ async function cargarDirecciones() {
     }
 
     const maxTotal = Math.max(...direccionesReales.map(d => d.total));
-
     let filas = '';
     direccionesReales.slice(0, 10).forEach((dir, index) => {
         const porcentaje = maxTotal > 0 ? (dir.total / maxTotal) * 100 : 0;
@@ -1502,28 +1147,14 @@ async function cargarDirecciones() {
                 <td><strong>${escapeHtml(dir.direccion)}</strong></td>
                 <td>
                     <div class="ranking-barra-wrapper">
-                        <div class="ranking-barra">
-                            <div class="ranking-barra-relleno" style="width: ${porcentaje}%"></div>
-                        </div>
+                        <div class="ranking-barra"><div class="ranking-barra-relleno" style="width: ${porcentaje}%"></div></div>
                         <span class="ranking-valor">${dir.total}</span>
                     </div>
                 </td>
-            </tr>
-        `;
+            </tr>`;
     });
 
-    contenedor.innerHTML = `
-        <table class="ranking-tabla">
-            <thead>
-                <tr>
-                    <th style="width: 60px;">#</th>
-                    <th>Dirección</th>
-                    <th>Unidades recibidas</th>
-                </tr>
-            </thead>
-            <tbody>${filas}</tbody>
-        </table>
-    `;
+    contenedor.innerHTML = `<table class="ranking-tabla"><thead><tr><th style="width: 60px;">#</th><th>Dirección</th><th>Unidades recibidas</th></tr></thead><tbody>${filas}</tbody></table>`;
 
     const primeraFila = contenedor.querySelector('tbody tr');
     if (primeraFila) primeraFila.classList.add('activo');
@@ -1533,31 +1164,16 @@ async function cargarDirecciones() {
             const nombre = this.dataset.direccion;
             const dir = direccionesReales.find(d => d.direccion === nombre);
             if (!dir) return;
-
             contenedor.querySelectorAll('tbody tr').forEach(r => r.classList.remove('activo'));
             this.classList.add('activo');
-
-            mostrarDetalleDireccion({
-                nombre: dir.direccion,
-                total: dir.total,
-                articulos: dir.articulos
-            });
+            mostrarDetalleDireccion({ nombre: dir.direccion, total: dir.total, articulos: dir.articulos });
         });
     });
 
     const primera = direccionesReales[0];
-    mostrarDetalleDireccion({
-        nombre: primera.direccion,
-        total: primera.total,
-        articulos: primera.articulos
-    });
-
+    mostrarDetalleDireccion({ nombre: primera.direccion, total: primera.total, articulos: primera.articulos });
     const fechaEl = document.getElementById('fechaActualDirecciones');
-    if (fechaEl) {
-        fechaEl.textContent = new Date().toLocaleDateString('es-AR', {
-            weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
-        });
-    }
+    if (fechaEl) fechaEl.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function mostrarDetalleDireccion({ nombre, total, articulos }) {
@@ -1566,41 +1182,20 @@ function mostrarDetalleDireccion({ nombre, total, articulos }) {
 
     let filasArticulos = '';
     (articulos || []).forEach(a => {
-        filasArticulos += `
-            <tr>
-                <td><strong>${escapeHtml(a.articulo)}</strong></td>
-                <td><span class="badge-categoria">${escapeHtml(a.categoria || '—')}</span></td>
-                <td style="font-weight: 700; color: #16a34a;">+${a.cantidad}</td>
-            </tr>
-        `;
+        filasArticulos += `<tr><td><strong>${escapeHtml(a.articulo)}</strong></td><td><span class="badge-categoria">${escapeHtml(a.categoria || '—')}</span></td><td style="font-weight: 700; color: #16a34a;">+${a.cantidad}</td></tr>`;
     });
 
-    if (!articulos || articulos.length === 0) {
-        filasArticulos = `<tr><td colspan="3"><p class="placeholder">Sin artículos registrados.</p></td></tr>`;
-    }
+    if (!articulos || articulos.length === 0) filasArticulos = `<tr><td colspan="3"><p class="placeholder">Sin artículos registrados.</p></td></tr>`;
 
     contenedor.innerHTML = `
         <div class="detalle-direccion">
             <h3 class="detalle-direccion-nombre">${escapeHtml(nombre)}</h3>
-            <p class="detalle-direccion-total">
-                Total: <strong>${total}</strong> unidades recibidas
-            </p>
+            <p class="detalle-direccion-total">Total: <strong>${total}</strong> unidades recibidas</p>
             <div class="inventario-tabla-wrapper">
-                <table class="inventario-tabla">
-                    <thead>
-                        <tr>
-                            <th>Artículo</th>
-                            <th>Categoría</th>
-                            <th>Cantidad</th>
-                        </tr>
-                    </thead>
-                    <tbody>${filasArticulos}</tbody>
-                </table>
+                <table class="inventario-tabla"><thead><tr><th>Artículo</th><th>Categoría</th><th>Cantidad</th></tr></thead><tbody>${filasArticulos}</tbody></table>
             </div>
-        </div>
-    `;
+        </div>`;
 }
-
 // ============================================================
 // 17. DASHBOARD
 // ============================================================
@@ -1618,10 +1213,7 @@ async function cargarDashboard() {
     let datos;
     try {
         datos = await apiService.post({ accion: 'estadisticasDashboard' });
-
-        if (datos && datos.exito === false) {
-            throw new Error(datos.error || 'Error al obtener estadísticas');
-        }
+        if (datos && datos.exito === false) throw new Error(datos.error || 'Error al obtener estadísticas');
     } catch (error) {
         console.error('Error cargando Dashboard:', error);
         mostrarToast('Error al cargar el Dashboard', 'error');
@@ -1635,7 +1227,6 @@ async function cargarDashboard() {
         `${datos.categorias || 0} categorías · ${(datos.unidadesTotales || 0).toLocaleString('es-AR')} ud. totales`;
 
     document.getElementById('dashCriticos').textContent = datos.criticos || 0;
-
     document.getElementById('dashEntradasMes').textContent = (datos.entradasMes || 0).toLocaleString('es-AR');
     document.getElementById('dashSalidasMes').textContent = (datos.salidasMes || 0).toLocaleString('es-AR');
 
@@ -1663,8 +1254,7 @@ function renderizarDashUltimosMovimientos(entradas) {
                     <div class="dash-mov-detalle">${escapeHtml(e.proveedor || '—')}</div>
                 </div>
                 <div class="dash-mov-cantidad entrada">+${e.cantidad}</div>
-            </li>
-        `;
+            </li>`;
     });
     html += '</ul>';
     contenedor.innerHTML = html;
@@ -1683,13 +1273,11 @@ function renderizarDashArticulosCriticos(criticos) {
     criticos.forEach(c => {
         const badgeClase = c.stock === 0 ? 'sin-stock' : 'critico';
         const badgeTexto = c.stock === 0 ? 'Sin stock' : `Crítico (${c.stock})`;
-
         html += `
             <li>
                 <div class="dash-critico-nombre">${escapeHtml(c.articulo)}</div>
                 <div class="dash-critico-badge ${badgeClase}">${badgeTexto}</div>
-            </li>
-        `;
+            </li>`;
     });
     html += '</ul>';
     contenedor.innerHTML = html;
@@ -1714,26 +1302,16 @@ function renderizarDashSalidasConRemito(salidas) {
                 <td>${escapeHtml(s.destino || '—')}</td>
                 <td><span class="badge-categoria">${escapeHtml(s.remito)}</span></td>
                 <td style="font-weight: 700; color: #dc2626;">-${s.cantidad}</td>
-            </tr>
-        `;
+            </tr>`;
     });
 
     contenedor.innerHTML = `
         <div style="overflow-x: auto;">
             <table class="dash-remito-tabla">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Artículo</th>
-                        <th>Destino</th>
-                        <th>N° Remito</th>
-                        <th>Cantidad</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Fecha</th><th>Artículo</th><th>Destino</th><th>N° Remito</th><th>Cantidad</th></tr></thead>
                 <tbody>${filas}</tbody>
             </table>
-        </div>
-    `;
+        </div>`;
 }
 
 function configurarDashboard() {
@@ -1828,16 +1406,13 @@ function renderizarDetallePedido() {
     `).join('') || '<tr><td colspan="3"><p class="placeholder">Sin artículos.</p></td></tr>';
     
     const esPendiente = p.estado === 'Pendiente';
-    
     const fechaTxt = p.fecha ? new Date(p.fecha).toLocaleDateString('es-AR', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     }) : '—';
-    
     const estadoClase = normalizarTexto(p.estado || '').replace(/\s+/g, '-');
     
     contenedor.innerHTML = `
         <div class="detalle-pedido-card">
-            
             <div class="detalle-pedido-grid">
                 <div class="detalle-pedido-item">
                     <span class="detalle-pedido-label">Pedido</span>
@@ -1854,6 +1429,10 @@ function renderizarDetallePedido() {
                 <div class="detalle-pedido-item">
                     <span class="detalle-pedido-label">Referencia</span>
                     <span class="detalle-pedido-valor">${escapeHtml(p.referencia || '—')}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Nota</span>
+                    <span class="detalle-pedido-valor">${escapeHtml(p.nota || '—')}</span>
                 </div>
                 <div class="detalle-pedido-item">
                     <span class="detalle-pedido-label">Fecha</span>
@@ -1893,6 +1472,8 @@ async function manejarAccionPedido(accion, pedido) {
         cambiarTabPedidos('nuevo');
         document.getElementById('directorPedido').value = pedido.director || '';
         document.getElementById('referenciaPedido').value = pedido.referencia || '';
+        if (document.getElementById('notaPedido')) document.getElementById('notaPedido').value = pedido.nota || '';
+        
         document.getElementById('inputDireccionPedido').value = pedido.direccion || '';
         document.getElementById('direccionPedido').value = pedido.direccion || '';
         carritoPedido = (pedido.items || []).map(it => ({
@@ -1913,16 +1494,11 @@ async function manejarAccionPedido(accion, pedido) {
         try {
             const r = await apiService.post({ accion: 'cancelarPedido', id: pedido.id });
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
-
-            mostrarCartel('🗑️', 'PEDIDO CANCELADO',
-                `#${pedido.id} · ${pedido.direccion || ''}`, 'pedido-cancel');
-
+            mostrarCartel('🗑️', 'PEDIDO CANCELADO', `#${pedido.id} · ${pedido.direccion || ''}`, 'pedido-cancel');
             pedidoSeleccionado = null;
             await cargarListaPedidos();
             renderizarDetallePedido();
-        } catch (e) {
-            mostrarToast('Error: ' + e.message, 'error');
-        }
+        } catch (e) { mostrarToast('Error: ' + e.message, 'error'); }
         return;
     }
 
@@ -1931,25 +1507,17 @@ async function manejarAccionPedido(accion, pedido) {
         try {
             const r = await apiService.post({ accion: 'confirmarPedido', id: pedido.id });
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
-
-            mostrarCartel('✅', 'PEDIDO CONFIRMADO',
-                `Remito ${r.nroRemito} generado`, 'pedido-ok');
-
+            mostrarCartel('✅', 'PEDIDO CONFIRMADO', `Remito ${r.nroRemito} generado`, 'pedido-ok');
             await cargarListaPedidos();
             await cargarArticulos();
             renderizarDetallePedido();
-        } catch (e) {
-            mostrarToast('Error: ' + e.message, 'error');
-        }
+        } catch (e) { mostrarToast('Error: ' + e.message, 'error'); }
         return;
     }
 
     if (accion === 'pdf') {
-        if (pedido.pdfRemito && pedido.pdfRemito.startsWith('http')) {
-            window.open(pedido.pdfRemito, '_blank');
-        } else {
-            mostrarToast('PDF no disponible', 'error');
-        }
+        if (pedido.pdfRemito && pedido.pdfRemito.startsWith('http')) window.open(pedido.pdfRemito, '_blank');
+        else mostrarToast('PDF no disponible', 'error');
     }
 }
 
@@ -1978,37 +1546,43 @@ function renderizarCarrito() {
         const stock = articulo ? obtenerStock(articulo) : '—';
         const multiplicador = obtenerMultiplicadorUnidades(articulo);
         const nombrePresentacion = obtenerNombrePresentacion(articulo);
-
-        let selectorTipo = '';
-        if (multiplicador > 1) {
-            const tipoActual = it.tipo || 'unidad';
-            const textoBoton = tipoActual === 'pack' ? nombrePresentacion.toUpperCase() : 'UNIDAD';
-            selectorTipo = `<button type="button" class="btn-tipo-cantidad" data-tipo-idx="${idx}" style="background: var(--bg-hover, #f1f5f9); border: 1px solid var(--border, #e2e8f0); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; margin-left: 8px;">${textoBoton}</button>`;
-        }
-
+        const tipoActual = it.tipo || 'unidad';
         const cantMostrar = it.cantidad || 1;
 
+        let selectorTipoHTML = '';
+        if (multiplicador > 1) {
+            const nombrePack = nombrePresentacion.toUpperCase() + 'S';
+            selectorTipoHTML = `
+                <div style="display: inline-flex; gap: 4px; margin-left: 10px; vertical-align: middle;">
+                    <button type="button" class="btn-tipo-cantidad ${tipoActual === 'unidad' ? 'activo' : ''}" data-tipo-idx="${idx}" data-tipo-val="unidad" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; border: 1px solid var(--border); background: ${tipoActual === 'unidad' ? 'var(--accent)' : 'var(--bg-card)'}; color: ${tipoActual === 'unidad' ? '#fff' : 'var(--text-muted)'}; cursor: pointer; font-weight: 600;">UNIDADES</button>
+                    <button type="button" class="btn-tipo-cantidad ${tipoActual === 'pack' ? 'activo' : ''}" data-tipo-idx="${idx}" data-tipo-val="pack" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; border: 1px solid var(--border); background: ${tipoActual === 'pack' ? 'var(--accent)' : 'var(--bg-card)'}; color: ${tipoActual === 'pack' ? '#fff' : 'var(--text-muted)'}; cursor: pointer; font-weight: 600;">${nombrePack} (x${multiplicador})</button>
+                </div>`;
+        }
+
         let equivalenciaHTML = '';
-        if ((it.tipo || 'unidad') === 'pack' && multiplicador > 1) {
+        if (tipoActual === 'pack' && multiplicador > 1) {
             const totalUnidades = cantMostrar * multiplicador;
-            equivalenciaHTML = `<span class="carrito-item-stock">(${totalUnidades} unidades)</span>`;
+            equivalenciaHTML = `<span class="carrito-item-stock" style="color: #16a34a; font-weight: 600; font-size: 0.85rem;">👉 Son ${totalUnidades} unidades en total</span>`;
         } else {
             equivalenciaHTML = `<span class="carrito-item-stock">Stock: ${stock}</span>`;
         }
 
         return `
-            <div class="carrito-item">
-                <span class="carrito-item-emoji" aria-hidden="true">${imgHTML}</span>
-                <div>
-                    <span class="carrito-item-nombre">${escapeHtml(it.nombre)}${selectorTipo}</span>
-                    ${equivalenciaHTML}
+            <div class="carrito-item" style="align-items: flex-start;">
+                <span class="carrito-item-emoji" aria-hidden="true" style="margin-top: 5px;">${imgHTML}</span>
+                <div style="flex: 1;">
+                    <span class="carrito-item-nombre" style="display: block; margin-bottom: 4px;">${escapeHtml(it.nombre)}</span>
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        ${selectorTipoHTML}
+                        ${equivalenciaHTML}
+                    </div>
                 </div>
-                <div class="carrito-stepper" aria-label="Cantidad de ${escapeHtml(it.nombre)}">
-                    <button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}" aria-label="Restar una unidad">−</button>
-                    <span class="carrito-cantidad-valor">${cantMostrar}</span>
-                    <button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}" aria-label="Agregar una unidad">+</button>
+                <div class="carrito-stepper" style="margin-top: 5px;">
+                    <button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}">−</button>
+                    <input type="number" class="carrito-input-cantidad" data-idx="${idx}" value="${cantMostrar}" min="1" style="width: 50px; text-align: center; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem;">
+                    <button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}">+</button>
                 </div>
-                <button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" aria-label="Quitar ${escapeHtml(it.nombre)}">✕</button>
+                <button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" style="margin-top: 5px;">✕</button>
             </div>`;
     }).join('');
 
@@ -2020,11 +1594,25 @@ function renderizarCarrito() {
         else decrementarCantidadCarrito(idx);
     }));
 
+    contenedor.querySelectorAll('.carrito-input-cantidad').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const idx = Number(e.target.dataset.idx);
+            let val = parseInt(e.target.value);
+            if (isNaN(val) || val < 1) val = 1;
+            carritoPedido[idx].cantidad = val;
+            renderizarCarrito();
+        });
+    });
+
     contenedor.querySelectorAll('.btn-tipo-cantidad').forEach(btn => {
         btn.addEventListener('click', () => {
             const idx = Number(btn.dataset.tipoIdx);
+            const nuevoTipo = btn.dataset.tipoVal;
             if (carritoPedido[idx]) {
-                carritoPedido[idx].tipo = (carritoPedido[idx].tipo === 'pack') ? 'unidad' : 'pack';
+                if (carritoPedido[idx].tipo !== nuevoTipo) {
+                    carritoPedido[idx].tipo = nuevoTipo;
+                    carritoPedido[idx].cantidad = 1; 
+                }
                 renderizarCarrito();
             }
         });
@@ -2038,10 +1626,20 @@ function renderizarCarrito() {
 
 function configurarPedidos() {
     document.querySelectorAll('[data-tab-pedidos]').forEach(btn => btn.addEventListener('click', () => cambiarTabPedidos(btn.dataset.tabPedidos)));
-    document.querySelectorAll('[data-filtro-fecha]').forEach(btn => btn.addEventListener('click', () => { filtroFechaSeguimiento = btn.dataset.filtroFecha; document.querySelectorAll('[data-filtro-fecha]').forEach(chip => chip.classList.toggle('activo', chip === btn)); renderizarHojaSeguimiento(); }));
-    document.querySelectorAll('[data-filtro-estado]').forEach(btn => btn.addEventListener('click', () => { filtroEstadoSeguimiento = filtroEstadoSeguimiento === btn.dataset.filtroEstado ? 'todos' : btn.dataset.filtroEstado; document.querySelectorAll('[data-filtro-estado]').forEach(chip => chip.classList.toggle('activo', chip.dataset.filtroEstado === filtroEstadoSeguimiento)); renderizarHojaSeguimiento(); }));
+    document.querySelectorAll('[data-filtro-fecha]').forEach(btn => btn.addEventListener('click', () => { 
+        filtroFechaSeguimiento = btn.dataset.filtroFecha; 
+        document.querySelectorAll('[data-filtro-fecha]').forEach(chip => chip.classList.toggle('activo', chip === btn)); 
+        renderizarHojaSeguimiento(); 
+    }));
+    document.querySelectorAll('[data-filtro-estado]').forEach(btn => btn.addEventListener('click', () => { 
+        filtroEstadoSeguimiento = filtroEstadoSeguimiento === btn.dataset.filtroEstado ? 'todos' : btn.dataset.filtroEstado; 
+        document.querySelectorAll('[data-filtro-estado]').forEach(chip => chip.classList.toggle('activo', chip.dataset.filtroEstado === filtroEstadoSeguimiento)); 
+        renderizarHojaSeguimiento(); 
+    }));
+    
     const form = document.getElementById('formPedido');
     if (form) form.addEventListener('submit', manejarSubmitPedido);
+    
     configurarBuscadorArticulosPedido();
     configurarBuscadorDireccionesPedido();
     cambiarTabPedidos('seguimiento');
@@ -2055,24 +1653,15 @@ async function manejarSubmitPedido(e) {
         || document.getElementById('inputDireccionPedido')?.value?.trim();
     const director = document.getElementById('directorPedido')?.value?.trim() || '';
     const referencia = document.getElementById('referenciaPedido')?.value?.trim() || '';
+    const nota = document.getElementById('notaPedido')?.value?.trim() || '';
 
-    if (!direccion) {
-        mostrarToast('Seleccioná una dirección', 'error');
-        return;
-    }
-
-    if (!Array.isArray(carritoPedido) || carritoPedido.length === 0) {
-        mostrarToast('El carrito está vacío', 'error');
-        return;
-    }
+    if (!direccion) { mostrarToast('Seleccioná una dirección', 'error'); return; }
+    if (!Array.isArray(carritoPedido) || carritoPedido.length === 0) { mostrarToast('El carrito está vacío', 'error'); return; }
 
     const btn = document.getElementById('btnConfirmarPedido');
     const txtOriginal = btn?.textContent || 'Confirmar pedido';
 
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Guardando...';
-    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
 
     try {
         const items = carritoPedido.map(it => {
@@ -2081,9 +1670,7 @@ async function manejarSubmitPedido(e) {
             const cantidadPresentacion = Math.max(1, Number(it.cantidad) || 1);
             const tipo = it.tipo || 'unidad';
             const esPack = tipo === 'pack' && multiplicador > 1;
-            const unidadesTotales = esPack
-                ? cantidadPresentacion * multiplicador
-                : cantidadPresentacion;
+            const unidadesTotales = esPack ? cantidadPresentacion * multiplicador : cantidadPresentacion;
 
             const presentacion = obtenerNombrePresentacion(articulo);
             const textoCantidad = esPack
@@ -2099,43 +1686,25 @@ async function manejarSubmitPedido(e) {
             };
         });
 
-        const payload = {
-            direccion,
-            director,
-            referencia,
-            items
-        };
+        const payload = { direccion, director, referencia, nota, items };
 
         const resultado = modoEdicionPedido
-            ? await apiService.post({
-                accion: 'editarPedido',
-                id: modoEdicionPedido,
-                ...payload
-            })
-            : await apiService.post({
-                accion: 'crearPedido',
-                ...payload
-            });
+            ? await apiService.post({ accion: 'editarPedido', id: modoEdicionPedido, ...payload })
+            : await apiService.post({ accion: 'crearPedido', ...payload });
 
-        if (!resultado || resultado.exito === false) {
-            throw new Error(resultado?.error || 'No se pudo guardar el pedido');
-        }
+        if (!resultado || resultado.exito === false) throw new Error(resultado?.error || 'No se pudo guardar el pedido');
 
         const estabaEditando = Boolean(modoEdicionPedido);
         mostrarToast(estabaEditando ? 'Pedido actualizado' : 'Pedido creado', 'exito');
 
         carritoPedido = [];
         modoEdicionPedido = null;
-
         document.getElementById('formPedido')?.reset();
 
-        const direccionPedido = document.getElementById('direccionPedido');
-        const directorPedido = document.getElementById('directorPedido');
-        const referenciaPedido = document.getElementById('referenciaPedido');
-
-        if (direccionPedido) direccionPedido.value = '';
-        if (directorPedido) directorPedido.value = '';
-        if (referenciaPedido) referenciaPedido.value = '';
+        if (document.getElementById('direccionPedido')) document.getElementById('direccionPedido').value = '';
+        if (document.getElementById('directorPedido')) document.getElementById('directorPedido').value = '';
+        if (document.getElementById('referenciaPedido')) document.getElementById('referenciaPedido').value = '';
+        if (document.getElementById('notaPedido')) document.getElementById('notaPedido').value = '';
 
         if (btn) btn.textContent = 'Confirmar pedido';
         renderizarCarrito();
@@ -2149,6 +1718,23 @@ async function manejarSubmitPedido(e) {
             if (modoEdicionPedido === null) btn.textContent = 'Confirmar pedido';
         }
     }
+}
+
+function agregarAlCarrito(item) {
+    const existente = carritoPedido.find(x => String(x.id) === String(item.id));
+    if (existente) {
+        existente.cantidad += 1;
+    } else {
+        const multiplicador = obtenerMultiplicadorUnidades(item);
+        carritoPedido.push({
+            id: item.id,
+            nombre: item.articulo,
+            categoria: item.categoriaID || '',
+            cantidad: 1,
+            tipo: 'unidad'
+        });
+    }
+    renderizarCarrito();
 }
 
 function configurarBuscadorArticulosPedido() {
@@ -2173,7 +1759,6 @@ function configurarBuscadorArticulosPedido() {
     input.addEventListener('keydown', function(e) {
         const items = dropdown.querySelectorAll('li');
         if (items.length === 0) return;
-
         let idx = Array.from(items).findIndex(li => li.classList.contains('seleccionado'));
 
         if (e.key === 'ArrowDown') {
@@ -2186,29 +1771,28 @@ function configurarBuscadorArticulosPedido() {
             items.forEach((li, i) => li.classList.toggle('seleccionado', i === idx));
         } else if (e.key === 'Enter') {
             e.preventDefault();
-            if (idx >= 0 && items[idx]) {
-                items[idx].click();
-            } else if (items.length > 0) {
-                items[0].click();
-            }
+            if (idx >= 0 && items[idx]) items[idx].click();
+            else if (items.length > 0) items[0].click();
         } else if (e.key === 'Escape') {
             dropdown.classList.remove('visible');
         }
     });
 
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('.carrito-section') &&
-            !e.target.closest('.buscador-articulo-group')) {
+        if (!e.target.closest('.carrito-section') && !e.target.closest('.buscador-articulo-group')) {
             dropdown.classList.remove('visible');
         }
     });
 
     function filtrar(texto) {
         const termino = normalizarTexto(texto);
-        const resultados = articulos.filter(item =>
-            normalizarTexto(item.articulo).includes(termino) ||
-            String(item.id).includes(termino)
-        ).slice(0, 10);
+        const palabras = termino.split(/\s+/).filter(p => p.length > 0);
+
+        const resultados = articulos.filter(item => {
+            const textoArticulo = normalizarTexto(item.articulo);
+            if (String(item.id).includes(termino)) return true;
+            return palabras.every(palabra => textoArticulo.includes(palabra));
+        }).slice(0, 10);
 
         dropdown.innerHTML = '';
 
@@ -2225,7 +1809,7 @@ function configurarBuscadorArticulosPedido() {
 
         resultados.forEach(item => {
             const li = document.createElement('li');
-            const stock = obtenerStock ? obtenerStock(item) : '—';
+            const stock = obtenerStock(item);
             li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">ID ${escapeHtml(String(item.id))} · Stock ${stock}</span>`;
             li.addEventListener('click', function() {
                 agregarAlCarrito(item);
@@ -2238,23 +1822,6 @@ function configurarBuscadorArticulosPedido() {
     }
 }
 
-function agregarAlCarrito(item) {
-    const existente = carritoPedido.find(x => String(x.id) === String(item.id));
-    if (existente) {
-        existente.cantidad += 1;
-    } else {
-        const multiplicador = obtenerMultiplicadorUnidades(item);
-        carritoPedido.push({
-            id: item.id,
-            nombre: item.articulo,
-            categoria: item.categoriaID || '',
-            cantidad: 1,
-            tipo: multiplicador > 1 ? 'unidad' : 'unidad'
-        });
-    }
-    renderizarCarrito();
-}
-
 function configurarBuscadorDireccionesPedido() {
     const input = document.getElementById('inputDireccionPedido');
     const hidden = document.getElementById('direccionPedido');
@@ -2265,10 +1832,7 @@ function configurarBuscadorDireccionesPedido() {
         const val = this.value.trim();
         hidden.value = val;
 
-        if (val.length < 1) {
-            dropdown.classList.remove('visible');
-            return;
-        }
+        if (val.length < 1) { dropdown.classList.remove('visible'); return; }
 
         const termino = normalizarTexto(val);
         const coincidencias = (direccionesOficiales || []).filter(d =>
@@ -2280,31 +1844,21 @@ function configurarBuscadorDireccionesPedido() {
         if (coincidencias.length === 0) {
             const li = document.createElement('li');
             li.innerHTML = `Usar: <strong>${escapeHtml(val)}</strong> <span class="id-articulo">(texto libre)</span>`;
-            li.addEventListener('click', function() {
-                hidden.value = val;
-                dropdown.classList.remove('visible');
-            });
+            li.addEventListener('click', function() { hidden.value = val; dropdown.classList.remove('visible'); });
             dropdown.appendChild(li);
         } else {
             coincidencias.forEach(dir => {
                 const li = document.createElement('li');
                 li.innerHTML = `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`;
-                li.addEventListener('click', function() {
-                    input.value = dir.nombre;
-                    hidden.value = dir.nombre;
-                    dropdown.classList.remove('visible');
-                });
+                li.addEventListener('click', function() { input.value = dir.nombre; hidden.value = dir.nombre; dropdown.classList.remove('visible'); });
                 dropdown.appendChild(li);
             });
         }
-
         dropdown.classList.add('visible');
     });
 
     document.addEventListener('click', function(e) {
-        if (!e.target.closest('#inputDireccionPedido')?.parentElement) {
-            dropdown.classList.remove('visible');
-        }
+        if (!e.target.closest('#inputDireccionPedido')?.parentElement) dropdown.classList.remove('visible');
     });
 }
 
@@ -2332,7 +1886,6 @@ function actualizarTotalCarrito() {
     if (!total) return;
 
     let totalUnidades = 0;
-
     carritoPedido.forEach(item => {
         const articulo = articulos.find(a => String(a.id) === String(item.id));
         const multiplicador = obtenerMultiplicadorUnidades(articulo);
@@ -2499,22 +2052,15 @@ function mostrarCartel(icono, titulo, subtitulo, tipo = 'exito') {
     subEl.textContent = subtitulo || '';
     subEl.style.display = subtitulo ? '' : 'none';
 
-    cartel.classList.remove(
-        'tipo-entrada', 'tipo-salida', 'tipo-relevamiento',
-        'tipo-pedido-ok', 'tipo-pedido-cancel'
-    );
-    if (tipo && tipo !== 'exito') {
-        cartel.classList.add('tipo-' + tipo);
-    }
+    cartel.classList.remove('tipo-entrada', 'tipo-salida', 'tipo-relevamiento', 'tipo-pedido-ok', 'tipo-pedido-cancel');
+    if (tipo && tipo !== 'exito') cartel.classList.add('tipo-' + tipo);
 
     cartel.classList.remove('visible');
     void cartel.offsetWidth;
     cartel.classList.add('visible');
 
     clearTimeout(window._cartelTimeout);
-    window._cartelTimeout = setTimeout(() => {
-        cartel.classList.remove('visible');
-    }, 2500);
+    window._cartelTimeout = setTimeout(() => { cartel.classList.remove('visible'); }, 2500);
 }
 
 // ============================================================
@@ -2537,33 +2083,25 @@ function abrirModalArticulo(origen = null) {
     document.getElementById('nuevoArtError').textContent = '';
 
     const esModoEntrada = origen && origen.origen === 'entrada';
-
     const aviso = document.getElementById('nuevoArtAvisoEntrada');
     aviso.style.display = esModoEntrada ? 'block' : 'none';
 
     const bloqueCant = document.getElementById('nuevoArtBloqueCantidad');
-    if (bloqueCant) {
-        bloqueCant.style.display = esModoEntrada ? 'block' : 'none';
-    }
+    if (bloqueCant) bloqueCant.style.display = esModoEntrada ? 'block' : 'none';
 
-    if (esModoEntrada && origen.nombreSugerido) {
-        document.getElementById('nuevoArtNombre').value = origen.nombreSugerido;
-    }
+    if (esModoEntrada && origen.nombreSugerido) document.getElementById('nuevoArtNombre').value = origen.nombreSugerido;
 
     const datalist = document.getElementById('listaCategorias');
     datalist.innerHTML = '';
     const cats = new Set();
-    articulos.forEach(a => {
-        if (a.categoriaID && a.categoriaID.trim()) cats.add(a.categoriaID.trim());
-    });
+    articulos.forEach(a => { if (a.categoriaID && a.categoriaID.trim()) cats.add(a.categoriaID.trim()); });
     Array.from(cats).sort().forEach(c => {
         const opt = document.createElement('option');
         opt.value = c;
         datalist.appendChild(opt);
     });
 
-    document.getElementById('guardarModalArticulo').textContent =
-        esModoEntrada ? 'Crear y registrar entrada' : 'Crear artículo';
+    document.getElementById('guardarModalArticulo').textContent = esModoEntrada ? 'Crear y registrar entrada' : 'Crear artículo';
 
     actualizarEquivalenciaArticulo();
     modal.style.display = 'flex';
@@ -2574,16 +2112,10 @@ function actualizarEquivalenciaArticulo() {
     const unidad = document.getElementById('nuevoArtUnidad').value;
     const mult = parseInt(document.getElementById('nuevoArtMultiplicador').value) || 1;
     const label = document.getElementById('nuevoArtEquivalencia');
-    if (mult > 1) {
-        label.textContent = `1 ${unidad} = ${mult} unidades`;
-    } else {
-        label.textContent = `1 ${unidad} = 1 unidad`;
-    }
+    label.textContent = mult > 1 ? `1 ${unidad} = ${mult} unidades` : `1 ${unidad} = 1 unidad`;
 
     const cantUnidad = document.getElementById('nuevoArtCantidadUnidad');
-    if (cantUnidad) {
-        cantUnidad.textContent = mult > 1 ? unidad.toLowerCase() + 's' : 'unidades';
-    }
+    if (cantUnidad) cantUnidad.textContent = mult > 1 ? unidad.toLowerCase() + 's' : 'unidades';
 
     actualizarTotalIngreso();
 }
@@ -2597,11 +2129,8 @@ function actualizarTotalIngreso() {
     const caja = document.getElementById('nuevoArtTotalCaja');
     if (!caja) return;
 
-    if (mult > 1) {
-        caja.innerHTML = `<strong>📦 Ingresarán ${total.toLocaleString('es-AR')} unidades</strong> (${cant} × ${mult})`;
-    } else {
-        caja.innerHTML = `<strong>📦 Ingresarán ${total.toLocaleString('es-AR')} unidades</strong>`;
-    }
+    if (mult > 1) caja.innerHTML = `<strong>📦 Ingresarán ${total.toLocaleString('es-AR')} unidades</strong> (${cant} × ${mult})`;
+    else caja.innerHTML = `<strong>📦 Ingresarán ${total.toLocaleString('es-AR')} unidades</strong>`;
 }
 
 function cerrarModalArticulo() {
@@ -2624,23 +2153,12 @@ async function guardarNuevoArticulo() {
     if (!categoria) { errorEl.textContent = 'La categoría es obligatoria'; return; }
     if (multiplicador < 1) { errorEl.textContent = 'El multiplicador debe ser ≥ 1'; return; }
 
-    const datos = {
-        nombre, categoria, imagen, observaciones,
-        unidadMedida, multiplicador,
-        stockMin, stockCritico,
-        capacidadMax: 0
-    };
-
+    const datos = { nombre, categoria, imagen, observaciones, unidadMedida, multiplicador, stockMin, stockCritico, capacidadMax: 0 };
     const esModoEntrada = modoCreacionArticulo && modoCreacionArticulo.origen === 'entrada';
+    
     if (esModoEntrada) {
         const cantidadModal = parseInt(document.getElementById('nuevoArtCantidad').value) || 1;
-        datos.entrada = {
-            cantidad: cantidadModal,
-            proveedor: '',
-            factura: '',
-            observacionEntrada: '',
-            fecha: ''
-        };
+        datos.entrada = { cantidad: cantidadModal, proveedor: '', factura: '', observacionEntrada: '', fecha: '' };
     }
 
     const btn = document.getElementById('guardarModalArticulo');
@@ -2653,25 +2171,18 @@ async function guardarNuevoArticulo() {
         const r = await apiService.post({ accion: 'crearArticulo', datos });
         if (!r || r.exito === false) throw new Error(r?.error || 'Error al crear el artículo');
 
-        const stockFinal = (typeof r.stockIni === 'number') ? r.stockIni : 0;
-
-        mostrarCartel('📦', 'ARTÍCULO CREADO',
-            `${nombre} · stock ${stockFinal} unidades`, 'exito');
-
+        mostrarCartel('📦', 'ARTÍCULO CREADO', `${nombre} · stock ${r.stockIni || 0} unidades`, 'exito');
         cerrarModalArticulo();
-
         await cargarArticulos();
 
         if (esModoEntrada) {
             document.getElementById('formEntrada').reset();
             document.getElementById('articuloId').value = '';
-            document.getElementById('vistaPreviaContenido').innerHTML =
-                '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+            document.getElementById('vistaPreviaContenido').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
             document.getElementById('registradoPor').value = 'Samuel Steves';
             await cargarUltimasEntradas();
             movimientos = [];
         }
-
     } catch (err) {
         errorEl.textContent = err.message;
     } finally {
@@ -2687,7 +2198,6 @@ function configurarModalArticulo() {
     document.getElementById('cerrarModalArticulo')?.addEventListener('click', cerrarModalArticulo);
     document.getElementById('cancelarModalArticulo')?.addEventListener('click', cerrarModalArticulo);
     document.getElementById('guardarModalArticulo')?.addEventListener('click', guardarNuevoArticulo);
-
     document.querySelector('.btn-nuevo')?.addEventListener('click', () => abrirModalArticulo());
 }
 
@@ -2702,52 +2212,35 @@ async function eliminarArticulo(id) {
     const stock = obtenerStock(item);
 
     let mensaje = `¿Eliminar el artículo?\n\n"${nombre}"\n\nStock actual: ${stock} unidades\n\nEsta acción no se puede deshacer.`;
-
-    if (stock > 0) {
-        mensaje += `\n\n⚠️ El artículo todavía tiene stock. Si lo eliminás, perdés el registro del stock actual.`;
-    }
+    if (stock > 0) mensaje += `\n\n⚠️ El artículo todavía tiene stock. Si lo eliminás, perdés el registro del stock actual.`;
 
     if (!confirm(mensaje)) return;
 
     try {
         const r = await apiService.post({ accion: 'eliminarArticulo', id: id });
         if (!r || r.exito === false) throw new Error(r?.error || 'Error al eliminar');
-
         mostrarCartel('🗑️', 'ARTÍCULO ELIMINADO', nombre, 'pedido-cancel');
-
         await cargarArticulos();
         movimientos = [];
-
-    } catch (e) {
-        mostrarToast('Error: ' + e.message, 'error');
-    }
+    } catch (e) { mostrarToast('Error: ' + e.message, 'error'); }
 }
 
 // ============================================================
 // 23. TEMA CLARO / OSCURO
 // ============================================================
 function aplicarTema(tema) {
-    const html = document.documentElement;
-    html.setAttribute('data-theme', tema);
+    document.documentElement.setAttribute('data-theme', tema);
     try { localStorage.setItem('inventario-tema', tema); } catch (e) {}
-    actualizarBotonTema(tema);
-}
-
-function actualizarBotonTema(tema) {
     const btn = document.querySelector('.theme-toggle');
-    if (!btn) return;
-    btn.textContent = tema === 'dark' ? 'Modo claro' : 'Modo oscuro';
+    if (btn) btn.textContent = tema === 'dark' ? 'Modo claro' : 'Modo oscuro';
 }
 
 function inicializarTema() {
     let tema = 'light';
     try {
         const guardado = localStorage.getItem('inventario-tema');
-        if (guardado === 'dark' || guardado === 'light') {
-            tema = guardado;
-        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            tema = 'dark';
-        }
+        if (guardado === 'dark' || guardado === 'light') tema = guardado;
+        else if (window.matchMedia('(prefers-color-scheme: dark)').matches) tema = 'dark';
     } catch (e) {}
 
     aplicarTema(tema);
@@ -2774,14 +2267,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     configurarModalDireccion();
     configurarModalArticulo();
 
-    configurarBuscadorDropdown(
-        'inputArticulo', 'articuloId',
-        'listaArticulosCustom', 'vistaPreviaContenido'
-    );
-    configurarBuscadorDropdown(
-        'inputArticuloSalida', 'articuloIdSalida',
-        'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida'
-    );
+    configurarBuscadorDropdown('inputArticulo', 'articuloId', 'listaArticulosCustom', 'vistaPreviaContenido');
+    configurarBuscadorDropdown('inputArticuloSalida', 'articuloIdSalida', 'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida');
     configurarBuscadorDropdownRelevamiento();
 
     cargarDashboard();
@@ -2831,3 +2318,88 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hash === 'direcciones') cargarDirecciones();
     if (hash === 'dashboard') cargarDashboard();
 });
+
+// ============================================================
+// 25. HISTORIAL DE ARTÍCULO (MODAL DINÁMICO)
+// ============================================================
+async function abrirModalHistorial(idArticulo) {
+    const articulo = articulos.find(a => String(a.id) === String(idArticulo));
+    if (!articulo) return;
+
+    if (movimientos.length === 0) {
+        mostrarToast('Cargando historial...', 'exito');
+        try {
+            const resultado = await apiService.post({ accion: 'listarMovimientos' });
+            if (resultado && resultado.exito === false) throw new Error(resultado.error);
+            movimientos = Array.isArray(resultado) ? resultado : [];
+        } catch (e) {
+            mostrarToast('Error al cargar historial: ' + e.message, 'error');
+            return;
+        }
+    }
+
+    const historial = movimientos.filter(m => String(m.idArticulo) === String(idArticulo));
+    
+    let filas = historial.map(m => {
+        const fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+        let cantTexto = ''; let cantColor = '#dc2626';
+        
+        if (m.tipo === 'Entrada') { cantTexto = `+${m.cantidad}`; cantColor = '#16a34a'; }
+        else if (m.tipo === 'Salida') { cantTexto = `-${m.cantidad}`; cantColor = '#dc2626'; }
+        else if (m.tipo === 'Relevamiento') { 
+            const dif = Number(m.cantidad) || 0; cantTexto = dif > 0 ? `+${dif}` : `${dif}`; cantColor = dif > 0 ? '#16a34a' : '#dc2626'; 
+        }
+
+        const origenDestino = m.tipo === 'Entrada' ? (m.proveedor || '—') : (m.destino || m.proveedor || '—');
+        const nota = m.ordenCompra || m.factura || '—';
+
+        return `
+            <tr>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem;">${fecha}</td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border);"><span class="badge ${m.tipo === 'Entrada' ? 'badge-disponible' : 'badge-sin-stock'}">${m.tipo}</span></td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border); font-weight: 700; color: ${cantColor};">${cantTexto}</td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem;">${escapeHtml(origenDestino)}</td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem;">${escapeHtml(nota)}</td>
+            </tr>`;
+    }).join('');
+
+    if (historial.length === 0) {
+        filas = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">No hay movimientos registrados para este artículo.</td></tr>`;
+    }
+
+    const modalId = 'modalHistorialDinamico';
+    let modal = document.getElementById(modalId);
+    if (modal) modal.remove();
+
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'modal-overlay';
+    modal.style.display = 'flex';
+    
+    modal.innerHTML = `
+        <div class="modal-contenido" style="max-width: 800px; width: 90%;">
+            <div class="modal-header">
+                <h3>Historial: ${escapeHtml(articulo.articulo)}</h3>
+                <button type="button" class="modal-cerrar" onclick="document.getElementById('${modalId}').remove()">✕</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--bg-hover); text-align: left;">
+                            <th style="padding: 10px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Fecha</th>
+                            <th style="padding: 10px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Tipo</th>
+                            <th style="padding: 10px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Cant.</th>
+                            <th style="padding: 10px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Origen/Destino</th>
+                            <th style="padding: 10px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-guardar" onclick="document.getElementById('${modalId}').remove()">Cerrar</button>
+            </div>
+        </div>`;
+    
+    document.body.appendChild(modal);
+}

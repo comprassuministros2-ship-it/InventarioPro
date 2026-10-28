@@ -209,19 +209,19 @@
                             <input type="date" id="fechaEntrada" required>
                         </div>
                         <div class="form-group">
-    <label for="proveedor">PROVEEDOR</label>
-    <input type="text" id="proveedor" placeholder="Nombre del proveedor">
-</div>
+                            <label for="proveedor">PROVEEDOR</label>
+                            <input type="text" id="proveedor" placeholder="Nombre del proveedor">
+                        </div>
 
-<div class="form-group">
-    <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
-    <input type="text" id="factura" placeholder="Ej: FAC-00234">
-</div>
+                        <div class="form-group">
+                            <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
+                            <input type="text" id="factura" placeholder="Ej: FAC-00234">
+                        </div>
 
-<div class="form-group">
-    <label for="tipoCompra">TIPO DE ORDEN DE COMPRA</label>
-    <input type="text" id="tipoCompra" placeholder="Ej: Orden de Compra, Compra Directa...">
-</div>
+                        <div class="form-group">
+                            <label for="tipoCompra">TIPO DE ORDEN DE COMPRA</label>
+                            <input type="text" id="tipoCompra" placeholder="Ej: Orden de Compra, Compra Directa...">
+                        </div>
                         <div class="form-group">
                             <label for="observaciones">OBSERVACIONES</label>
                             <textarea id="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
@@ -277,19 +277,19 @@
                             <input type="hidden" id="articuloIdSalida" value="">
                         </div>
                        <div class="form-group" id="grupoCantidadSalida">
-    <div id="avisoPresentacionSalida" class="aviso-presentacion" hidden>
-        Stock actual: <span id="textoStockActualSalida"></span>
-    </div>
-    <label for="cantidadUnidadesSalida">CANTIDAD *</label>
-    <div style="display: flex; gap: 0.8rem; align-items: center;">
-        <input type="number" id="cantidadUnidadesSalida" min="1" value="1" required style="flex: 1;">
-        <select id="selectTipoSalida" style="width: auto; min-width: 120px; display: none;">
-            <option value="unidad">Unidades</option>
-            <option value="pack" id="optPackSalida">Pack</option>
-        </select>
-    </div>
-    <input type="hidden" id="cantidadSalida" value="1">
-</div>
+                            <div id="avisoPresentacionSalida" class="aviso-presentacion" hidden>
+                                Stock actual: <span id="textoStockActualSalida"></span>
+                            </div>
+                            <label for="cantidadUnidadesSalida">CANTIDAD *</label>
+                            <div style="display: flex; gap: 0.8rem; align-items: center;">
+                                <input type="number" id="cantidadUnidadesSalida" min="1" value="1" required style="flex: 1;">
+                                <select id="selectTipoSalida" style="width: auto; min-width: 120px; display: none;">
+                                    <option value="unidad">Unidades</option>
+                                    <option value="pack" id="optPackSalida">Pack</option>
+                                </select>
+                            </div>
+                            <input type="hidden" id="cantidadSalida" value="1">
+                        </div>
                         <div class="form-group">
                             <label for="fechaSalida">FECHA *</label>
                             <input type="date" id="fechaSalida" required>
@@ -634,6 +634,12 @@
                                     <label for="referenciaPedido">REFERENCIA / MOTIVO</label>
                                     <input type="text" id="referenciaPedido" placeholder="Ej: Reposición mensual">
                                 </div>
+                                <!-- ★ NUEVO CAMPO: NOTA INTERNA -->
+                                <div class="form-group">
+                                    <label for="notaPedido">NOTA INTERNA (OPCIONAL)</label>
+                                    <input type="text" id="notaPedido" placeholder="Ej: Entregar urgente por la tarde">
+                                </div>
+                                <!-- ★ FIN NUEVO CAMPO -->
                                 <div class="form-group buscador-articulo-group">
                                     <label for="inputArticuloPedido">AGREGAR ARTÍCULO AL CARRITO</label>
                                     <div class="buscador-wrapper">
