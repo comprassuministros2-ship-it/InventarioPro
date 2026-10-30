@@ -1198,19 +1198,33 @@ body {
 
 .btn-exportar {
     padding: 0.6rem 1.2rem;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    color: var(--text);
+    border: none;
+    background: var(--accent);
+    color: #ffffff;
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
+    font-weight: 600;
     font-family: inherit;
-    transition: all 0.2s;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .btn-exportar:hover {
-    border-color: var(--accent);
+    background: var(--accent-hover);
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.18);
+    transform: translateY(-1px);
+}
+
+#pagina-inventario .btn-exportar {
+    border: 1px solid var(--accent-border);
+    background: var(--accent-soft);
     color: var(--accent);
+}
+
+#pagina-inventario .btn-exportar:hover {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #ffffff;
 }
 
 .btn-nuevo {
