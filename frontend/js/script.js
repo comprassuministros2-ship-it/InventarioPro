@@ -30,7 +30,11 @@
 // ============================================================
 
 // ============================================================
-// 0. TOAST - Notificación flotante (FUNCIÓN GLOBAL)
+// INVENTARIO PRO — LÓGICA PRINCIPAL
+// ============================================================
+
+// ============================================================
+// 0. TOAST - Notificación flotante
 // ============================================================
 function mostrarToast(mensaje, tipo = 'exito') {
     const toast = document.getElementById('toast');
@@ -61,11 +65,7 @@ let modoCreacionArticulo = null;
 
 function escapeHtml(texto) {
     return String(texto ?? '').replace(/[&<>"']/g, caracter => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[caracter]));
 }
 
@@ -157,6 +157,7 @@ function renderizarArticulos(datos) {
         const estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
         const celdaArticulo = obtenerCeldaArticuloHTML(item);
 
+        // ✅ RESTAURADO: 4 botones (Historial, Relevamiento, Editar, Eliminar)
         filas += `
             <tr>
                 <td>${celdaArticulo}</td>
@@ -167,15 +168,10 @@ function renderizarArticulos(datos) {
                 <td class="td-centrado">—</td>
                 <td>
                     <div class="acciones-celda" style="display: flex; gap: 0.4rem; justify-content: center;">
-                        <button class="btn-accion" type="button" title="Detalles" data-action="detalles" data-id="${item.id}">
-                            👁️
-                        </button>
-                        <button class="btn-accion" type="button" title="Relevamiento" data-action="relevamiento" data-id="${item.id}">
-                            ✏️
-                        </button>
-                        <button class="btn-accion" type="button" title="Eliminar" data-action="eliminar" data-id="${item.id}">
-                            🗑️
-                        </button>
+                        <button class="btn-accion" type="button" title="Historial" data-action="historial" data-id="${item.id}">👁️</button>
+                        <button class="btn-accion" type="button" title="Relevamiento" data-action="relevamiento" data-id="${item.id}">✏️</button>
+                        <button class="btn-accion" type="button" title="Editar Producto" data-action="editar" data-id="${item.id}">📷</button>
+                        <button class="btn-accion" type="button" title="Eliminar" data-action="eliminar" data-id="${item.id}">🗑️</button>
                     </div>
                 </td>
             </tr>
@@ -209,8 +205,15 @@ function renderizarArticulos(datos) {
 
             if (accion === 'relevamiento') {
                 irARelevamientoConArticulo(id);
-            } else if (accion === 'detalles') {
-                mostrarToast('Próximamente: página de detalles', 'exito');
+            } else if (accion === 'editar') {
+                // Si todavía no tenés el HTML del modal, mostrará un aviso
+                if (typeof abrirModalEditarArticulo === 'function') {
+                    abrirModalEditarArticulo(id);
+                } else {
+                    mostrarToast('Falta agregar el HTML del modal de edición', 'error');
+                }
+            } else if (accion === 'historial') {
+                if (typeof abrirModalHistorial === 'function') abrirModalHistorial(id);
             } else if (accion === 'eliminar') {
                 eliminarArticulo(id);
             }
@@ -220,40 +223,28 @@ function renderizarArticulos(datos) {
 
 function obtenerCeldaArticuloHTML(articulo) {
     const imgData = (articulo.imagen || '').trim();
-    
     let contenidoVisual = '';
     
     if (imgData.startsWith('img/')) {
         const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
         contenidoVisual = `<img src="${urlGitHub}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
-    } 
-    else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
+    } else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
         let driveId = imgData;
         if (imgData.includes('id=')) driveId = imgData.split('id=')[1].split('&')[0];
         else if (imgData.includes('/d/')) driveId = imgData.split('/d/')[1].split('/')[0];
         const urlBackend = `${CONFIG.API.BASE_URL}?imgId=${driveId}`;
         contenidoVisual = `<img src="${urlBackend}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
-    } 
-    else if (imgData !== '') {
+    } else if (imgData !== '') {
         contenidoVisual = `<span class="emoji-articulo">${imgData}</span>`;
-    } 
-    else {
-        contenidoVisual = '';
     }
 
     const obs = articulo.observaciones || '';
-    const alertaHTML = obs.includes('⚠️') 
-        ? `<span title="${escapeHtml(obs)}" style="margin-left: 8px; font-size: 1.1rem; cursor: help; color: #dc2626;">⚠️</span>` 
-        : '';
+    const alertaHTML = obs.includes('⚠️') ? `<span title="${escapeHtml(obs)}" style="margin-left: 8px; font-size: 1.1rem; cursor: help; color: #dc2626;">⚠️</span>` : '';
 
     return `
         <div class="articulo-celda">
-            <div class="articulo-imagen">
-                ${contenidoVisual}
-            </div>
-            <div class="articulo-info">
-                <span class="articulo-nombre">${escapeHtml(articulo.articulo)} ${alertaHTML}</span>
-            </div>
+            <div class="articulo-imagen">${contenidoVisual}</div>
+            <div class="articulo-info"><span class="articulo-nombre">${escapeHtml(articulo.articulo)} ${alertaHTML}</span></div>
         </div>
     `;
 }
@@ -501,7 +492,7 @@ function renderizarSelectCategorias() {
 }
 
 // ============================================================
-// 7. BUSCADOR GENÉRICO CON DROPDOWN
+// 7. BUSCADORES CON DROPDOWN
 // ============================================================
 function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
     const input = document.getElementById(inputId);
@@ -547,7 +538,6 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
             li.style.color = "var(--text-muted)";
             li.style.fontStyle = "italic";
             li.style.cursor = "default";
-            li.style.borderBottom = "1px solid var(--border)";
             dropdown.appendChild(li);
 
             if (inputId === 'inputArticulo') {
@@ -558,23 +548,21 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
                 liCrear.style.cursor = "pointer";
                 liCrear.addEventListener("click", function() {
                     dropdown.classList.remove("visible");
-                    abrirModalArticulo({
-                        origen: 'entrada',
-                        nombreSugerido: texto
-                    });
+                    abrirModalArticulo({ origen: 'entrada', nombreSugerido: texto });
                 });
                 dropdown.appendChild(liCrear);
             }
-
             dropdown.classList.add("visible");
             return;
         }
+        
         resultados.forEach(item => {
             const li = document.createElement("li");
-            li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">ID ${item.id}</span>`;
+            // ✅ RESTAURADO: Solo el nombre, sin (ID X)
+            li.innerHTML = `${escapeHtml(item.articulo)}`;
             li.dataset.id = item.id;
             li.addEventListener("click", function() {
-                input.value = `${item.articulo} (ID ${item.id})`;
+                input.value = item.articulo; // ✅ Sin (ID X)
                 hidden.value = item.id;
                 dropdown.classList.remove("visible");
                 mostrarVistaPrevia(item.id, previewId);
@@ -625,8 +613,7 @@ function configurarBuscadorDropdownRelevamiento() {
             hidden.value = "";
             document.getElementById('stockSistema').value = '—';
             document.getElementById('diferencia').value = '—';
-            document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML =
-                '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+            document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         }
     });
 
@@ -655,10 +642,11 @@ function configurarBuscadorDropdownRelevamiento() {
         }
         resultados.forEach(item => {
             const li = document.createElement("li");
-            li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">ID ${item.id}</span>`;
+            // ✅ RESTAURADO: Solo el nombre
+            li.innerHTML = `${escapeHtml(item.articulo)}`;
             li.dataset.id = item.id;
             li.addEventListener("click", function() {
-                input.value = `${item.articulo} (ID ${item.id})`;
+                input.value = item.articulo; // ✅ Sin (ID X)
                 hidden.value = item.id;
                 dropdown.classList.remove("visible");
                 mostrarStockSistemaRelevamiento(item.id);
@@ -723,7 +711,7 @@ function mostrarVistaPrevia(id, contenedorId) {
 }
 
 // ============================================================
-// 9. REGISTRAR ENTRADA
+// 9. REGISTRO DE ENTRADAS
 // ============================================================
 async function registrarEntrada(e) {
     e.preventDefault();
@@ -768,8 +756,7 @@ async function registrarEntrada(e) {
 
         document.getElementById('formEntrada').reset();
         document.getElementById('articuloId').value = '';
-        document.getElementById('vistaPreviaContenido').innerHTML =
-            '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+        document.getElementById('vistaPreviaContenido').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         document.getElementById('registradoPor').value = 'Samuel Steves';
         restablecerCantidadEntrada();
         await cargarArticulos();
@@ -785,7 +772,7 @@ async function registrarEntrada(e) {
 }
 
 // ============================================================
-// 10. REGISTRAR SALIDA
+// 10. REGISTRO DE SALIDAS
 // ============================================================
 async function registrarSalida(e) {
     e.preventDefault();
@@ -844,13 +831,11 @@ async function registrarSalida(e) {
             return;
         }
 
-        mostrarCartel('⬇️', 'SALIDA REGISTRADA',
-            `${nombreArticulo} · -${cantidadUnidadesReales} unidades`, 'salida');
+        mostrarCartel('⬇️', 'SALIDA REGISTRADA', `${nombreArticulo} · -${cantidadUnidadesReales} unidades`, 'salida');
 
         document.getElementById('formSalida').reset();
         document.getElementById('articuloIdSalida').value = '';
-        document.getElementById('vistaPreviaContenidoSalida').innerHTML =
-            '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+        document.getElementById('vistaPreviaContenidoSalida').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
         document.getElementById('registradoPorSalida').value = 'Samuel Steves';
         
         restablecerCantidadSalida();
@@ -1150,7 +1135,6 @@ function configurarMovimientos() {
         });
     }
 }
-
 // ============================================================
 // 13. MENÚ LATERAL COLAPSABLE
 // ============================================================
@@ -1447,7 +1431,8 @@ function irARelevamientoConArticulo(id) {
 
         const input = document.getElementById('inputArticuloRelevamiento');
         const hidden = document.getElementById('articuloIdRelevamiento');
-        if (input) input.value = `${item.articulo} (ID ${item.id})`;
+        // ✅ Sin (ID X)
+        if (input) input.value = item.articulo;
         if (hidden) hidden.value = item.id;
 
         mostrarStockSistemaRelevamiento(item.id);
@@ -1932,8 +1917,16 @@ async function manejarAccionPedido(accion, pedido) {
             const r = await apiService.post({ accion: 'confirmarPedido', id: pedido.id });
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
 
-            mostrarCartel('✅', 'PEDIDO CONFIRMADO',
-                `Remito ${r.nroRemito} generado`, 'pedido-ok');
+            // ✅ Verificamos si falló el PDF
+            const pdfFallo = typeof r.pdfUrl === 'string' && r.pdfUrl.startsWith('ERROR_PDF');
+
+            if (pdfFallo) {
+                const detalleError = (r.pdfUrl || '').replace('ERROR_PDF:', '').trim() || 'error desconocido';
+                mostrarCartel('⚠️', 'PEDIDO CONFIRMADO', `Stock descontado · Falló el PDF (${r.nroRemito})`, 'pedido-cancel');
+                mostrarToast('Stock descontado, pero falló el remito: ' + detalleError, 'error');
+            } else {
+                mostrarCartel('✅', 'PEDIDO CONFIRMADO', `Remito ${r.nroRemito} generado`, 'pedido-ok');
+            }
 
             await cargarListaPedidos();
             await cargarArticulos();
@@ -1953,6 +1946,7 @@ async function manejarAccionPedido(accion, pedido) {
     }
 }
 
+// ✅ CARRITO REPARADO: Se restauró el botón de Unidades/Cajas y el input de cantidad
 function renderizarCarrito() {
     const contenedor = document.getElementById('carritoPedido');
     const totalEl = document.getElementById('carritoTotal');
@@ -1978,37 +1972,43 @@ function renderizarCarrito() {
         const stock = articulo ? obtenerStock(articulo) : '—';
         const multiplicador = obtenerMultiplicadorUnidades(articulo);
         const nombrePresentacion = obtenerNombrePresentacion(articulo);
-
-        let selectorTipo = '';
-        if (multiplicador > 1) {
-            const tipoActual = it.tipo || 'unidad';
-            const textoBoton = tipoActual === 'pack' ? nombrePresentacion.toUpperCase() : 'UNIDAD';
-            selectorTipo = `<button type="button" class="btn-tipo-cantidad" data-tipo-idx="${idx}" style="background: var(--bg-hover, #f1f5f9); border: 1px solid var(--border, #e2e8f0); border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; font-weight: 600; cursor: pointer; margin-left: 8px;">${textoBoton}</button>`;
-        }
-
+        const tipoActual = it.tipo || 'unidad';
         const cantMostrar = it.cantidad || 1;
 
+        let selectorTipoHTML = '';
+        if (multiplicador > 1) {
+            const nombrePack = nombrePresentacion.toUpperCase() + 'S';
+            selectorTipoHTML = `
+                <div style="display: inline-flex; gap: 4px; margin-left: 10px; vertical-align: middle;">
+                    <button type="button" class="btn-tipo-cantidad ${tipoActual === 'unidad' ? 'activo' : ''}" data-tipo-idx="${idx}" data-tipo-val="unidad" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; border: 1px solid var(--border); background: ${tipoActual === 'unidad' ? 'var(--accent)' : 'var(--bg-card)'}; color: ${tipoActual === 'unidad' ? '#fff' : 'var(--text-muted)'}; cursor: pointer; font-weight: 600;">UNIDADES</button>
+                    <button type="button" class="btn-tipo-cantidad ${tipoActual === 'pack' ? 'activo' : ''}" data-tipo-idx="${idx}" data-tipo-val="pack" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; border: 1px solid var(--border); background: ${tipoActual === 'pack' ? 'var(--accent)' : 'var(--bg-card)'}; color: ${tipoActual === 'pack' ? '#fff' : 'var(--text-muted)'}; cursor: pointer; font-weight: 600;">${nombrePack} (x${multiplicador})</button>
+                </div>`;
+        }
+
         let equivalenciaHTML = '';
-        if ((it.tipo || 'unidad') === 'pack' && multiplicador > 1) {
+        if (tipoActual === 'pack' && multiplicador > 1) {
             const totalUnidades = cantMostrar * multiplicador;
-            equivalenciaHTML = `<span class="carrito-item-stock">(${totalUnidades} unidades)</span>`;
+            equivalenciaHTML = `<span class="carrito-item-stock" style="color: #16a34a; font-weight: 600; font-size: 0.85rem;">👉 Son ${totalUnidades} unidades en total</span>`;
         } else {
             equivalenciaHTML = `<span class="carrito-item-stock">Stock: ${stock}</span>`;
         }
 
         return `
-            <div class="carrito-item">
-                <span class="carrito-item-emoji" aria-hidden="true">${imgHTML}</span>
-                <div>
-                    <span class="carrito-item-nombre">${escapeHtml(it.nombre)}${selectorTipo}</span>
-                    ${equivalenciaHTML}
+            <div class="carrito-item" style="align-items: flex-start;">
+                <span class="carrito-item-emoji" aria-hidden="true" style="margin-top: 5px;">${imgHTML}</span>
+                <div style="flex: 1;">
+                    <span class="carrito-item-nombre" style="display: block; margin-bottom: 4px;">${escapeHtml(it.nombre)}</span>
+                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        ${selectorTipoHTML}
+                        ${equivalenciaHTML}
+                    </div>
                 </div>
-                <div class="carrito-stepper" aria-label="Cantidad de ${escapeHtml(it.nombre)}">
-                    <button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}" aria-label="Restar una unidad">−</button>
-                    <span class="carrito-cantidad-valor">${cantMostrar}</span>
-                    <button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}" aria-label="Agregar una unidad">+</button>
+                <div class="carrito-stepper" style="margin-top: 5px;">
+                    <button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}">−</button>
+                    <input type="number" class="carrito-input-cantidad" data-idx="${idx}" value="${cantMostrar}" min="1" style="width: 50px; text-align: center; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem;">
+                    <button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}">+</button>
                 </div>
-                <button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" aria-label="Quitar ${escapeHtml(it.nombre)}">✕</button>
+                <button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" style="margin-top: 5px;">✕</button>
             </div>`;
     }).join('');
 
@@ -2020,11 +2020,25 @@ function renderizarCarrito() {
         else decrementarCantidadCarrito(idx);
     }));
 
+    contenedor.querySelectorAll('.carrito-input-cantidad').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const idx = Number(e.target.dataset.idx);
+            let val = parseInt(e.target.value);
+            if (isNaN(val) || val < 1) val = 1;
+            carritoPedido[idx].cantidad = val;
+            renderizarCarrito();
+        });
+    });
+
     contenedor.querySelectorAll('.btn-tipo-cantidad').forEach(btn => {
         btn.addEventListener('click', () => {
             const idx = Number(btn.dataset.tipoIdx);
+            const nuevoTipo = btn.dataset.tipoVal;
             if (carritoPedido[idx]) {
-                carritoPedido[idx].tipo = (carritoPedido[idx].tipo === 'pack') ? 'unidad' : 'pack';
+                if (carritoPedido[idx].tipo !== nuevoTipo) {
+                    carritoPedido[idx].tipo = nuevoTipo;
+                    carritoPedido[idx].cantidad = 1; 
+                }
                 renderizarCarrito();
             }
         });
@@ -2226,7 +2240,8 @@ function configurarBuscadorArticulosPedido() {
         resultados.forEach(item => {
             const li = document.createElement('li');
             const stock = obtenerStock ? obtenerStock(item) : '—';
-            li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">ID ${escapeHtml(String(item.id))} · Stock ${stock}</span>`;
+            // ✅ Sin ID visible, con Stock
+            li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">Stock ${stock}</span>`;
             li.addEventListener('click', function() {
                 agregarAlCarrito(item);
                 input.value = '';
@@ -2249,7 +2264,7 @@ function agregarAlCarrito(item) {
             nombre: item.articulo,
             categoria: item.categoriaID || '',
             cantidad: 1,
-            tipo: multiplicador > 1 ? 'unidad' : 'unidad'
+            tipo: 'unidad'
         });
     }
     renderizarCarrito();
@@ -2371,15 +2386,26 @@ function inicioDiaPedido(fecha = new Date()) {
     return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate());
 }
 
+// ✅ RESTAURADO: Pendientes siempre visibles como "hoy"
 function filtrarPedidosPorFecha(pedidos, filtro) {
     const lista = Array.isArray(pedidos) ? pedidos : [];
     if (filtro === 'todos') return lista;
     const hoy = inicioDiaPedido();
-    if (filtro === 'hoy') return lista.filter(p => { const fecha = fechaLocalPedido(p); return fecha && fecha.getTime() === hoy.getTime(); });
+    if (filtro === 'hoy') {
+        return lista.filter(p => {
+            if (p.estado === 'Pendiente') return true;
+            const fecha = fechaLocalPedido(p);
+            return fecha && fecha.getTime() === hoy.getTime();
+        });
+    }
     if (filtro === 'semana') {
         const lunes = new Date(hoy);
         lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
-        return lista.filter(p => { const fecha = fechaLocalPedido(p); return fecha && fecha >= lunes && fecha <= hoy; });
+        return lista.filter(p => {
+            if (p.estado === 'Pendiente') return true;
+            const fecha = fechaLocalPedido(p);
+            return fecha && fecha >= lunes && fecha <= hoy;
+        });
     }
     return lista;
 }
@@ -2401,10 +2427,12 @@ function calcularContadoresEstado(pedidos) {
     };
 }
 
+// ✅ RESTAURADO: Pendientes se agrupan bajo HOY
 function agruparPedidosPorDia(pedidos) {
     const grupos = new Map();
+    const hoy = inicioDiaPedido();
     [...(Array.isArray(pedidos) ? pedidos : [])].sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0)).forEach(p => {
-        const fecha = fechaLocalPedido(p);
+        const fecha = (p.estado === 'Pendiente') ? hoy : fechaLocalPedido(p);
         if (!fecha) return;
         const clave = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
         if (!grupos.has(clave)) grupos.set(clave, { fecha, pedidos: [] });
@@ -2831,3 +2859,102 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hash === 'direcciones') cargarDirecciones();
     if (hash === 'dashboard') cargarDashboard();
 });
+
+// ============================================================
+// 25. EDITAR ARTÍCULO Y SUBIR FOTO
+// ============================================================
+function abrirModalEditarArticulo(id) {
+    const art = articulos.find(a => String(a.id) === String(id));
+    if (!art) return;
+
+    document.getElementById('editArtId').value = art.id;
+    document.getElementById('editArtNombre').value = art.articulo || '';
+    document.getElementById('editArtCategoria').value = art.categoriaID || '';
+    document.getElementById('editArtUnidad').value = art.unidadMedida || 'Unidad';
+    document.getElementById('editArtMultiplicador').value = art.multiplicadorUnidades || 1;
+    document.getElementById('editArtStockMin').value = art.stockMin || 0;
+    document.getElementById('editArtObservaciones').value = art.observaciones || '';
+    document.getElementById('editArtError').textContent = '';
+    document.getElementById('editArtImagenFile').value = '';
+
+    const preview = document.getElementById('editArtImagenPreview');
+    const imgData = (art.imagen || '').trim();
+    
+    if (imgData.startsWith('img/')) {
+        preview.innerHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}" style="width:100%; height:100%; object-fit:cover;">`;
+    } else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
+        let driveId = imgData;
+        if (imgData.includes('id=')) driveId = imgData.split('id=')[1].split('&')[0];
+        else if (imgData.includes('/d/')) driveId = imgData.split('/d/')[1].split('/')[0];
+        preview.innerHTML = `<img src="${CONFIG.API.BASE_URL}?imgId=${driveId}" style="width:100%; height:100%; object-fit:cover;">`;
+    } else if (imgData !== '') {
+        preview.textContent = imgData;
+    } else {
+        preview.textContent = '📦';
+    }
+
+    document.getElementById('modalEditarArticulo').style.display = 'flex';
+}
+
+async function guardarEdicionArticulo() {
+    const id = document.getElementById('editArtId').value;
+    const nombre = document.getElementById('editArtNombre').value.trim();
+    const categoria = document.getElementById('editArtCategoria').value.trim();
+    const unidadMedida = document.getElementById('editArtUnidad').value;
+    const multiplicador = parseInt(document.getElementById('editArtMultiplicador').value) || 1;
+    const stockMin = parseInt(document.getElementById('editArtStockMin').value) || 0;
+    const observaciones = document.getElementById('editArtObservaciones').value.trim();
+    const fileInput = document.getElementById('editArtImagenFile');
+    const errorEl = document.getElementById('editArtError');
+    const btn = document.getElementById('btnGuardarEdicionArticulo');
+
+    if (!nombre || !categoria) { errorEl.textContent = 'Nombre y categoría son obligatorios'; return; }
+    btn.disabled = true; btn.textContent = 'Guardando...'; errorEl.textContent = '';
+
+    let base64Image = null;
+    if (fileInput.files && fileInput.files[0]) {
+        try {
+            base64Image = await procesarYReducirImagen(fileInput.files[0]);
+        } catch (e) {
+            errorEl.textContent = 'Error al procesar la imagen';
+            btn.disabled = false; btn.textContent = 'Guardar cambios'; return;
+        }
+    }
+
+    const datos = { id, nombre, categoria, unidadMedida, multiplicador, stockMin, observaciones, imagenBase64: base64Image };
+
+    try {
+        const r = await apiService.post({ accion: 'editarArticulo', datos });
+        if (!r || r.exito === false) throw new Error(r?.error || 'Error al editar');
+        mostrarToast('Artículo actualizado', 'exito');
+        document.getElementById('modalEditarArticulo').style.display = 'none';
+        await cargarArticulos();
+    } catch (err) {
+        errorEl.textContent = err.message;
+    } finally {
+        btn.disabled = false; btn.textContent = 'Guardar cambios';
+    }
+}
+
+function procesarYReducirImagen(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width; let height = img.height;
+                const maxAncho = 800;
+                if (width > maxAncho) { height = Math.round((height * maxAncho) / width); width = maxAncho; }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.7));
+            };
+            img.onerror = () => reject(new Error('Archivo no válido'));
+            img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('Error leyendo archivo'));
+        reader.readAsDataURL(file);
+    });
+}

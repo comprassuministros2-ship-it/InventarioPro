@@ -8,31 +8,11 @@
     <!-- ========================================== -->
     <!-- INVENTARIO PRO — ESTRUCTURA HTML           -->
     <!-- ========================================== -->
-    <!-- ÍNDICE DE CONTENIDO:                       -->
-    <!-- 01. HEAD — Metadatos, favicon y tema       -->
-    <!-- 02. SIDEBAR — Navegación lateral           -->
-    <!-- 03. CONTENIDO PRINCIPAL                    -->
-    <!-- 04. PÁGINA — Inventario general            -->
-    <!-- 05. PÁGINA — Entradas                      -->
-    <!-- 06. PÁGINA — Salidas                       -->
-    <!-- 07. PÁGINA — Movimientos                   -->
-    <!-- 08. PÁGINA — Direcciones                   -->
-    <!-- 09. PÁGINA — Dashboard                     -->
-    <!-- 10. PÁGINA — Relevamiento                  -->
-    <!-- 11. PÁGINA — Pedidos                       -->
-    <!-- 12. PÁGINAS — Reportes y configuración     -->
-    <!-- 13. TOAST Y CARTEL DE ACCIÓN               -->
-    <!-- 14. MODAL — Nueva dirección                -->
-    <!-- 15. MODAL — Nuevo artículo                 -->
-    <!-- 16. SCRIPTS                                -->
-    <!-- ========================================== -->
     
-    <!-- ★ Favicon (Cubo con check) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%232563eb%22/><path fill=%22%23fff%22 d=%22M50 20l30 17-30 17-30-17zM20 46l27 15.5V87L20 71zM80 46 53 61.5V87l27-16z%22/><path d=%22M41 37l6 6 12-12%22 fill=%22none%22 stroke=%22%232563eb%22 stroke-width=%226%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
 
     <link rel="stylesheet" href="css/style.css">
     <script>
-        // Anti-FOUC: aplicar el tema ANTES de que se renderice el body
         (function() {
             try {
                 var tema = localStorage.getItem('inventario-tema');
@@ -45,44 +25,18 @@
             }
         })();
     </script>
-    <!-- ═══ MIGAS DE PAN (breadcrumb) — estilos autónomos, usan tus variables si existen ═══ -->
     <style>
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.45rem;
-            font-size: 0.82rem;
-            margin-bottom: 0.45rem;
-        }
-        .breadcrumb a {
-            color: var(--accent, #2563eb);
-            text-decoration: none;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 6px;
-        }
-        .breadcrumb a:hover {
-            background: var(--accent-soft, #eff6ff);
-            text-decoration: underline;
-        }
-        .breadcrumb-separador {
-            color: var(--text-muted, #94a3b8);
-            font-weight: 700;
-            user-select: none;
-        }
-        .breadcrumb-actual {
-            color: var(--text-muted, #64748b);
-            font-weight: 600;
-        }
+        .breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem; font-size: 0.82rem; margin-bottom: 0.45rem; }
+        .breadcrumb a { color: var(--accent, #2563eb); text-decoration: none; font-weight: 600; padding: 2px 6px; border-radius: 6px; }
+        .breadcrumb a:hover { background: var(--accent-soft, #eff6ff); text-decoration: underline; }
+        .breadcrumb-separador { color: var(--text-muted, #94a3b8); font-weight: 700; user-select: none; }
+        .breadcrumb-actual { color: var(--text-muted, #64748b); font-weight: 600; }
     </style>
 </head>
 <body>
 <div class="app-layout">
 
-    <!-- ========================================== -->
-    <!-- SIDEBAR                                     -->
-    <!-- ========================================== -->
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <div class="sidebar-logo">
@@ -94,13 +48,15 @@
         <nav class="sidebar-nav">
             <section class="sidebar-nav-group">
                 <h2 class="sidebar-section-title">Principal</h2>
-                <a href="#" class="sidebar-link is-active" data-page="inventario">Inventario General</a>
+                <!-- ★ Cambio: Se sacó is-active de inventario -->
+                <a href="#" class="sidebar-link" data-page="inventario">Inventario General</a>
             </section>
             <section class="sidebar-nav-group">
                 <h2 class="sidebar-section-title">Operaciones</h2>
                 <a href="#" class="sidebar-link" data-page="entradas">Entradas</a>
                 <a href="#" class="sidebar-link" data-page="salidas">Salidas</a>
-                <a href="#" class="sidebar-link" data-page="pedidos">Pedidos</a>
+                <!-- ★ Cambio: Se agregó is-active a pedidos -->
+                <a href="#" class="sidebar-link is-active" data-page="pedidos">Pedidos</a>
             </section>
             <section class="sidebar-nav-group">
                 <h2 class="sidebar-section-title">Gestión</h2>
@@ -123,13 +79,12 @@
         </div>
     </aside>
 
-    <!-- ========================================== -->
-    <!-- CONTENIDO PRINCIPAL                        -->
-    <!-- ========================================== -->
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="main-content" style="padding: 0;">
 
         <!-- ============ PÁGINA: INVENTARIO GENERAL ============ -->
-        <div id="pagina-inventario" class="pagina activa">
+        <!-- ★ Cambio: Se sacó la clase 'activa' -->
+        <div id="pagina-inventario" class="pagina">
             <div class="page-header">
                 <h1>Inventario General</h1>
                 <p class="fecha-hoy">Gestión de artículos y stock</p>
@@ -209,19 +164,17 @@
                             <input type="date" id="fechaEntrada" required>
                         </div>
                         <div class="form-group">
-    <label for="proveedor">PROVEEDOR</label>
-    <input type="text" id="proveedor" placeholder="Nombre del proveedor">
-</div>
-
-<div class="form-group">
-    <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
-    <input type="text" id="factura" placeholder="Ej: FAC-00234">
-</div>
-
-<div class="form-group">
-    <label for="tipoCompra">TIPO DE ORDEN DE COMPRA</label>
-    <input type="text" id="tipoCompra" placeholder="Ej: Orden de Compra, Compra Directa...">
-</div>
+                            <label for="proveedor">PROVEEDOR</label>
+                            <input type="text" id="proveedor" placeholder="Nombre del proveedor">
+                        </div>
+                        <div class="form-group">
+                            <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
+                            <input type="text" id="factura" placeholder="Ej: FAC-00234">
+                        </div>
+                        <div class="form-group">
+                            <label for="tipoCompra">TIPO DE ORDEN DE COMPRA</label>
+                            <input type="text" id="tipoCompra" placeholder="Ej: Orden de Compra, Compra Directa...">
+                        </div>
                         <div class="form-group">
                             <label for="observaciones">OBSERVACIONES</label>
                             <textarea id="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
@@ -277,19 +230,19 @@
                             <input type="hidden" id="articuloIdSalida" value="">
                         </div>
                        <div class="form-group" id="grupoCantidadSalida">
-    <div id="avisoPresentacionSalida" class="aviso-presentacion" hidden>
-        Stock actual: <span id="textoStockActualSalida"></span>
-    </div>
-    <label for="cantidadUnidadesSalida">CANTIDAD *</label>
-    <div style="display: flex; gap: 0.8rem; align-items: center;">
-        <input type="number" id="cantidadUnidadesSalida" min="1" value="1" required style="flex: 1;">
-        <select id="selectTipoSalida" style="width: auto; min-width: 120px; display: none;">
-            <option value="unidad">Unidades</option>
-            <option value="pack" id="optPackSalida">Pack</option>
-        </select>
-    </div>
-    <input type="hidden" id="cantidadSalida" value="1">
-</div>
+                            <div id="avisoPresentacionSalida" class="aviso-presentacion" hidden>
+                                Stock actual: <span id="textoStockActualSalida"></span>
+                            </div>
+                            <label for="cantidadUnidadesSalida">CANTIDAD *</label>
+                            <div style="display: flex; gap: 0.8rem; align-items: center;">
+                                <input type="number" id="cantidadUnidadesSalida" min="1" value="1" required style="flex: 1;">
+                                <select id="selectTipoSalida" style="width: auto; min-width: 120px; display: none;">
+                                    <option value="unidad">Unidades</option>
+                                    <option value="pack" id="optPackSalida">Pack</option>
+                                </select>
+                            </div>
+                            <input type="hidden" id="cantidadSalida" value="1">
+                        </div>
                         <div class="form-group">
                             <label for="fechaSalida">FECHA *</label>
                             <input type="date" id="fechaSalida" required>
@@ -354,7 +307,6 @@
             </div>
 
             <div style="padding: 0 1.5rem;">
-
                 <div class="toolbar-movimientos">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
@@ -391,7 +343,6 @@
             </div>
 
             <div style="padding: 0 1.5rem;">
-
                 <div class="toolbar-inventario">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
@@ -424,7 +375,6 @@
                         <p class="placeholder">Seleccioná una dirección del ranking</p>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -441,7 +391,6 @@
             </div>
 
             <div style="padding: 0 1.5rem;">
-
                 <div class="dashboard-tarjetas">
                     <div class="dashboard-tarjeta">
                         <div class="dashboard-tarjeta-icono">📦</div>
@@ -524,7 +473,6 @@
                         <p class="placeholder">Cargando...</p>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -544,7 +492,6 @@
                 <div class="relevamiento-form">
                     <h2>Registrar relevamiento</h2>
                     <form id="formRelevamiento">
-
                         <div class="form-group buscador-articulo-group">
                             <label for="inputArticuloRelevamiento">ARTÍCULO *</label>
                             <div class="buscador-wrapper">
@@ -596,7 +543,8 @@
         </div>
 
         <!-- ============ PÁGINA: PEDIDOS ============ -->
-        <div id="pagina-pedidos" class="pagina">
+        <!-- ★ Cambio: Se agregó la clase 'activa' acá -->
+        <div id="pagina-pedidos" class="pagina activa">
             <div class="page-header">
                 <div class="breadcrumb">
                     <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
@@ -607,11 +555,13 @@
                 <p class="fecha-hoy">Gestión de pedidos - <span id="fechaActualPedidos"></span></p>
             </div>
             <div class="pedidos-contenido">
+                <!-- ★ Pestañas en el orden solicitado -->
                 <div class="pedidos-tabs" role="tablist" aria-label="Secciones de pedidos">
-                    <button type="button" class="pedidos-tab" id="tabNuevoPedido" role="tab" aria-selected="false" aria-controls="pedidosTabNuevo" data-tab-pedidos="nuevo">Nuevo pedido</button>
                     <button type="button" class="pedidos-tab activo" id="tabSeguimientoPedidos" role="tab" aria-selected="true" aria-controls="pedidosTabSeguimiento" data-tab-pedidos="seguimiento">Hoja de seguimiento</button>
+                    <button type="button" class="pedidos-tab" id="tabNuevoPedido" role="tab" aria-selected="false" aria-controls="pedidosTabNuevo" data-tab-pedidos="nuevo">Nuevo pedido</button>
                 </div>
 
+                <!-- SECCIÓN NUEVO PEDIDO -->
                 <section id="pedidosTabNuevo" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabNuevoPedido" hidden>
                     <div class="pedidos-grid">
                         <div class="pedidos-form">
@@ -665,6 +615,7 @@
                     </div>
                 </section>
 
+                <!-- SECCIÓN SEGUIMIENTO -->
                 <section id="pedidosTabSeguimiento" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabSeguimientoPedidos">
                     <div class="pedidos-resumen-tira" aria-live="polite">
                         <div class="pedidos-resumen-item">
@@ -715,7 +666,7 @@
         </div>
         <!-- ★ FIN PEDIDOS -->
 
-        <!-- Otras páginas (placeholder) -->
+        <!-- OTRAS PÁGINAS -->
         <div id="pagina-reportes" class="pagina">
             <div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div>
             <p class="placeholder" style="padding:1.5rem;">Próximamente.</p>
@@ -728,17 +679,12 @@
     </main>
 </div>
 
-<!-- ========================================== -->
-<!-- TOAST - NOTIFICACIÓN FLOTANTE              -->
-<!-- ========================================== -->
+<!-- TOAST Y CARTEL -->
 <div id="toast" class="toast" role="alert" aria-live="polite">
     <div class="toast-icono">✓</div>
     <div class="toast-mensaje"></div>
 </div>
 
-<!-- ========================================== -->
-<!-- CARTEL DE ACCIÓN                            -->
-<!-- ========================================== -->
 <div id="cartelAccion" class="cartel-accion" role="status" aria-live="polite">
     <div class="cartel-icono" id="cartelIcono">✓</div>
     <div class="cartel-texto">
@@ -748,9 +694,7 @@
     <div class="cartel-progreso"></div>
 </div>
 
-<!-- ========================================== -->
-<!-- MODAL: AGREGAR NUEVA DIRECCIÓN             -->
-<!-- ========================================== -->
+<!-- MODAL DIRECCIÓN -->
 <div id="modalNuevaDireccion" class="modal-overlay" style="display: none;">
     <div class="modal-contenido">
         <div class="modal-header">
@@ -786,9 +730,7 @@
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- MODAL: NUEVO ARTÍCULO                      -->
-<!-- ========================================== -->
+<!-- MODAL NUEVO ARTÍCULO -->
 <div id="modalNuevoArticulo" class="modal-overlay" style="display:none;">
     <div class="modal-contenido">
         <div class="modal-header">
@@ -796,13 +738,10 @@
             <button type="button" class="modal-cerrar" id="cerrarModalArticulo">✕</button>
         </div>
         <div class="modal-body">
-            <!-- Nombre -->
             <div class="form-group">
                 <label for="nuevoArtNombre">NOMBRE *</label>
                 <input type="text" id="nuevoArtNombre" placeholder="Ej: Libreta A4">
             </div>
-
-            <!-- Categoría + Emoji -->
             <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
                 <div class="form-group">
                     <label for="nuevoArtCategoria">CATEGORÍA *</label>
@@ -814,8 +753,6 @@
                     <input type="text" id="nuevoArtImagen" value="📦" maxlength="8" style="text-align:center; font-size:1.4rem;">
                 </div>
             </div>
-
-            <!-- Presentación -->
             <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
                 <div class="form-group">
                     <label for="nuevoArtUnidad">UNIDAD DE MEDIDA *</label>
@@ -836,8 +773,6 @@
             <p id="nuevoArtEquivalencia" style="font-size:0.8rem; color:var(--text-muted); margin-top:-0.8rem; margin-bottom:1rem;">
                 1 Unidad = 1 unidad
             </p>
-
-            <!-- Cantidad que ingresa (solo en modo entrada) -->
             <div id="nuevoArtBloqueCantidad">
                 <div class="form-group">
                     <label for="nuevoArtCantidad">CANTIDAD QUE INGRESA *</label>
@@ -846,21 +781,10 @@
                         <span id="nuevoArtCantidadUnidad" style="color:var(--text-muted); font-size:0.9rem;">unidades</span>
                     </div>
                 </div>
-
-                <div id="nuevoArtTotalCaja" style="
-                    padding: 0.75rem 1rem;
-                    background: var(--accent-soft);
-                    border-left: 3px solid var(--accent);
-                    border-radius: 6px;
-                    margin-bottom: 1.25rem;
-                    font-size: 0.9rem;
-                    color: var(--text);
-                ">
+                <div id="nuevoArtTotalCaja" style="padding: 0.75rem 1rem; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 6px; margin-bottom: 1.25rem; font-size: 0.9rem; color: var(--text);">
                     <strong>📦 Ingresarán 1 unidad</strong>
                 </div>
             </div>
-
-            <!-- Stock mínimos -->
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
                 <div class="form-group">
                     <label for="nuevoArtStockMin">STOCK MÍNIMO</label>
@@ -871,20 +795,15 @@
                     <input type="number" id="nuevoArtStockCritico" value="0" min="0">
                 </div>
             </div>
-
-            <!-- Observaciones -->
             <div class="form-group">
                 <label for="nuevoArtObservaciones">OBSERVACIONES</label>
                 <textarea id="nuevoArtObservaciones" rows="2" placeholder="Notas (opcional)..."></textarea>
             </div>
-
-            <!-- Aviso de entrada (solo cuando viene de Entradas) -->
             <div id="nuevoArtAvisoEntrada" style="display:none; padding:0.8rem; background:var(--accent-soft); border-left:3px solid var(--accent); border-radius:6px; margin-top:0.5rem;">
                 <p style="font-size:0.82rem; color:var(--text-muted); margin:0;">
                     📦 Al guardar también se registrará la entrada al stock.
                 </p>
             </div>
-
             <p class="modal-error" id="nuevoArtError"></p>
         </div>
         <div class="modal-footer">
@@ -894,15 +813,83 @@
     </div>
 </div>
 
-<!-- ================ SCRIPTS ================ -->
+<!-- MODAL EDITAR ARTÍCULO -->
+<div id="modalEditarArticulo" class="modal-overlay" style="display:none;">
+    <div class="modal-contenido">
+        <div class="modal-header">
+            <h3>Editar artículo</h3>
+            <button type="button" class="modal-cerrar" onclick="document.getElementById('modalEditarArticulo').style.display='none'">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="editArtId">
+            <div class="form-group">
+                <label>NOMBRE *</label>
+                <input type="text" id="editArtNombre" placeholder="Ej: Libreta A4">
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
+                <div class="form-group">
+                    <label>CATEGORÍA *</label>
+                    <input type="text" id="editArtCategoria" list="listaCategorias">
+                </div>
+                <div class="form-group">
+                    <label>UNIDAD DE MEDIDA *</label>
+                    <select id="editArtUnidad">
+                        <option value="Unidad">Unidad</option>
+                        <option value="Caja">Caja</option>
+                        <option value="Pack">Pack</option>
+                        <option value="Resma">Resma</option>
+                        <option value="Frasco">Frasco</option>
+                        <option value="Docena">Docena</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                <div class="form-group">
+                    <label>MULTIPLICADOR *</label>
+                    <input type="number" id="editArtMultiplicador" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>STOCK MÍNIMO</label>
+                    <input type="number" id="editArtStockMin" min="0" value="0">
+                </div>
+            </div>
+
+            <!-- SECCIÓN FOTO -->
+            <div class="form-group" style="background: var(--bg-hover); padding: 10px; border-radius: 8px; border: 1px dashed var(--border);">
+                <label>FOTO DEL ARTÍCULO</label>
+                <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 10px;">
+                    <div id="editArtImagenPreview" style="width: 50px; height: 50px; border-radius: 6px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow: hidden;">
+                        📦
+                    </div>
+                    <div style="flex: 1;">
+                        <input type="file" id="editArtImagenFile" accept="image/*" capture="environment" style="font-size: 0.85rem; width: 100%;">
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Sacá una foto o subí una imagen (se achicará automáticamente).</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>OBSERVACIONES</label>
+                <textarea id="editArtObservaciones" rows="2"></textarea>
+            </div>
+            <p class="modal-error" id="editArtError" style="color: red;"></p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" onclick="document.getElementById('modalEditarArticulo').style.display='none'">Cancelar</button>
+            <button type="button" class="btn-guardar" id="btnGuardarEdicionArticulo" onclick="guardarEdicionArticulo()">Guardar cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- SCRIPTS -->
 <script src="js/Config.js"></script>
 <script src="js/services/ApiService.js"></script>
 <script src="js/services/ArticulosService.js"></script>
 <script src="js/sidebar.js"></script>
 <script src="js/script.js"></script>
 
-<!-- Respaldo de navegación para las migas: si tu PASO 1 ya definió
-     navegarAPagina() en script.js o sidebar.js, este bloque no pisa nada -->
 <script>
     if (typeof window.navegarAPagina !== 'function') {
         window.navegarAPagina = function (pagina) {
