@@ -2801,6 +2801,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     configurarMovimientos();
     configurarModalDireccion();
     configurarModalArticulo();
+    inicializarDragAndDropImagen();
 
     configurarBuscadorDropdown(
         'inputArticulo', 'articuloId',
@@ -2957,4 +2958,62 @@ function procesarYReducirImagen(file) {
         reader.onerror = () => reject(new Error('Error leyendo archivo'));
         reader.readAsDataURL(file);
     });
+}
+
+// ============================================================
+// 26. DRAG & DROP (SOPORTE PARA ARRASTRAR IMÁGENES)
+// ============================================================
+function inicializarDragAndDropImagen() {
+    const dropZone = document.getElementById('editArtImagenPreview');
+    const fileInput = document.getElementById('editArtImagenFile');
+    if (!dropZone || !fileInput) return;
+
+    // Prevenir comportamiento por defecto del navegador (abrir la imagen en una pestaña nueva)
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    // Efectos visuales de feedback
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.style.borderColor = 'var(--accent)';
+            dropZone.style.backgroundColor = 'var(--accent-soft)';
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+            dropZone.style.borderColor = 'var(--border)';
+            dropZone.style.backgroundColor = 'var(--bg-hover)';
+        }, false);
+    });
+
+    // Manejo del drop
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            fileInput.files = files; // Transfiere el archivo al input real
+            actualizarPreviewImagen(files[0], dropZone);
+        }
+    });
+
+    // Manejo del input tradicional
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            actualizarPreviewImagen(e.target.files[0], dropZone);
+        }
+    });
+
+    // Helper interno para renderizar la miniatura
+    function actualizarPreviewImagen(file, contenedor) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            contenedor.innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:8px; pointer-events:none;">`;
+        };
+        reader.readAsDataURL(file);
+    }
 }
