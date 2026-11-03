@@ -228,12 +228,8 @@ function obtenerCeldaArticuloHTML(articulo) {
     if (imgData.startsWith('img/')) {
         const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
         contenidoVisual = `<img src="${urlGitHub}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
-    } else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
-        let driveId = imgData;
-        if (imgData.includes('id=')) driveId = imgData.split('id=')[1].split('&')[0];
-        else if (imgData.includes('/d/')) driveId = imgData.split('/d/')[1].split('/')[0];
-        const urlBackend = `${CONFIG.API.BASE_URL}?imgId=${driveId}`;
-        contenidoVisual = `<img src="${urlBackend}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
+    } else if (imgData.startsWith('http') || imgData.startsWith('data:image/')) {
+        contenidoVisual = `<img src="${imgData}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
     } else if (imgData !== '') {
         contenidoVisual = `<span class="emoji-articulo">${imgData}</span>`;
     }
@@ -2883,11 +2879,8 @@ function abrirModalEditarArticulo(id) {
     
     if (imgData.startsWith('img/')) {
         preview.innerHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}" style="width:100%; height:100%; object-fit:cover;">`;
-    } else if (imgData.startsWith('http') || (imgData.length > 20 && !imgData.includes(' '))) {
-        let driveId = imgData;
-        if (imgData.includes('id=')) driveId = imgData.split('id=')[1].split('&')[0];
-        else if (imgData.includes('/d/')) driveId = imgData.split('/d/')[1].split('/')[0];
-        preview.innerHTML = `<img src="${CONFIG.API.BASE_URL}?imgId=${driveId}" style="width:100%; height:100%; object-fit:cover;">`;
+    } else if (imgData.startsWith('http') || imgData.startsWith('data:image/')) {
+        preview.innerHTML = `<img src="${imgData}" style="width:100%; height:100%; object-fit:cover;">`;
     } else if (imgData !== '') {
         preview.textContent = imgData;
     } else {
