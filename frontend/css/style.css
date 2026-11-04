@@ -3085,3 +3085,77 @@ body {
 .btn-detalle.primario:hover {
     background: var(--accent-hover);
 }
+
+/* ============================================================
+   FIX DE ESPACIADO - MOVIMIENTOS Y TABLAS
+   ============================================================ */
+
+/* 1. Barra de herramientas: distribuye buscador a la izquierda y botón a la derecha */
+.toolbar-movimientos {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap; /* Si la pantalla es chica, se acomoda solo */
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.toolbar-movimientos .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    flex: 1; /* Ocupa el espacio disponible */
+}
+
+.toolbar-movimientos .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* 2. Tabla: más aire en las celdas */
+.inventario-tabla {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.inventario-tabla th {
+    padding: 1rem 1.25rem; /* Más espacio vertical y horizontal en títulos */
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--border, #e2e8f0);
+    white-space: nowrap; /* Evita que "FECHA" o "CANTIDAD" se partan en dos líneas */
+}
+
+.inventario-tabla td {
+    padding: 1.25rem 1.25rem; /* Más espacio en cada fila */
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border, #e2e8f0);
+    line-height: 1.5; /* Mejora la lectura de textos largos como las direcciones */
+    font-size: 0.9rem;
+}
+
+/* 3. Ajustes específicos para que no se peguen los textos */
+.inventario-tabla td:last-child {
+    padding-right: 2rem; /* Aire extra en el borde derecho para el "Detalle" */
+}
+
+/* Evita que la fecha y cantidad se rompan en varias líneas */
+.inventario-tabla td:nth-child(1),
+.inventario-tabla td:nth-child(4) {
+    white-space: nowrap;
+}
+
+/* Mejora el look de las filas al pasar el mouse */
+.inventario-tabla tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.inventario-tabla tbody tr:hover {
+    background-color: var(--bg-hover, #f8fafc);
+}
