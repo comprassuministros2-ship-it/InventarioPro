@@ -131,7 +131,7 @@ async function cargarArticulos() {
         console.error("Error cargando artículos:", error);
         const contenedor = document.getElementById("contenedorInventario");
         if (contenedor) {
-            contenedor.innerHTML = `<p class="placeholder">Error al cargar inventario: ${error.message}</p>`;
+            contenedor.innerHTML = `<p class="placeholder">Error al cargar inventario: ${escapeHtml(error.message)}</p>`;
         }
         return [];
     }
@@ -231,7 +231,7 @@ function obtenerCeldaArticuloHTML(articulo) {
     } else if (imgData.startsWith('http') || imgData.startsWith('data:image/')) {
         contenidoVisual = `<img src="${imgData}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
     } else if (imgData !== '') {
-        contenidoVisual = `<span class="emoji-articulo">${imgData}</span>`;
+        contenidoVisual = `<span class="emoji-articulo">${escapeHtml(imgData)}</span>`;
     }
 
     const obs = articulo.observaciones || '';
@@ -488,103 +488,243 @@ function renderizarSelectCategorias() {
 }
 
 // ============================================================
-// 7. BUSCADORES CON DROPDOWN
+// 7. BUSCADORES CON DROPDOWN — Componente Unificado
 // ============================================================
+/**
+ * Dropdown - Componente unificado para buscadores con lista desplegable
+ * Reemplaza las 5 implementaciones duplicadas anteriores
+ */
+class Dropdown {
+    constructor(options) {
+        this.input = options.input;
+        this.dropdown = options.dropdown;
+        this.hidden = options.hidden || null;
+        this.dataSource = options.dataSource;
+        this.filter = options.filter || this.defaultFilter;
+        this.renderItem = options.renderItem;
+        this.onSelect = options.onSelect;
+        this.onClose = options.onClose || (() => {});
+        this.maxResults = options.maxResults || 0;
+        this.allowFreeText = options.allowFreeText || false;
+        this.freeTextLabel = options.freeTextLabel || 'Usar: <strong>${value}</strong> <span class="id-articulo">(texto libre)</span>';
+        this.keyboardNav = options.keyboardNav !== false;
+        this.clickOutsideSelector = options.clickOutsideSelector || '.buscador-articulo-group';
+        this.minChars = options.minChars || 1;
+        this.debounceMs = options.debounceMs || 0;
+
+        this.selectedIndex = -1;
+        this.debounceTimer = null;
+        this.abortController = null;
+        this.isOpen = false;
+
+        this.init();
+    }
+
+    defaultFilter(items, termino) {
+        const normTermino = normalizarTexto(termino);
+        return items.filter(item =>
+            normalizarTexto(item.articulo || item.nombre || '').includes(normTermino) ||
+            String(item.id || '').includes(normTermino)
+        );
+    }
+
+    init() {
+        if (!this.input || !this.dropdown) return;
+
+        // Focus event - show dropdown if there's content
+        this.input.addEventListener('focus', () => {
+            const valor = this.input.value.trim();
+            if (valor.length >= this.minChars) {
+                this.filtrar(valor);
+            }
+        });
+
+        // Input event with optional debounce
+        this.input.addEventListener('input', (e) => {
+            const valor = e.target.value.trim();
+
+            if (this.hidden) {
+                this.hidden.value = valor;
+            }
+
+            if (this.debounceMs > 0) {
+                clearTimeout(this.debounceTimer);
+                this.debounceTimer = setTimeout(() => {
+                    this.filtrar(valor);
+                }, this.debounceMs);
+            } else {
+                this.filtrar(valor);
+            }
+        });
+
+        // Keyboard navigation
+        if (this.keyboardNav) {
+            this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
+        }
+
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest(this.clickOutsideSelector)) {
+                this.close();
+            }
+        });
+
+        // Escape key to close
+        this.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.close();
+            }
+        });
+    }
+
+    filtrar(texto) {
+        if (texto.length < this.minChars) {
+            this.close();
+            return;
+        }
+
+        // Cancel any pending async operation
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+        this.abortController = new AbortController();
+
+        const items = typeof this.dataSource === 'function'
+            ? this.dataSource()
+            : this.dataSource;
+
+        let resultados = this.filter(items, texto);
+
+        if (this.maxResults > 0) {
+            resultados = resultados.slice(0, this.maxResults);
+        }
+
+        this.render(resultados, texto);
+    }
+
+    render(resultados, textoOriginal) {
+        this.dropdown.innerHTML = '';
+        this.selectedIndex = -1;
+
+        if (resultados.length === 0) {
+            if (this.allowFreeText && textoOriginal.length >= this.minChars) {
+                this.addFreeTextOption(textoOriginal);
+            } else {
+                this.addNoResultsItem();
+            }
+            this.open();
+            return;
+        }
+
+        resultados.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = this.renderItem(item);
+            li.dataset.index = index;
+            li.dataset.id = item.id || '';
+            li.addEventListener('click', () => this.selectItem(item));
+            this.dropdown.appendChild(li);
+        });
+
+        if (this.allowFreeText && textoOriginal.length >= this.minChars) {
+            this.addFreeTextOption(textoOriginal);
+        }
+
+        this.open();
+    }
+
+    addNoResultsItem() {
+        const li = document.createElement('li');
+        li.textContent = 'No se encontraron resultados';
+        li.style.color = 'var(--text-muted)';
+        li.style.fontStyle = 'italic';
+        li.style.cursor = 'default';
+        this.dropdown.appendChild(li);
+    }
+
+    addFreeTextOption(valor) {
+        const li = document.createElement('li');
+        li.innerHTML = this.freeTextLabel.replace('${value}', escapeHtml(valor));
+        li.addEventListener('click', () => {
+            if (this.hidden) this.hidden.value = valor;
+            this.close();
+            this.onSelect({ freeText: true, value: valor }, this.input, this.hidden, this.dropdown);
+        });
+        this.dropdown.appendChild(li);
+    }
+
+    selectItem(item) {
+        this.input.value = item.articulo || item.nombre || '';
+        if (this.hidden) this.hidden.value = item.id || '';
+        this.close();
+        this.onSelect(item, this.input, this.hidden, this.dropdown);
+    }
+
+    handleKeydown(e) {
+        const items = this.dropdown.querySelectorAll('li');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.selectedIndex = (this.selectedIndex + 1) % items.length;
+            this.updateSelection(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.selectedIndex = (this.selectedIndex - 1 + items.length) % items.length;
+            this.updateSelection(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (this.selectedIndex >= 0 && items[this.selectedIndex]) {
+                items[this.selectedIndex].click();
+            }
+        }
+    }
+
+    updateSelection(items) {
+        items.forEach((li, i) => li.classList.toggle('seleccionado', i === this.selectedIndex));
+    }
+
+    open() {
+        this.dropdown.classList.add('visible');
+        this.isOpen = true;
+    }
+
+    close() {
+        this.dropdown.classList.remove('visible');
+        this.isOpen = false;
+        this.selectedIndex = -1;
+        this.onClose();
+    }
+
+    destroy() {
+        clearTimeout(this.debounceTimer);
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+    }
+}
+
+// Función helper para mantener compatibilidad
 function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
     const input = document.getElementById(inputId);
     const hidden = document.getElementById(hiddenId);
     const dropdown = document.getElementById(dropdownId);
     if (!input || !hidden || !dropdown) return;
 
-    input.addEventListener("focus", function() {
-        if (this.value.trim().length >= 1) filtrar(this.value.trim());
-    });
-
-    input.addEventListener("input", function() {
-        const valor = this.value.trim();
-        if (valor.length >= 1) {
-            filtrar(valor);
-            dropdown.classList.add("visible");
-        } else {
-            dropdown.classList.remove("visible");
-            hidden.value = "";
-            const preview = document.getElementById(previewId);
-            if (preview) preview.innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
-            if (inputId === 'inputArticulo') restablecerCantidadEntrada();
-            if (inputId === 'inputArticuloSalida') restablecerCantidadSalida();
-        }
-    });
-
-    document.addEventListener("click", function(e) {
-        if (!e.target.closest(".buscador-articulo-group")) {
-            dropdown.classList.remove("visible");
-        }
-    });
-
-    function filtrar(texto) {
-        const termino = normalizarTexto(texto);
-        const resultados = articulos.filter(item =>
-            normalizarTexto(item.articulo).includes(termino) ||
-            String(item.id).includes(termino)
-        );
-        dropdown.innerHTML = "";
-        if (resultados.length === 0) {
-            const li = document.createElement("li");
-            li.innerHTML = `No se encontró "${escapeHtml(texto)}"`;
-            li.style.color = "var(--text-muted)";
-            li.style.fontStyle = "italic";
-            li.style.cursor = "default";
-            dropdown.appendChild(li);
-
-            if (inputId === 'inputArticulo') {
-                const liCrear = document.createElement("li");
-                liCrear.innerHTML = `➕ Crear "<strong>${escapeHtml(texto)}</strong>" ahora`;
-                liCrear.style.color = "var(--accent)";
-                liCrear.style.fontWeight = "600";
-                liCrear.style.cursor = "pointer";
-                liCrear.addEventListener("click", function() {
-                    dropdown.classList.remove("visible");
-                    abrirModalArticulo({ origen: 'entrada', nombreSugerido: texto });
-                });
-                dropdown.appendChild(liCrear);
-            }
-            dropdown.classList.add("visible");
-            return;
-        }
-        
-        resultados.forEach(item => {
-            const li = document.createElement("li");
-            // ✅ RESTAURADO: Solo el nombre, sin (ID X)
-            li.innerHTML = `${escapeHtml(item.articulo)}`;
-            li.dataset.id = item.id;
-            li.addEventListener("click", function() {
-                input.value = item.articulo; // ✅ Sin (ID X)
-                hidden.value = item.id;
-                dropdown.classList.remove("visible");
-                mostrarVistaPrevia(item.id, previewId);
-                if (inputId === 'inputArticulo') actualizarPresentacionEntrada(item);
-                if (inputId === 'inputArticuloSalida') actualizarPresentacionSalida(item);
-            });
-            dropdown.appendChild(li);
-        });
-        dropdown.classList.add("visible");
-    }
-
-    let selectedIndex = -1;
-    input.addEventListener("keydown", function(e) {
-        const items = dropdown.querySelectorAll("li");
-        if (items.length === 0) return;
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            selectedIndex = (selectedIndex + 1) % items.length;
-            items.forEach((li, i) => li.classList.toggle("seleccionado", i === selectedIndex));
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
-            items.forEach((li, i) => li.classList.toggle("seleccionado", i === selectedIndex));
-        } else if (e.key === "Enter") {
-            e.preventDefault();
-            if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
+    new Dropdown({
+        input,
+        dropdown,
+        hidden,
+        dataSource: articulos,
+        minChars: 1,
+        debounceMs: 150,
+        keyboardNav: true,
+        clickOutsideSelector: '.buscador-articulo-group',
+        renderItem: (item) => `${escapeHtml(item.articulo)}`,
+        onSelect: (item) => {
+            if (item.freeText) return;
+            input.value = item.articulo;
+            hidden.value = item.id;
+            if (previewId) mostrarVistaPrevia(item.id, previewId);
         }
     });
 }
@@ -595,78 +735,28 @@ function configurarBuscadorDropdownRelevamiento() {
     const dropdown = document.getElementById('listaArticulosCustomRelevamiento');
     if (!input || !hidden || !dropdown) return;
 
-    input.addEventListener("focus", function() {
-        if (this.value.trim().length >= 1) filtrar(this.value.trim());
-    });
-
-    input.addEventListener("input", function() {
-        const valor = this.value.trim();
-        if (valor.length >= 1) {
-            filtrar(valor);
-            dropdown.classList.add("visible");
-        } else {
-            dropdown.classList.remove("visible");
-            hidden.value = "";
-            document.getElementById('stockSistema').value = '—';
-            document.getElementById('diferencia').value = '—';
-            document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
-        }
-    });
-
-    document.addEventListener("click", function(e) {
-        if (!e.target.closest(".buscador-articulo-group")) {
-            dropdown.classList.remove("visible");
-        }
-    });
-
-    function filtrar(texto) {
-        const termino = normalizarTexto(texto);
-        const resultados = articulos.filter(item =>
-            normalizarTexto(item.articulo).includes(termino) ||
-            String(item.id).includes(termino)
-        );
-        dropdown.innerHTML = "";
-        if (resultados.length === 0) {
-            const li = document.createElement("li");
-            li.textContent = "No se encontraron artículos";
-            li.style.color = "var(--text-muted)";
-            li.style.fontStyle = "italic";
-            li.style.cursor = "default";
-            dropdown.appendChild(li);
-            dropdown.classList.add("visible");
-            return;
-        }
-        resultados.forEach(item => {
-            const li = document.createElement("li");
-            // ✅ RESTAURADO: Solo el nombre
-            li.innerHTML = `${escapeHtml(item.articulo)}`;
-            li.dataset.id = item.id;
-            li.addEventListener("click", function() {
-                input.value = item.articulo; // ✅ Sin (ID X)
-                hidden.value = item.id;
-                dropdown.classList.remove("visible");
-                mostrarStockSistemaRelevamiento(item.id);
-            });
-            dropdown.appendChild(li);
-        });
-        dropdown.classList.add("visible");
-    }
-
-    let selectedIndex = -1;
-    input.addEventListener("keydown", function(e) {
-        const items = dropdown.querySelectorAll("li");
-        if (items.length === 0) return;
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            selectedIndex = (selectedIndex + 1) % items.length;
-            items.forEach((li, i) => li.classList.toggle("seleccionado", i === selectedIndex));
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            selectedIndex = (selectedIndex - 1 + items.length) % items.length;
-            items.forEach((li, i) => li.classList.toggle("seleccionado", i === selectedIndex));
-        } else if (e.key === "Enter") {
-            e.preventDefault();
-            if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
+    new Dropdown({
+        input,
+        dropdown,
+        hidden,
+        dataSource: articulos,
+        minChars: 1,
+        debounceMs: 150,
+        keyboardNav: true,
+        clickOutsideSelector: '.buscador-articulo-group',
+        renderItem: (item) => `${escapeHtml(item.articulo)}`,
+        onSelect: (item) => {
+            if (item.freeText) return;
+            input.value = item.articulo;
+            hidden.value = item.id;
+            mostrarStockSistemaRelevamiento(item.id);
+        },
+        onClose: () => {
+            if (!hidden.value) {
+                document.getElementById('stockSistema').value = '—';
+                document.getElementById('diferencia').value = '—';
+                document.getElementById('vistaPreviaContenidoRelevamiento').innerHTML = '<p class="placeholder">Seleccioná un artículo para ver su stock actual</p>';
+            }
         }
     });
 }
@@ -803,6 +893,13 @@ async function registrarSalida(e) {
         observaciones = observaciones ? `${textoPack} ${observaciones}` : textoPack;
     }
 
+    // Validación de stock en frontend antes de enviar al backend
+    const stockActual = obtenerStock(articuloSel);
+    if (cantidadUnidadesReales > stockActual) {
+        mostrarToast(`Stock insuficiente: ${stockActual} unidades disponibles, ${cantidadUnidadesReales} solicitadas`, 'error');
+        return;
+    }
+
     const btn = document.getElementById('btnRegistrarSalida');
     btn.disabled = true;
     btn.textContent = 'Registrando...';
@@ -880,7 +977,7 @@ async function cargarUltimasEntradas() {
         contenedor.innerHTML = html;
     } catch (error) {
         console.error('Error cargando últimas entradas:', error);
-        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
+        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${escapeHtml(error.message)}</p>`;
     }
 }
 
@@ -914,7 +1011,7 @@ async function cargarUltimasSalidas() {
         contenedor.innerHTML = html;
     } catch (error) {
         console.error('Error cargando últimas salidas:', error);
-        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
+        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${escapeHtml(error.message)}</p>`;
     }
 }
 
@@ -948,7 +1045,7 @@ async function cargarMovimientos() {
         renderizarMovimientos(movimientos);
     } catch (error) {
         console.error('Error cargando movimientos:', error);
-        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
+        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${escapeHtml(error.message)}</p>`;
     }
 }
 
@@ -1184,57 +1281,26 @@ function configurarBuscadorDestinos() {
     if (input.dataset.listenerDestinos) return;
     input.dataset.listenerDestinos = 'true';
 
-    input.addEventListener('input', function() {
-        const valor = this.value.trim();
-        hidden.value = valor;
-
-        if (valor.length < 1) {
-            dropdown.classList.remove('visible');
-            return;
-        }
-
-        const termino = normalizarTexto(valor);
-        const coincidencias = direccionesOficiales.filter(d =>
-            normalizarTexto(d.nombre).includes(termino)
-        );
-
-        dropdown.innerHTML = '';
-
-        if (coincidencias.length === 0) {
-            const li = document.createElement('li');
-            li.innerHTML = `Usar: <strong>${escapeHtml(valor)}</strong> <span class="id-articulo">(texto libre)</span>`;
-            li.addEventListener('click', function() {
-                hidden.value = valor;
-                dropdown.classList.remove('visible');
-            });
-            dropdown.appendChild(li);
-        } else {
-            coincidencias.forEach(dir => {
-                const li = document.createElement('li');
-                li.innerHTML = `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`;
-                li.addEventListener('click', function() {
-                    input.value = dir.nombre;
-                    hidden.value = dir.nombre;
-                    dropdown.classList.remove('visible');
-                });
-                dropdown.appendChild(li);
-            });
-
-            const liLibre = document.createElement('li');
-            liLibre.innerHTML = `Usar: <strong>${escapeHtml(valor)}</strong> <span class="id-articulo">(texto libre)</span>`;
-            liLibre.addEventListener('click', function() {
-                hidden.value = valor;
-                dropdown.classList.remove('visible');
-            });
-            dropdown.appendChild(liLibre);
-        }
-
-        dropdown.classList.add('visible');
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.destino-input-wrapper')) {
-            dropdown.classList.remove('visible');
+    new Dropdown({
+        input,
+        dropdown,
+        hidden,
+        dataSource: () => direccionesOficiales || [],
+        minChars: 1,
+        debounceMs: 150,
+        keyboardNav: false,
+        clickOutsideSelector: '.destino-input-wrapper',
+        allowFreeText: true,
+        maxResults: 0,
+        renderItem: (dir) => `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`,
+        freeTextLabel: `Usar: <strong>\${value}</strong> <span class="id-articulo">(texto libre)</span>`,
+        onSelect: (item) => {
+            if (item.freeText) {
+                hidden.value = item.value;
+                return;
+            }
+            input.value = item.nombre;
+            hidden.value = item.nombre;
         }
     });
 }
@@ -1463,7 +1529,7 @@ async function cargarDirecciones() {
 
     } catch (error) {
         console.error('Error cargando direcciones:', error);
-        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${error.message}</p>`;
+        contenedor.innerHTML = `<p class="placeholder">⚠️ Error al cargar: ${escapeHtml(error.message)}</p>`;
         return;
     }
 
@@ -1962,7 +2028,7 @@ function renderizarCarrito() {
         if (imgData.startsWith('img/')) {
             imgHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">`;
         } else if (imgData !== '') {
-            imgHTML = imgData;
+            imgHTML = escapeHtml(imgData);
         }
 
         const stock = articulo ? obtenerStock(articulo) : '—';
@@ -1973,7 +2039,7 @@ function renderizarCarrito() {
 
         let selectorTipoHTML = '';
         if (multiplicador > 1) {
-            const nombrePack = nombrePresentacion.toUpperCase() + 'S';
+            const nombrePack = escapeHtml(nombrePresentacion.toUpperCase() + 'S');
             selectorTipoHTML = `
                 <div style="display: inline-flex; gap: 4px; margin-left: 10px; vertical-align: middle;">
                     <button type="button" class="btn-tipo-cantidad ${tipoActual === 'unidad' ? 'activo' : ''}" data-tipo-idx="${idx}" data-tipo-val="unidad" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; border: 1px solid var(--border); background: ${tipoActual === 'unidad' ? 'var(--accent)' : 'var(--bg-card)'}; color: ${tipoActual === 'unidad' ? '#fff' : 'var(--text-muted)'}; cursor: pointer; font-weight: 600;">UNIDADES</button>
@@ -2166,87 +2232,26 @@ function configurarBuscadorArticulosPedido() {
     const dropdown = document.getElementById('listaArticulosPedido');
     if (!input || !dropdown) return;
 
-    input.addEventListener('focus', function() {
-        if (this.value.trim().length >= 1) filtrar(this.value.trim());
-    });
-
-    input.addEventListener('input', function() {
-        const val = this.value.trim();
-        if (val.length >= 1) {
-            filtrar(val);
-            dropdown.classList.add('visible');
-        } else {
-            dropdown.classList.remove('visible');
-        }
-    });
-
-    input.addEventListener('keydown', function(e) {
-        const items = dropdown.querySelectorAll('li');
-        if (items.length === 0) return;
-
-        let idx = Array.from(items).findIndex(li => li.classList.contains('seleccionado'));
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            idx = (idx + 1) % items.length;
-            items.forEach((li, i) => li.classList.toggle('seleccionado', i === idx));
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            idx = (idx - 1 + items.length) % items.length;
-            items.forEach((li, i) => li.classList.toggle('seleccionado', i === idx));
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (idx >= 0 && items[idx]) {
-                items[idx].click();
-            } else if (items.length > 0) {
-                items[0].click();
-            }
-        } else if (e.key === 'Escape') {
-            dropdown.classList.remove('visible');
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.carrito-section') &&
-            !e.target.closest('.buscador-articulo-group')) {
-            dropdown.classList.remove('visible');
-        }
-    });
-
-    function filtrar(texto) {
-        const termino = normalizarTexto(texto);
-        const resultados = articulos.filter(item =>
-            normalizarTexto(item.articulo).includes(termino) ||
-            String(item.id).includes(termino)
-        ).slice(0, 10);
-
-        dropdown.innerHTML = '';
-
-        if (resultados.length === 0) {
-            const li = document.createElement('li');
-            li.textContent = 'No se encontraron artículos';
-            li.style.color = 'var(--text-muted)';
-            li.style.fontStyle = 'italic';
-            li.style.cursor = 'default';
-            dropdown.appendChild(li);
-            dropdown.classList.add('visible');
-            return;
-        }
-
-        resultados.forEach(item => {
-            const li = document.createElement('li');
+    new Dropdown({
+        input,
+        dropdown,
+        hidden: null,
+        dataSource: articulos,
+        minChars: 1,
+        debounceMs: 150,
+        keyboardNav: true,
+        clickOutsideSelector: '.carrito-section, .buscador-articulo-group',
+        maxResults: 10,
+        renderItem: (item) => {
             const stock = obtenerStock ? obtenerStock(item) : '—';
-            // ✅ Sin ID visible, con Stock
-            li.innerHTML = `${escapeHtml(item.articulo)} <span class="id-articulo">Stock ${stock}</span>`;
-            li.addEventListener('click', function() {
-                agregarAlCarrito(item);
-                input.value = '';
-                dropdown.classList.remove('visible');
-            });
-            dropdown.appendChild(li);
-        });
-        dropdown.classList.add('visible');
-    }
+            return `${escapeHtml(item.articulo)} <span class="id-articulo">Stock ${stock}</span>`;
+        },
+        onSelect: (item) => {
+            if (item.freeText) return;
+            agregarAlCarrito(item);
+            input.value = '';
+        }
+    });
 }
 
 function agregarAlCarrito(item) {
@@ -2272,49 +2277,26 @@ function configurarBuscadorDireccionesPedido() {
     const dropdown = document.getElementById('listaDireccionesPedido');
     if (!input || !hidden || !dropdown) return;
 
-    input.addEventListener('input', function() {
-        const val = this.value.trim();
-        hidden.value = val;
-
-        if (val.length < 1) {
-            dropdown.classList.remove('visible');
-            return;
-        }
-
-        const termino = normalizarTexto(val);
-        const coincidencias = (direccionesOficiales || []).filter(d =>
-            normalizarTexto(d.nombre).includes(termino)
-        ).slice(0, 10);
-
-        dropdown.innerHTML = '';
-
-        if (coincidencias.length === 0) {
-            const li = document.createElement('li');
-            li.innerHTML = `Usar: <strong>${escapeHtml(val)}</strong> <span class="id-articulo">(texto libre)</span>`;
-            li.addEventListener('click', function() {
-                hidden.value = val;
-                dropdown.classList.remove('visible');
-            });
-            dropdown.appendChild(li);
-        } else {
-            coincidencias.forEach(dir => {
-                const li = document.createElement('li');
-                li.innerHTML = `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`;
-                li.addEventListener('click', function() {
-                    input.value = dir.nombre;
-                    hidden.value = dir.nombre;
-                    dropdown.classList.remove('visible');
-                });
-                dropdown.appendChild(li);
-            });
-        }
-
-        dropdown.classList.add('visible');
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('#inputDireccionPedido')?.parentElement) {
-            dropdown.classList.remove('visible');
+    new Dropdown({
+        input,
+        dropdown,
+        hidden,
+        dataSource: () => direccionesOficiales || [],
+        minChars: 1,
+        debounceMs: 150,
+        keyboardNav: false,
+        clickOutsideSelector: '#inputDireccionPedido',
+        allowFreeText: true,
+        maxResults: 10,
+        renderItem: (dir) => `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`,
+        freeTextLabel: `Usar: <strong>\${value}</strong> <span class="id-articulo">(texto libre)</span>`,
+        onSelect: (item) => {
+            if (item.freeText) {
+                hidden.value = item.value;
+                return;
+            }
+            input.value = item.nombre;
+            hidden.value = item.nombre;
         }
     });
 }
@@ -2931,6 +2913,16 @@ async function guardarEdicionArticulo() {
 }
 
 function procesarYReducirImagen(file) {
+    // Validar tipo de archivo
+    if (!file.type.startsWith('image/')) {
+        return Promise.reject(new Error('Solo se permiten imágenes (JPG, PNG, etc)'));
+    }
+    // Validar tamaño: máximo 5MB
+    const MAX_SIZE = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+        return Promise.reject(new Error('El archivo es demasiado grande. Máximo 5MB.'));
+    }
+
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -2989,15 +2981,37 @@ function inicializarDragAndDropImagen() {
         const dt = e.dataTransfer;
         const files = dt.files;
         if (files.length > 0) {
+            const file = files[0];
+            // Validar tipo y tamaño
+            if (!file.type.startsWith('image/')) {
+                mostrarToast('Solo se permiten imágenes (JPG, PNG, etc)', 'error');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                mostrarToast('El archivo es demasiado grande. Máximo 5MB.', 'error');
+                return;
+            }
             fileInput.files = files; // Transfiere el archivo al input real
-            actualizarPreviewImagen(files[0], dropZone);
+            actualizarPreviewImagen(file, dropZone);
         }
     });
 
     // Manejo del input tradicional
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-            actualizarPreviewImagen(e.target.files[0], dropZone);
+            const file = e.target.files[0];
+            // Validar tipo y tamaño
+            if (!file.type.startsWith('image/')) {
+                mostrarToast('Solo se permiten imágenes (JPG, PNG, etc)', 'error');
+                e.target.value = ''; // Limpiar el input
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                mostrarToast('El archivo es demasiado grande. Máximo 5MB.', 'error');
+                e.target.value = ''; // Limpiar el input
+                return;
+            }
+            actualizarPreviewImagen(file, dropZone);
         }
     });
 
