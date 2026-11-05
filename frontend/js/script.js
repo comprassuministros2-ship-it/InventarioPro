@@ -63,6 +63,9 @@ let filtroActivo = "todos";
 let movimientos = [];
 let modoCreacionArticulo = null;
 
+// Array global para almacenar instancias de Dropdown y limpiarlas al navegar
+let dropdownInstances = [];
+
 function escapeHtml(texto) {
     return String(texto ?? '').replace(/[&<>"']/g, caracter => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -81,6 +84,14 @@ function obtenerFechaLocal() {
 // 2. NAVEGACIÓN ENTRE PÁGINAS
 // ============================================================
 function navegarAPagina(nombre) {
+    // Destruir todas las instancias de Dropdown para evitar memory leaks
+    dropdownInstances.forEach(instance => {
+        if (instance && typeof instance.destroy === 'function') {
+            instance.destroy();
+        }
+    });
+    dropdownInstances.length = 0; // Limpiar el array
+
     document.querySelectorAll('.pagina').forEach(p => p.classList.remove('activa'));
     const target = document.getElementById('pagina-' + nombre);
     if (target) target.classList.add('activa');
@@ -212,12 +223,19 @@ function renderizarArticulos(datos) {
 function obtenerCeldaArticuloHTML(articulo) {
     const imgData = (articulo.imagen || '').trim();
     let contenidoVisual = '';
-    
+
+    // Validar que la URL de imagen sea segura (http/https/data:image) para prevenir XSS
+    function esUrlImagenSegura(url) {
+        return url.startsWith('https://') || url.startsWith('http://') || url.startsWith('data:image/');
+    }
+
     if (imgData.startsWith('img/')) {
         const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
-        contenidoVisual = `<img src="${urlGitHub}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
-    } else if (imgData.startsWith('http') || imgData.startsWith('data:image/')) {
-        contenidoVisual = `<img src="${imgData}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
+        if (esUrlImagenSegura(urlGitHub)) {
+            contenidoVisual = `<img src="${escapeHtml(urlGitHub)}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
+        }
+    } else if (esUrlImagenSegura(imgData)) {
+        contenidoVisual = `<img src="${escapeHtml(imgData)}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
     } else if (imgData !== '') {
         contenidoVisual = `<span class="emoji-articulo">${escapeHtml(imgData)}</span>`;
     }
@@ -505,6 +523,15 @@ class Dropdown {
         this.abortController = null;
         this.isOpen = false;
 
+        // Guardar referencias a handlers para poder removerlos en destroy()
+        this._handlers = {
+            focus: null,
+            input: null,
+            keydownNav: null,
+            keydownEscape: null,
+            clickOutside: null
+        };
+
         this.init();
     }
 
@@ -520,15 +547,16 @@ class Dropdown {
         if (!this.input || !this.dropdown) return;
 
         // Focus event - show dropdown if there's content
-        this.input.addEventListener('focus', () => {
+        this._handlers.focus = () => {
             const valor = this.input.value.trim();
             if (valor.length >= this.minChars) {
                 this.filtrar(valor);
             }
-        });
+        };
+        this.input.addEventListener('focus', this._handlers.focus);
 
         // Input event with optional debounce
-        this.input.addEventListener('input', (e) => {
+        this._handlers.input = (e) => {
             const valor = e.target.value.trim();
 
             if (this.hidden) {
@@ -543,26 +571,30 @@ class Dropdown {
             } else {
                 this.filtrar(valor);
             }
-        });
+        };
+        this.input.addEventListener('input', this._handlers.input);
 
         // Keyboard navigation
         if (this.keyboardNav) {
-            this.input.addEventListener('keydown', (e) => this.handleKeydown(e));
+            this._handlers.keydownNav = (e) => this.handleKeydown(e);
+            this.input.addEventListener('keydown', this._handlers.keydownNav);
         }
 
         // Click outside to close
-        document.addEventListener('click', (e) => {
+        this._handlers.clickOutside = (e) => {
             if (!e.target.closest(this.clickOutsideSelector)) {
                 this.close();
             }
-        });
+        };
+        document.addEventListener('click', this._handlers.clickOutside);
 
         // Escape key to close
-        this.input.addEventListener('keydown', (e) => {
+        this._handlers.keydownEscape = (e) => {
             if (e.key === 'Escape') {
                 this.close();
             }
-        });
+        };
+        this.input.addEventListener('keydown', this._handlers.keydownEscape);
     }
 
     filtrar(texto) {
@@ -684,10 +716,37 @@ class Dropdown {
     }
 
     destroy() {
+        // Limpiar timeout de debounce
         clearTimeout(this.debounceTimer);
+        this.debounceTimer = null;
+
+        // Cancelar cualquier operación async pendiente
         if (this.abortController) {
             this.abortController.abort();
+            this.abortController = null;
         }
+
+        // Remover event listeners del input
+        if (this.input) {
+            if (this._handlers.focus) this.input.removeEventListener('focus', this._handlers.focus);
+            if (this._handlers.input) this.input.removeEventListener('input', this._handlers.input);
+            if (this._handlers.keydownNav) this.input.removeEventListener('keydown', this._handlers.keydownNav);
+            if (this._handlers.keydownEscape) this.input.removeEventListener('keydown', this._handlers.keydownEscape);
+        }
+
+        // Remover event listener global de click outside
+        if (this._handlers.clickOutside) {
+            document.removeEventListener('click', this._handlers.clickOutside);
+        }
+
+        // Limpiar referencias
+        this._handlers = {
+            focus: null,
+            input: null,
+            keydownNav: null,
+            keydownEscape: null,
+            clickOutside: null
+        };
     }
 }
 
@@ -698,7 +757,7 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
     const dropdown = document.getElementById(dropdownId);
     if (!input || !hidden || !dropdown) return;
 
-    new Dropdown({
+    const instance = new Dropdown({
         input,
         dropdown,
         hidden,
@@ -715,6 +774,7 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
             if (previewId) mostrarVistaPrevia(item.id, previewId);
         }
     });
+    dropdownInstances.push(instance);
 }
 
 function configurarBuscadorDropdownRelevamiento() {
@@ -723,7 +783,7 @@ function configurarBuscadorDropdownRelevamiento() {
     const dropdown = document.getElementById('listaArticulosCustomRelevamiento');
     if (!input || !hidden || !dropdown) return;
 
-    new Dropdown({
+    const instance = new Dropdown({
         input,
         dropdown,
         hidden,
@@ -747,6 +807,7 @@ function configurarBuscadorDropdownRelevamiento() {
             }
         }
     });
+    dropdownInstances.push(instance);
 }
 
 // ============================================================
@@ -1269,7 +1330,7 @@ function configurarBuscadorDestinos() {
     if (input.dataset.listenerDestinos) return;
     input.dataset.listenerDestinos = 'true';
 
-    new Dropdown({
+    const instance = new Dropdown({
         input,
         dropdown,
         hidden,
@@ -1291,6 +1352,7 @@ function configurarBuscadorDestinos() {
             hidden.value = item.nombre;
         }
     });
+    dropdownInstances.push(instance);
 }
 
 function validarDestinoSalida() {
@@ -2220,7 +2282,7 @@ function configurarBuscadorArticulosPedido() {
     const dropdown = document.getElementById('listaArticulosPedido');
     if (!input || !dropdown) return;
 
-    new Dropdown({
+    const instance = new Dropdown({
         input,
         dropdown,
         hidden: null,
@@ -2240,6 +2302,7 @@ function configurarBuscadorArticulosPedido() {
             input.value = '';
         }
     });
+    dropdownInstances.push(instance);
 }
 
 function agregarAlCarrito(item) {
@@ -2265,7 +2328,7 @@ function configurarBuscadorDireccionesPedido() {
     const dropdown = document.getElementById('listaDireccionesPedido');
     if (!input || !hidden || !dropdown) return;
 
-    new Dropdown({
+    const instance = new Dropdown({
         input,
         dropdown,
         hidden,
@@ -2287,6 +2350,7 @@ function configurarBuscadorDireccionesPedido() {
             hidden.value = item.nombre;
         }
     });
+    dropdownInstances.push(instance);
 }
 
 // ============================================================
@@ -2857,12 +2921,23 @@ function abrirModalEditarArticulo(id) {
 
     const preview = document.getElementById('editArtImagenPreview');
     const imgData = (art.imagen || '').trim();
+
+    // Validar que la URL de imagen sea segura (http/https/data:image) para prevenir XSS
+    function esUrlImagenSegura(url) {
+        return url.startsWith('https://') || url.startsWith('http://') || url.startsWith('data:image/');
+    }
+
     if (imgData.startsWith('img/')) {
-        preview.innerHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}" style="width:100%; height:100%; object-fit:cover;">`;
-    } else if (imgData.startsWith('http') || imgData.startsWith('data:image/')) {
-        preview.innerHTML = `<img src="${imgData}" style="width:100%; height:100%; object-fit:cover;">`;
+        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
+        if (esUrlImagenSegura(urlGitHub)) {
+            preview.innerHTML = `<img src="${escapeHtml(urlGitHub)}" style="width:100%; height:100%; object-fit:cover;">`;
+        } else {
+            preview.textContent = '📦';
+        }
+    } else if (esUrlImagenSegura(imgData)) {
+        preview.innerHTML = `<img src="${escapeHtml(imgData)}" style="width:100%; height:100%; object-fit:cover;">`;
     } else if (imgData !== '') {
-        preview.textContent = imgData;
+        preview.textContent = escapeHtml(imgData);
     } else {
         preview.textContent = '📦';
     }
