@@ -3159,3 +3159,73 @@ body {
 .inventario-tabla tbody tr:hover {
     background-color: var(--bg-hover, #f8fafc);
 }
+
+/* ============================================================
+   ACCIONES DROPDOWN (menú 3 puntitos)
+   ============================================================ */
+.acciones-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.btn-mas-acciones {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0.25rem 0.5rem;
+    color: var(--text-muted);
+    border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-mas-acciones:hover {
+    background-color: var(--bg-hover);
+    color: var(--text);
+}
+
+.menu-acciones-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 180px;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.menu-acciones-dropdown.visible {
+    display: flex;
+}
+
+.menu-acciones-dropdown button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 0.875rem;
+    color: var(--text);
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.menu-acciones-dropdown button:hover {
+    background-color: var(--bg-hover);
+}
+
+.menu-acciones-dropdown button.btn-eliminar {
+    color: var(--danger);
+    border-top: 1px solid var(--border);
+}
+
+.menu-acciones-dropdown button.btn-eliminar:hover {
+    background-color: rgba(220, 38, 38, 0.1);
+}

@@ -150,14 +150,12 @@ function renderizarArticulos(datos) {
     }
 
     let filas = "";
-
     datos.forEach(item => {
         const stock = obtenerStock(item);
         const estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
         const estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
         const celdaArticulo = obtenerCeldaArticuloHTML(item);
 
-        // ✅ RESTAURADO: 4 botones (Historial, Relevamiento, Editar, Eliminar)
         filas += `
             <tr>
                 <td>${celdaArticulo}</td>
@@ -166,12 +164,15 @@ function renderizarArticulos(datos) {
                 <td><span class="badge-categoria">${escapeHtml(item.categoriaID || '—')}</span></td>
                 <td class="td-centrado">—</td>
                 <td class="td-centrado">—</td>
-                <td>
-                    <div class="acciones-celda" style="display: flex; gap: 0.4rem; justify-content: center;">
-                        <button class="btn-accion" type="button" title="Historial" data-action="historial" data-id="${item.id}">👁️</button>
-                        <button class="btn-accion" type="button" title="Relevamiento" data-action="relevamiento" data-id="${item.id}">✏️</button>
-                        <button class="btn-accion" type="button" title="Editar Producto" data-action="editar" data-id="${item.id}">📷</button>
-                        <button class="btn-accion" type="button" title="Eliminar" data-action="eliminar" data-id="${item.id}">🗑️</button>
+                <td class="td-centrado">
+                    <div class="acciones-wrapper">
+                        <button class="btn-mas-acciones" type="button" onclick="toggleMenuAcciones(this)">⋮</button>
+                        <div class="menu-acciones-dropdown">
+                            <button type="button" data-action="historial" data-id="${item.id}">👁️ Ver Historial</button>
+                            <button type="button" data-action="relevamiento" data-id="${item.id}">✏️ Relevar Stock</button>
+                            <button type="button" data-action="editar" data-id="${item.id}">📷 Editar / Foto</button>
+                            <button type="button" class="btn-eliminar" data-action="eliminar" data-id="${item.id}">🗑️ Eliminar</button>
+                        </div>
                     </div>
                 </td>
             </tr>
@@ -197,26 +198,17 @@ function renderizarArticulos(datos) {
         </div>
     `;
 
-    contenedor.querySelectorAll('.btn-accion[data-action]').forEach(btn => {
+    contenedor.querySelectorAll('.menu-acciones-dropdown button').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const accion = this.dataset.action;
             const id = this.dataset.id;
+            document.querySelectorAll('.menu-acciones-dropdown').forEach(m => m.classList.remove('visible'));
 
-            if (accion === 'relevamiento') {
-                irARelevamientoConArticulo(id);
-            } else if (accion === 'editar') {
-                // Si todavía no tenés el HTML del modal, mostrará un aviso
-                if (typeof abrirModalEditarArticulo === 'function') {
-                    abrirModalEditarArticulo(id);
-                } else {
-                    mostrarToast('Falta agregar el HTML del modal de edición', 'error');
-                }
-            } else if (accion === 'historial') {
-                if (typeof abrirModalHistorial === 'function') abrirModalHistorial(id);
-            } else if (accion === 'eliminar') {
-                eliminarArticulo(id);
-            }
+            if (accion === 'relevamiento') irARelevamientoConArticulo(id);
+            else if (accion === 'editar') abrirModalEditarArticulo(id);
+            else if (accion === 'historial') abrirModalHistorial(id);
+            else if (accion === 'eliminar') eliminarArticulo(id);
         });
     });
 }
@@ -2842,6 +2834,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================================
 // 25. EDITAR ARTÍCULO Y SUBIR FOTO
 // ============================================================
+function toggleMenuAcciones(btn) {
+    const dropdown = btn.nextElementSibling;
+    document.querySelectorAll('.menu-acciones-dropdown').forEach(m => { if (m !== dropdown) m.classList.remove('visible'); });
+    dropdown.classList.toggle('visible');
+}
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.acciones-wrapper')) {
+        document.querySelectorAll('.menu-acciones-dropdown').forEach(m => m.classList.remove('visible'));
+    }
+});
+
 function abrirModalEditarArticulo(id) {
     const art = articulos.find(a => String(a.id) === String(id));
     if (!art) return;
@@ -2858,7 +2861,6 @@ function abrirModalEditarArticulo(id) {
 
     const preview = document.getElementById('editArtImagenPreview');
     const imgData = (art.imagen || '').trim();
-    
     if (imgData.startsWith('img/')) {
         preview.innerHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}" style="width:100%; height:100%; object-fit:cover;">`;
     } else if (imgData.startsWith('http') || imgData.startsWith('data:image/')) {
@@ -2868,7 +2870,6 @@ function abrirModalEditarArticulo(id) {
     } else {
         preview.textContent = '📦';
     }
-
     document.getElementById('modalEditarArticulo').style.display = 'flex';
 }
 
@@ -2913,16 +2914,8 @@ async function guardarEdicionArticulo() {
 }
 
 function procesarYReducirImagen(file) {
-    // Validar tipo de archivo
-    if (!file.type.startsWith('image/')) {
-        return Promise.reject(new Error('Solo se permiten imágenes (JPG, PNG, etc)'));
-    }
-    // Validar tamaño: máximo 5MB
-    const MAX_SIZE = 5 * 1024 * 1024;
-    if (file.size > MAX_SIZE) {
-        return Promise.reject(new Error('El archivo es demasiado grande. Máximo 5MB.'));
-    }
-
+    if (!file.type.startsWith('image/')) return Promise.reject(new Error('Solo se permiten imágenes'));
+    if (file.size > 5 * 1024 * 1024) return Promise.reject(new Error('Máximo 5MB.'));
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -2945,77 +2938,41 @@ function procesarYReducirImagen(file) {
     });
 }
 
-// ============================================================
-// 26. DRAG & DROP (SOPORTE PARA ARRASTRAR IMÁGENES)
-// ============================================================
 function inicializarDragAndDropImagen() {
     const dropZone = document.getElementById('editArtImagenPreview');
     const fileInput = document.getElementById('editArtImagenFile');
     if (!dropZone || !fileInput) return;
 
-    // Prevenir comportamiento por defecto del navegador (abrir la imagen en una pestaña nueva)
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        }, false);
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
     });
 
-    // Efectos visuales de feedback
     ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.style.borderColor = 'var(--accent)';
-            dropZone.style.backgroundColor = 'var(--accent-soft)';
-        }, false);
+        dropZone.addEventListener(eventName, () => { dropZone.style.borderColor = 'var(--accent)'; dropZone.style.backgroundColor = 'var(--accent-soft)'; }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            dropZone.style.borderColor = 'var(--border)';
-            dropZone.style.backgroundColor = 'var(--bg-hover)';
-        }, false);
+        dropZone.addEventListener(eventName, () => { dropZone.style.borderColor = 'var(--border)'; dropZone.style.backgroundColor = 'var(--bg-hover)'; }, false);
     });
 
-    // Manejo del drop
     dropZone.addEventListener('drop', (e) => {
-        const dt = e.dataTransfer;
-        const files = dt.files;
+        const files = e.dataTransfer.files;
         if (files.length > 0) {
-            const file = files[0];
-            // Validar tipo y tamaño
-            if (!file.type.startsWith('image/')) {
-                mostrarToast('Solo se permiten imágenes (JPG, PNG, etc)', 'error');
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                mostrarToast('El archivo es demasiado grande. Máximo 5MB.', 'error');
-                return;
-            }
-            fileInput.files = files; // Transfiere el archivo al input real
-            actualizarPreviewImagen(file, dropZone);
+            if (!files[0].type.startsWith('image/')) { mostrarToast('Solo se permiten imágenes', 'error'); return; }
+            if (files[0].size > 5 * 1024 * 1024) { mostrarToast('El archivo supera los 5MB', 'error'); return; }
+            fileInput.files = files;
+            actualizarPreviewImagen(files[0], dropZone);
         }
     });
 
-    // Manejo del input tradicional
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-            const file = e.target.files[0];
-            // Validar tipo y tamaño
-            if (!file.type.startsWith('image/')) {
-                mostrarToast('Solo se permiten imágenes (JPG, PNG, etc)', 'error');
-                e.target.value = ''; // Limpiar el input
-                return;
-            }
-            if (file.size > 5 * 1024 * 1024) {
-                mostrarToast('El archivo es demasiado grande. Máximo 5MB.', 'error');
-                e.target.value = ''; // Limpiar el input
-                return;
-            }
-            actualizarPreviewImagen(file, dropZone);
+            if (!e.target.files[0].type.startsWith('image/')) { mostrarToast('Solo se permiten imágenes', 'error'); e.target.value=''; return; }
+            if (e.target.files[0].size > 5 * 1024 * 1024) { mostrarToast('El archivo supera los 5MB', 'error'); e.target.value=''; return; }
+            actualizarPreviewImagen(e.target.files[0], dropZone);
         }
     });
 
-    // Helper interno para renderizar la miniatura
     function actualizarPreviewImagen(file, contenedor) {
         const reader = new FileReader();
         reader.onload = function(e) {
