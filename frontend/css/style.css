@@ -3238,6 +3238,7 @@ body {
 .inventario-tabla-wrapper {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* 2. Encabezado tabla: fondo gris oscuro / azul clarito y negrita */
@@ -3249,4 +3250,32 @@ body {
 /* 3. Tipografía global: Segoe UI */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ============================================================
+   RESPONSIVE - Tablet (Lenovo ~10") y Celular (iPhone 12)
+   ============================================================ */
+
+/* TABLETS: Entre 768px y 1024px */
+@media (max-width: 1024px) {
+    .sidebar { width: 240px; }
+    .inventario-tabla th, .inventario-tabla td { padding: 0.8rem; font-size: 0.9rem; }
+    .modal-contenido { width: 80%; max-height: 85vh; }
+    .entradas-wrapper, .salidas-wrapper { flex-direction: column; }
+}
+
+/* CELULARES: iPhone 12 y similares (< 480px) */
+@media (max-width: 480px) {
+    .inventario-tabla th:nth-child(4), .inventario-tabla td:nth-child(4) { display: none; }
+    body { font-size: 14px; }
+    .main-content { padding: 0 0.5rem !important; }
+    .page-header { padding: 1rem 0.5rem; }
+    .form-group input, .form-group select, .form-group textarea, .btn-submit {
+        min-height: 44px;
+        font-size: 16px;
+    }
+    .modal-contenido { width: 95%; max-height: 95vh; margin: 10px auto; }
+    .btn-mas-acciones { padding: 10px 14px; font-size: 1.5rem; }
+    .sidebar { position: fixed; left: -100%; transition: left 0.3s; z-index: 1000; }
+    .sidebar.open { left: 0; }
 }
