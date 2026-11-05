@@ -3229,3 +3229,24 @@ body {
 .menu-acciones-dropdown button.btn-eliminar:hover {
     background-color: rgba(220, 38, 38, 0.1);
 }
+
+/* ============================================================
+   PRUEBA VISUAL - Ajustes de layout y tipografía
+   ============================================================ */
+
+/* 1. Contenedor tabla: ancho completo y scroll horizontal si hace falta */
+.inventario-tabla-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* 2. Encabezado tabla: fondo gris oscuro / azul clarito y negrita */
+.inventario-tabla th {
+    background-color: #e2e8f0;
+    font-weight: 700;
+}
+
+/* 3. Tipografía global: Segoe UI */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}

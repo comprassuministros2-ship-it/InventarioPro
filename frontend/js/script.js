@@ -162,8 +162,6 @@ function renderizarArticulos(datos) {
                 <td><span class="stock-numero">${stock}</span></td>
                 <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
                 <td><span class="badge-categoria">${escapeHtml(item.categoriaID || '—')}</span></td>
-                <td class="td-centrado">—</td>
-                <td class="td-centrado">—</td>
                 <td class="td-centrado">
                     <div class="acciones-wrapper">
                         <button class="btn-mas-acciones" type="button" onclick="toggleMenuAcciones(this)">⋮</button>
@@ -188,8 +186,6 @@ function renderizarArticulos(datos) {
                         <th>Stock</th>
                         <th>Estado</th>
                         <th>Categoría</th>
-                        <th>Ubicación</th>
-                        <th>Tipo</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
