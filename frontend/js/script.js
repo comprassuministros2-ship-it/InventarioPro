@@ -2922,10 +2922,24 @@ function configurarBtnGenerarReporte() {
     if (!btn) return;
 
     btn.addEventListener('click', async () => {
-        const fechaDesde = document.getElementById('reporteFechaDesde')?.value || '';
-        const fechaHasta = document.getElementById('reporteFechaHasta')?.value || '';
-        const categoria = document.getElementById('reporteCategoria')?.value || '';
-        const direccion = document.getElementById('reporteDireccion')?.value || '';
+        // Validación de entrada (defense-in-depth)
+        const fechaDesdeRaw = document.getElementById('reporteFechaDesde')?.value || '';
+        const fechaHastaRaw = document.getElementById('reporteFechaHasta')?.value || '';
+        const categoriaRaw = document.getElementById('reporteCategoria')?.value || '';
+        const direccionRaw = document.getElementById('reporteDireccion')?.value || '';
+
+        // Validar formato fecha YYYY-MM-DD
+        const fechaRegex = /^\d{4}-\d{2}-\d{2}$/;
+        const fechaDesde = fechaRegex.test(fechaDesdeRaw) ? fechaDesdeRaw : '';
+        const fechaHasta = fechaRegex.test(fechaHastaRaw) ? fechaHastaRaw : '';
+
+        // Validar categoría contra valores conocidos
+        const categoriasValidas = new Set(articulos.map(a => a.categoriaID).filter(Boolean));
+        const categoria = categoriasValidas.has(categoriaRaw) ? categoriaRaw : '';
+
+        // Validar dirección contra direcciones oficiales
+        const direccionesValidas = new Set((direccionesOficiales || []).map(d => d.nombre).filter(Boolean));
+        const direccion = direccionesValidas.has(direccionRaw) ? direccionRaw : '';
 
         const contenedor = document.getElementById('contenedorResultadosReportes');
         if (!contenedor) return;
@@ -3044,9 +3058,14 @@ function configurarBtnExportarExcel() {
             const cantTexto = esEntrada ? `+${cantidad}` : `-${cantidad}`;
             const origenDestino = esEntrada ? (m.proveedor || '—') : (m.destino || m.proveedor || '—');
 
-            // Escapar comillas dobles para CSV
-            const escapeCsv = (val) => String(val).replace(/"/g, '""');
-            return [fecha, articulo, tipo, cantTexto, origenDestino].map(v => `"${escapeCsv(v)}"`).join(';');
+            // Escapar comillas dobles Y neutralizar prefijos de fórmula (= + - @) para prevenir CSV Injection
+            const escapeCsv = (val) => {
+                let str = String(val).replace(/"/g, '""');
+                // Prefijar con comilla simple para forzar interpretación como texto en Excel/Sheets
+                if (/^[=+\-@]/.test(str)) str = "'" + str;
+                return `"${str}"`;
+            };
+            return [fecha, articulo, tipo, cantTexto, origenDestino].map(v => escapeCsv(v)).join(';');
         });
 
         // BOM UTF-8 (﻿) para que Excel lea tildes y ñ correctamente
