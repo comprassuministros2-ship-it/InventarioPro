@@ -134,6 +134,15 @@ function configurarNavegacion() {
     if (hash) navegarAPagina(hash);
 }
 
+// Navegar a inventario filtrando solo stock crítico (desde Dashboard)
+function irAStockCritico() {
+    navegarAPagina('inventario');
+    filtroActivo = 'criticos';
+    const select = document.getElementById('selectUbicacion');
+    if (select) select.value = 'criticos';
+    renderizarArticulos(aplicarFiltro(articulos));
+}
+
 // ============================================================
 // 3. CARGA DE ARTÍCULOS
 // ============================================================
@@ -440,6 +449,7 @@ function aplicarFiltro(datos) {
         if (filtroActivo === "disponibles") return stock > 0;
         if (filtroActivo === "stock-bajo") return stock >= 1 && stock <= 5;
         if (filtroActivo === "sin-stock") return stock === 0;
+        if (filtroActivo === "criticos") return stock === 0 || (item.stockCritico > 0 && stock <= item.stockCritico);
         if (filtroActivo === "todos" || !filtroActivo) return true;
         const categoriaItem = normalizarTexto(item.categoriaID);
         const categoriaFiltro = normalizarTexto(filtroActivo);
@@ -469,7 +479,8 @@ function renderizarSelectCategorias() {
     if (!select) return;
 
     const valorActual = select.value || 'todos';
-    select.innerHTML = '<option value="todos">Todas las categorías</option>';
+    select.innerHTML = '<option value="todos">Todas las categorías</option>' +
+        '<option value="criticos">⚠️ Solo Stock Crítico</option>';
 
     const categorias = new Set();
     articulos.forEach(item => {
