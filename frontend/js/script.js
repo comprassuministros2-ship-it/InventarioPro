@@ -1366,6 +1366,15 @@ function configurarBuscadorDestinos() {
         maxResults: 0,
         renderItem: (dir) => `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`,
         freeTextLabel: `Usar: <strong>\${value}</strong> <span class="id-articulo">(texto libre)</span>`,
+        filter: (items, termino) => {
+            const terminoNorm = normalizarTexto(termino);
+            if (!terminoNorm) return [];
+            const palabras = terminoNorm.split(/\s+/).filter(p => p.length > 0);
+            return items.filter(item => {
+                const textoCompleto = normalizarTexto((item.nombre || '') + ' ' + (item.tipo || '')).replace(/[-_/]/g, ' ');
+                return palabras.every(palabra => textoCompleto.includes(palabra));
+            });
+        },
         onSelect: (item) => {
             if (item.freeText) {
                 hidden.value = item.value;
@@ -2372,6 +2381,15 @@ function configurarBuscadorDireccionesPedido() {
         maxResults: 10,
         renderItem: (dir) => `${escapeHtml(dir.nombre)} <span class="id-articulo">${escapeHtml(dir.tipo || '')}</span>`,
         freeTextLabel: `Usar: <strong>\${value}</strong> <span class="id-articulo">(texto libre)</span>`,
+        filter: (items, termino) => {
+            const terminoNorm = normalizarTexto(termino);
+            if (!terminoNorm) return [];
+            const palabras = terminoNorm.split(/\s+/).filter(p => p.length > 0);
+            return items.filter(item => {
+                const textoCompleto = normalizarTexto((item.nombre || '') + ' ' + (item.tipo || '')).replace(/[-_/]/g, ' ');
+                return palabras.every(palabra => textoCompleto.includes(palabra));
+            });
+        },
         onSelect: (item) => {
             if (item.freeText) {
                 hidden.value = item.value;
