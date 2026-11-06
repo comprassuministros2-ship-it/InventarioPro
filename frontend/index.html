@@ -671,8 +671,46 @@
 
         <!-- OTRAS PÁGINAS -->
         <div id="pagina-reportes" class="pagina">
-            <div class="page-header"><h1>Reportes</h1><p class="fecha-hoy">Generación</p></div>
-            <p class="placeholder" style="padding:1.5rem;">Próximamente.</p>
+            <div class="page-header">
+                <h1>Reportes</h1>
+                <p class="fecha-hoy">Análisis y estadísticas</p>
+            </div>
+
+            <section class="estadistica-seccion" style="margin-bottom: 1.5rem;">
+                <h2 class="estadistica-titulo">Filtros del Reporte</h2>
+                <div class="reportes-filtros" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="reporteFechaDesde">Desde</label>
+                        <input type="date" id="reporteFechaDesde" class="form-input">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="reporteFechaHasta">Hasta</label>
+                        <input type="date" id="reporteFechaHasta" class="form-input">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="reporteCategoria">Categoría</label>
+                        <select id="reporteCategoria" class="form-input">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="reporteDireccion">Dirección</label>
+                        <select id="reporteDireccion" class="form-input">
+                            <option value="">Todas las direcciones</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; display: flex; gap: 0.8rem; align-items: end;">
+                        <button type="button" id="btnGenerarReporte" class="btn-submit" style="flex: 1; min-width: 180px;">Generar Reporte</button>
+                        <button type="button" id="btnExportarExcel" class="btn-ghost" style="flex: 1; min-width: 160px;">Exportar a Excel</button>
+                    </div>
+                </div>
+            </section>
+
+            <div id="contenedorResultadosReportes" class="inventario-tabla-wrapper" style="min-height: 300px;">
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 300px;">
+                    <p class="placeholder">Seleccioná los filtros y generá el reporte.</p>
+                </div>
+            </div>
         </div>
         <div id="pagina-configuracion" class="pagina">
             <div class="page-header"><h1>Configuración</h1><p class="fecha-hoy">Ajustes</p></div>

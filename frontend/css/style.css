@@ -3253,6 +3253,57 @@ body {
 }
 
 /* ============================================================
+   REPORTES — Filtros y resultados
+   ============================================================ */
+.reportes-filtros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.reportes-filtros .form-group {
+    margin-bottom: 0;
+}
+
+.reportes-filtros .form-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.reportes-filtros .form-input {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.reportes-filtros .form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+.reportes-filtros .btn-submit,
+.reportes-filtros .btn-ghost {
+    min-height: 48px;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+/* ============================================================
    RESPONSIVE - Tablet (Lenovo ~10") y Celular (iPhone 12)
    ============================================================ */
 
@@ -3278,4 +3329,18 @@ body {
     .btn-mas-acciones { padding: 10px 14px; font-size: 1.5rem; }
     .sidebar { position: fixed; left: -100%; transition: left 0.3s; z-index: 1000; }
     .sidebar.open { left: 0; }
+
+    /* REPORTES — Mobile: filtros apilados, botones full-width */
+    .reportes-filtros {
+        grid-template-columns: 1fr;
+    }
+    .reportes-filtros .form-group:last-child {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .reportes-filtros .btn-submit,
+    .reportes-filtros .btn-ghost {
+        width: 100%;
+        min-width: 0;
+    }
 }
