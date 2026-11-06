@@ -542,17 +542,21 @@ class Dropdown {
     }
 
     defaultFilter(items, termino) {
-        const terminoNorm = normalizarTexto(termino);
-        if (!terminoNorm) return [];
+        // 1. Normalizar el término de búsqueda (quitar tildes, minúsculas)
+        // 2. Convertir guiones o barras en espacios para unificar
+        const terminoLimpio = normalizarTexto(termino).replace(/[-_/]/g, ' ');
+        if (!terminoLimpio) return [];
 
         // Separar la búsqueda en palabras (ej: "coca cola" -> ["coca", "cola"])
-        const palabras = terminoNorm.split(/\s+/).filter(p => p.length > 0);
+        const palabras = terminoLimpio.split(/\s+/).filter(p => p.length > 0);
 
         return items.filter(item => {
-            // Unir nombre y categoría, normalizar y reemplazar guiones/barras por espacios
-            const textoCompleto = normalizarTexto((item.articulo || '') + ' ' + (item.categoriaID || '')).replace(/[-_/]/g, ' ');
+            // Preparar el texto del artículo y la categoría de la misma forma
+            const textoArticulo = normalizarTexto(item.articulo || item.nombre || '').replace(/[-_/]/g, ' ');
+            const textoCategoria = normalizarTexto(item.categoriaID || '').replace(/[-_/]/g, ' ');
+            const textoCompleto = textoArticulo + ' ' + textoCategoria;
 
-            // Verificar que TODAS las palabras buscadas estén presentes en el texto
+            // Devolver true solo si TODAS las palabras buscadas están presentes
             return palabras.every(palabra => textoCompleto.includes(palabra));
         });
     }
