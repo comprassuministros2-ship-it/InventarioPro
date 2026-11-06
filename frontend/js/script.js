@@ -84,23 +84,29 @@ function obtenerFechaLocal() {
 // 2. NAVEGACIÓN ENTRE PÁGINAS
 // ============================================================
 function navegarAPagina(nombre) {
-    // Destruir todas las instancias de Dropdown para evitar memory leaks
-    dropdownInstances.forEach(instance => {
-        if (instance && typeof instance.destroy === 'function') {
-            instance.destroy();
-        }
-    });
-    dropdownInstances.length = 0; // Limpiar el array
-
     document.querySelectorAll('.pagina').forEach(p => p.classList.remove('activa'));
     const target = document.getElementById('pagina-' + nombre);
     if (target) target.classList.add('activa');
     document.querySelectorAll('.sidebar-link').forEach(e => e.classList.remove('is-active'));
     const activo = document.querySelector(`.sidebar-link[data-page="${nombre}"]`);
     if (activo) activo.classList.add('is-active');
+
+    // Inicializar buscadores según la página (anti-doble-init dentro de cada función)
+    if (nombre === 'entradas') {
+        configurarBuscadorDropdown('inputArticulo', 'articuloId', 'listaArticulosCustom', 'vistaPreviaContenido');
+    }
+    if (nombre === 'salidas') {
+        configurarBuscadorDropdown('inputArticuloSalida', 'articuloIdSalida', 'listaArticulosCustomSalida', 'vistaPreviaContenidoSalida');
+        configurarBuscadorDestinos();
+    }
     if (nombre === 'pedidos') {
         cambiarTabPedidos('seguimiento');
         cargarPedidos();
+        configurarBuscadorArticulosPedido();
+        configurarBuscadorDireccionesPedido();
+    }
+    if (nombre === 'relevamiento') {
+        configurarBuscadorDropdownRelevamiento();
     }
 
     if (nombre === 'inventario') cargarArticulos();
@@ -757,6 +763,10 @@ function configurarBuscadorDropdown(inputId, hiddenId, dropdownId, previewId) {
     const dropdown = document.getElementById(dropdownId);
     if (!input || !hidden || !dropdown) return;
 
+    // Anti-doble init: si ya está inicializado, no hacer nada
+    if (input.dataset.dropdownInit === 'true') return;
+    input.dataset.dropdownInit = 'true';
+
     const instance = new Dropdown({
         input,
         dropdown,
@@ -782,6 +792,10 @@ function configurarBuscadorDropdownRelevamiento() {
     const hidden = document.getElementById('articuloIdRelevamiento');
     const dropdown = document.getElementById('listaArticulosCustomRelevamiento');
     if (!input || !hidden || !dropdown) return;
+
+    // Anti-doble init
+    if (input.dataset.dropdownInit === 'true') return;
+    input.dataset.dropdownInit = 'true';
 
     const instance = new Dropdown({
         input,
@@ -1327,8 +1341,9 @@ function configurarBuscadorDestinos() {
     const dropdown = document.getElementById('listaDestinosCustom');
     if (!input || !hidden || !dropdown) return;
 
-    if (input.dataset.listenerDestinos) return;
-    input.dataset.listenerDestinos = 'true';
+    // Anti-doble init
+    if (input.dataset.dropdownInit === 'true') return;
+    input.dataset.dropdownInit = 'true';
 
     const instance = new Dropdown({
         input,
@@ -2282,6 +2297,10 @@ function configurarBuscadorArticulosPedido() {
     const dropdown = document.getElementById('listaArticulosPedido');
     if (!input || !dropdown) return;
 
+    // Anti-doble init
+    if (input.dataset.dropdownInit === 'true') return;
+    input.dataset.dropdownInit = 'true';
+
     const instance = new Dropdown({
         input,
         dropdown,
@@ -2327,6 +2346,10 @@ function configurarBuscadorDireccionesPedido() {
     const hidden = document.getElementById('direccionPedido');
     const dropdown = document.getElementById('listaDireccionesPedido');
     if (!input || !hidden || !dropdown) return;
+
+    // Anti-doble init
+    if (input.dataset.dropdownInit === 'true') return;
+    input.dataset.dropdownInit = 'true';
 
     const instance = new Dropdown({
         input,
