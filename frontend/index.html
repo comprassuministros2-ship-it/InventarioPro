@@ -678,7 +678,7 @@
 
             <section class="estadistica-seccion" style="margin-bottom: 1.5rem;">
                 <h2 class="estadistica-titulo">Filtros del Reporte</h2>
-                <div class="reportes-filtros" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; flex-wrap: wrap;">
+                <div class="reportes-filtros" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; flex-wrap: wrap; align-items: end;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="reporteFechaDesde">Desde</label>
                         <input type="date" id="reporteFechaDesde" class="form-input">
@@ -699,9 +699,9 @@
                             <option value="">Todas las direcciones</option>
                         </select>
                     </div>
-                    <div class="form-group" style="margin-bottom: 0; display: flex; gap: 0.8rem; align-items: end;">
-                        <button type="button" id="btnGenerarReporte" class="btn-submit" style="flex: 1; min-width: 180px;">Generar Reporte</button>
-                        <button type="button" id="btnExportarExcel" class="btn-ghost" style="flex: 1; min-width: 160px;">Exportar a Excel</button>
+                    <div class="form-group" style="margin-bottom: 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <button type="button" id="btnGenerarReporte" class="btn-submit">Generar Reporte</button>
+                        <button type="button" id="btnExportarExcel" class="btn-exportar">📊 Exportar a Excel</button>
                     </div>
                 </div>
             </section>

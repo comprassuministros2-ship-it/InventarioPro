@@ -2894,6 +2894,15 @@ function inicializarFiltrosReportes() {
         selectDireccion.innerHTML = '<option value="">Todas las direcciones</option>' +
             direcciones.map(dir => `<option value="${escapeHtml(dir)}">${escapeHtml(dir)}</option>`).join('');
     }
+
+    // Fechas por defecto: desde = 1er día del mes actual, hasta = hoy
+    const hoy = obtenerFechaLocal(); // YYYY-MM-DD
+    const primerDiaMes = hoy.slice(0, 8) + '01'; // YYYY-MM-01
+
+    const inputDesde = document.getElementById('reporteFechaDesde');
+    const inputHasta = document.getElementById('reporteFechaHasta');
+    if (inputDesde && !inputDesde.value) inputDesde.value = primerDiaMes;
+    if (inputHasta && !inputHasta.value) inputHasta.value = hoy;
 }
 
 // Listener para botón "Generar Reporte"
