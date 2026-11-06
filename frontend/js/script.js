@@ -2873,7 +2873,181 @@ function inicializarTema() {
 }
 
 // ============================================================
-// 24. INICIALIZACIÓN
+// 24. REPORTES - FILTROS Y ACCIONES (FASE 2)
+// ============================================================
+// Variable global para guardar el último reporte generado y exportarlo a CSV
+let ultimoReporteGenerado = [];
+
+function inicializarFiltrosReportes() {
+    // Poblar select de Categoría con categorías únicas de los artículos
+    const selectCategoria = document.getElementById('reporteCategoria');
+    if (selectCategoria) {
+        const categorias = [...new Set(articulos.map(a => a.categoriaID).filter(Boolean))].sort();
+        selectCategoria.innerHTML = '<option value="">Todas las categorías</option>' +
+            categorias.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
+    }
+
+    // Poblar select de Dirección con nombres de direcciones oficiales
+    const selectDireccion = document.getElementById('reporteDireccion');
+    if (selectDireccion) {
+        const direcciones = (direccionesOficiales || []).map(d => d.nombre).filter(Boolean).sort();
+        selectDireccion.innerHTML = '<option value="">Todas las direcciones</option>' +
+            direcciones.map(dir => `<option value="${escapeHtml(dir)}">${escapeHtml(dir)}</option>`).join('');
+    }
+}
+
+// Listener para botón "Generar Reporte"
+function configurarBtnGenerarReporte() {
+    const btn = document.getElementById('btnGenerarReporte');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+        const fechaDesde = document.getElementById('reporteFechaDesde')?.value || '';
+        const fechaHasta = document.getElementById('reporteFechaHasta')?.value || '';
+        const categoria = document.getElementById('reporteCategoria')?.value || '';
+        const direccion = document.getElementById('reporteDireccion')?.value || '';
+
+        const contenedor = document.getElementById('contenedorResultadosReportes');
+        if (!contenedor) return;
+
+        // Asegurar que los movimientos estén cargados
+        if (!movimientos || movimientos.length === 0) {
+            contenedor.innerHTML = '<div class="placeholder" style="padding: 2rem; text-align: center;">Cargando movimientos...</div>';
+            await cargarMovimientos();
+        }
+
+        // Filtrar movimientos
+        let filtrados = [...movimientos];
+
+        // Filtro por fecha desde
+        if (fechaDesde) {
+            filtrados = filtrados.filter(m => m.fecha && m.fecha >= fechaDesde);
+        }
+
+        // Filtro por fecha hasta
+        if (fechaHasta) {
+            filtrados = filtrados.filter(m => m.fecha && m.fecha <= fechaHasta + 'T23:59:59');
+        }
+
+        // Filtro por categoría (buscar ID de artículos que tengan esa categoría)
+        if (categoria) {
+            const idsCategoria = articulos
+                .filter(a => a.categoriaID === categoria)
+                .map(a => String(a.id));
+            filtrados = filtrados.filter(m => idsCategoria.includes(String(m.idArticulo)));
+        }
+
+        // Filtro por dirección (buscar en destino o proveedor)
+        if (direccion) {
+            const dirNorm = normalizarTexto(direccion);
+            filtrados = filtrados.filter(m => {
+                const destino = normalizarTexto(m.destino || '');
+                const proveedor = normalizarTexto(m.proveedor || '');
+                return destino.includes(dirNorm) || proveedor.includes(dirNorm);
+            });
+        }
+
+        // Ordenar por fecha descendente
+        filtrados.sort((a, b) => (b._ts ?? 0) - (a._ts ?? 0));
+
+        // Guardar para exportación
+        ultimoReporteGenerado = filtrados;
+
+        // Renderizar tabla
+        if (filtrados.length === 0) {
+            contenedor.innerHTML = '<div class="placeholder" style="padding: 3rem; text-align: center;">No se encontraron movimientos con los filtros seleccionados.</div>';
+            return;
+        }
+
+        let filas = '';
+        filtrados.forEach(m => {
+            const fecha = m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '—';
+            const articulo = m.nombre || `ID ${m.idArticulo || '—'}`;
+            const tipo = m.tipo || '—';
+            const cantidad = Number(m.cantidad) || 0;
+            const esEntrada = tipo === 'Entrada';
+            const cantTexto = esEntrada ? `+${cantidad}` : `-${cantidad}`;
+            const cantColor = esEntrada ? '#16a34a' : '#dc2626';
+            const origenDestino = esEntrada ? (m.proveedor || '—') : (m.destino || m.proveedor || '—');
+
+            filas += `
+                <tr>
+                    <td>${escapeHtml(fecha)}</td>
+                    <td>${escapeHtml(articulo)}</td>
+                    <td><span class="badge ${esEntrada ? 'badge-disponible' : 'badge-sin-stock'}">${escapeHtml(tipo)}</span></td>
+                    <td style="font-weight:700; color:${cantColor};">${escapeHtml(cantTexto)}</td>
+                    <td>${escapeHtml(origenDestino)}</td>
+                </tr>
+            `;
+        });
+
+        contenedor.innerHTML = `
+            <p class="placeholder" style="margin: 0.5rem 0;">${filtrados.length} movimiento${filtrados.length !== 1 ? 's' : ''} encontrado${filtrados.length !== 1 ? 's' : ''}</p>
+            <div class="inventario-tabla-wrapper">
+                <table class="inventario-tabla">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Artículo</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Destino / Proveedor</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filas}</tbody>
+                </table>
+            </div>
+        `;
+    });
+}
+
+// Listener para botón "Exportar a Excel"
+function configurarBtnExportarExcel() {
+    const btn = document.getElementById('btnExportarExcel');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+        if (!ultimoReporteGenerado || ultimoReporteGenerado.length === 0) {
+            mostrarToast('Generá un reporte primero', 'error');
+            return;
+        }
+
+        // Encabezados CSV con separador punto y coma
+        const headers = ['Fecha', 'Artículo', 'Tipo', 'Cantidad', 'Destino / Proveedor'];
+
+        const rows = ultimoReporteGenerado.map(m => {
+            const fecha = m.fecha ? new Date(m.fecha).toLocaleDateString('es-AR') : '—';
+            const articulo = m.nombre || `ID ${m.idArticulo || '—'}`;
+            const tipo = m.tipo || '—';
+            const cantidad = Number(m.cantidad) || 0;
+            const esEntrada = tipo === 'Entrada';
+            const cantTexto = esEntrada ? `+${cantidad}` : `-${cantidad}`;
+            const origenDestino = esEntrada ? (m.proveedor || '—') : (m.destino || m.proveedor || '—');
+
+            // Escapar comillas dobles para CSV
+            const escapeCsv = (val) => String(val).replace(/"/g, '""');
+            return [fecha, articulo, tipo, cantTexto, origenDestino].map(v => `"${escapeCsv(v)}"`).join(';');
+        });
+
+        // BOM UTF-8 (﻿) para que Excel lea tildes y ñ correctamente
+        const csvContent = '﻿' + headers.join(';') + '\n' + rows.join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'Reporte_Inventario.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        mostrarToast('Reporte exportado a CSV', 'exito');
+    });
+}
+
+// ============================================================
+// 25. INICIALIZACIÓN
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
     inicializarTema();
@@ -2936,6 +3110,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (f3) f3.textContent = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
 
     await cargarArticulos();
+
+    // Inicializar filtros de reportes (requiere articulos y direccionesOficiales cargados)
+    inicializarFiltrosReportes();
+    configurarBtnGenerarReporte();
+    configurarBtnExportarExcel();
+
     await cargarUltimasEntradas();
     await cargarUltimasSalidas();
 
