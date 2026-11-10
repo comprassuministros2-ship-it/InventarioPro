@@ -245,7 +245,7 @@ function obtenerCeldaArticuloHTML(articulo) {
     }
 
     if (imgData.startsWith('img/')) {
-        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
+        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}`;
         if (esUrlImagenSegura(urlGitHub)) {
             contenidoVisual = `<img src="${escapeHtml(urlGitHub)}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
         }
@@ -2123,7 +2123,7 @@ function renderizarCarrito() {
 
         let imgHTML = '📦';
         if (imgData.startsWith('img/')) {
-            imgHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">`;
+            imgHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">`;
         } else if (imgData !== '') {
             imgHTML = escapeHtml(imgData);
         }
@@ -3200,7 +3200,7 @@ function abrirModalEditarArticulo(id) {
     }
 
     if (imgData.startsWith('img/')) {
-        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/frontend/${imgData}`;
+        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}`;
         if (esUrlImagenSegura(urlGitHub)) {
             preview.innerHTML = `<img src="${escapeHtml(urlGitHub)}" style="width:100%; height:100%; object-fit:cover;">`;
         } else {
