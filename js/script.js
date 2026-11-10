@@ -113,7 +113,10 @@ function navegarAPagina(nombre) {
     if (nombre === 'movimientos') cargarMovimientos();
     if (nombre === 'direcciones') cargarDirecciones();
     if (nombre === 'dashboard') cargarDashboard();
-    if (nombre === 'calle3') cargarArticulosCalle3();
+    if (nombre === 'calle3') {
+        cargarArticulosCalle3();
+        configurarBuscadorCalle3();
+    }
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -336,7 +339,7 @@ function obtenerCeldaArticuloHTML(articulo) {
     }
 
     if (imgData.startsWith('img/')) {
-        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}`;
+        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}?v=${new Date().getTime()}`;
         if (esUrlImagenSegura(urlGitHub)) {
             contenidoVisual = `<img src="${escapeHtml(urlGitHub)}" alt="" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">`;
         }
@@ -558,6 +561,29 @@ function configurarBuscador() {
             const valor = input.value;
             const resultados = aplicarFiltro(filtrarArticulos(valor));
             renderizarArticulos(resultados);
+        }, 300);
+    });
+}
+
+function configurarBuscadorCalle3() {
+    const input = document.getElementById("inputBusquedaCalle3");
+    if (!input) return;
+    let timeoutBusqueda = null;
+    input.addEventListener("input", () => {
+        clearTimeout(timeoutBusqueda);
+        timeoutBusqueda = setTimeout(() => {
+            const termino = input.value;
+            const terminoNormalizado = normalizarTexto(termino);
+            let filtrados = articulos.filter(item => String(item.ubicacion || '').trim() === 'Calle 3');
+            if (terminoNormalizado) {
+                filtrados = filtrados.filter(item => {
+                    const idCoincideExacto = normalizarTexto(item.id) === terminoNormalizado;
+                    const camposParciales = [item.articulo, item.categoriaID, item.patrimonio];
+                    const coincideParcial = camposParciales.some(campo => normalizarTexto(campo).includes(terminoNormalizado));
+                    return idCoincideExacto || coincideParcial;
+                });
+            }
+            renderizarArticulosCalle3(filtrados);
         }, 300);
     });
 }
@@ -2214,7 +2240,7 @@ function renderizarCarrito() {
 
         let imgHTML = '📦';
         if (imgData.startsWith('img/')) {
-            imgHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">`;
+            imgHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}?v=${new Date().getTime()}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">`;
         } else if (imgData !== '') {
             imgHTML = escapeHtml(imgData);
         }
@@ -3291,7 +3317,7 @@ function abrirModalEditarArticulo(id) {
     }
 
     if (imgData.startsWith('img/')) {
-        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}`;
+        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}?v=${new Date().getTime()}`;
         if (esUrlImagenSegura(urlGitHub)) {
             preview.innerHTML = `<img src="${escapeHtml(urlGitHub)}" style="width:100%; height:100%; object-fit:cover;">`;
         } else {
