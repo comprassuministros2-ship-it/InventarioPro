@@ -113,6 +113,7 @@ function navegarAPagina(nombre) {
     if (nombre === 'movimientos') cargarMovimientos();
     if (nombre === 'direcciones') cargarDirecciones();
     if (nombre === 'dashboard') cargarDashboard();
+    if (nombre === 'calle3') cargarArticulosCalle3();
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
@@ -163,12 +164,102 @@ async function cargarArticulos() {
     }
 }
 
+// Cargar artículos del Depósito Calle 3
+async function cargarArticulosCalle3() {
+    try {
+        const datos = await articulosService.obtenerArticulos();
+        articulos = Array.isArray(datos) ? datos : [];
+        const filtrados = articulos.filter(item => String(item.ubicacion || '').trim() === 'Calle 3');
+        renderizarArticulosCalle3(filtrados);
+        return filtrados;
+    } catch (error) {
+        console.error("Error cargando artículos Calle 3:", error);
+        const contenedor = document.getElementById("contenedorCalle3");
+        if (contenedor) {
+            contenedor.innerHTML = `<p class="placeholder">Error al cargar Depósito Calle 3: ${escapeHtml(error.message)}</p>`;
+        }
+        return [];
+    }
+}
+
+function renderizarArticulosCalle3(datos) {
+    const contenedor = document.getElementById("contenedorCalle3");
+    if (!contenedor) return;
+
+    if (!datos || datos.length === 0) {
+        contenedor.innerHTML = `<p class="placeholder">No hay artículos en el Depósito Calle 3.</p>`;
+        return;
+    }
+
+    let filas = "";
+    datos.forEach(item => {
+        const stock = obtenerStock(item);
+        const estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
+        const estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
+        const celdaArticulo = obtenerCeldaArticuloHTML(item);
+
+        filas += `
+            <tr>
+                <td>${celdaArticulo}</td>
+                <td><span class="stock-numero">${stock}</span></td>
+                <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
+                <td><span class="badge-categoria">${escapeHtml(item.categoriaID || '—')}</span></td>
+                <td class="td-centrado">
+                    <div class="acciones-wrapper">
+                        <button class="btn-mas-acciones" type="button" onclick="toggleMenuAcciones(this)">⋮</button>
+                        <div class="menu-acciones-dropdown">
+                            <button type="button" data-action="historial" data-id="${item.id}">👁️ Ver Historial</button>
+                            <button type="button" data-action="relevamiento" data-id="${item.id}">✏️ Relevar Stock</button>
+                            <button type="button" data-action="editar" data-id="${item.id}">📷 Editar / Foto</button>
+                            <button type="button" class="btn-eliminar" data-action="eliminar" data-id="${item.id}">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    contenedor.innerHTML = `
+        <div class="inventario-tabla-wrapper">
+            <table class="inventario-tabla">
+                <thead>
+                    <tr>
+                        <th>Artículo</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        <th>Categoría</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>
+    `;
+
+    contenedor.querySelectorAll('.menu-acciones-dropdown button').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const accion = this.dataset.action;
+            const id = this.dataset.id;
+            document.querySelectorAll('.menu-acciones-dropdown').forEach(m => m.classList.remove('visible'));
+
+            if (accion === 'relevamiento') irARelevamientoConArticulo(id);
+            else if (accion === 'editar') abrirModalEditarArticulo(id);
+            else if (accion === 'historial') abrirModalHistorial(id);
+            else if (accion === 'eliminar') eliminarArticulo(id);
+        });
+    });
+}
+
 // ============================================================
 // 4. RENDERIZADO DE TABLA DE INVENTARIO
 // ============================================================
 function renderizarArticulos(datos) {
     const contenedor = document.getElementById("contenedorInventario");
     if (!contenedor) return;
+
+    // Filtro: el inventario general NO muestra los de Calle 3
+    datos = datos.filter(item => String(item.ubicacion || '').trim() !== 'Calle 3');
 
     if (!datos || datos.length === 0) {
         contenedor.innerHTML = `<p class="placeholder">No se encontraron artículos que coincidan con la búsqueda.</p>`;

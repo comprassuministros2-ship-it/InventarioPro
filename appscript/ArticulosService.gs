@@ -34,7 +34,9 @@ function obtenerArticulos() {
 
       multiplicadorUnidades: datos[i][8],
 
-      capacidadMax: datos[i][9]
+      capacidadMax: datos[i][9],
+
+      ubicacion: datos[i][12]
 
     });
 

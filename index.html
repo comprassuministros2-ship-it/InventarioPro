@@ -53,6 +53,7 @@
                 <h2 class="sidebar-section-title">Principal</h2>
                 <!-- ★ Cambio: Se sacó is-active de inventario -->
                 <a href="#" class="sidebar-link" data-page="inventario">Inventario General</a>
+                <a href="#" class="sidebar-link" data-page="calle3">Depósito Calle 3</a>
             </section>
             <section class="sidebar-nav-group">
                 <h2 class="sidebar-section-title">Operaciones</h2>
@@ -715,6 +716,36 @@
         <div id="pagina-configuracion" class="pagina">
             <div class="page-header"><h1>Configuración</h1><p class="fecha-hoy">Ajustes</p></div>
             <p class="placeholder" style="padding:1.5rem;">Próximamente.</p>
+        </div>
+
+        <!-- ============ PÁGINA: DEPÓSITO CALLE 3 ============ -->
+        <div id="pagina-calle3" class="pagina">
+            <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="#" onclick="navegarAPagina('inventario'); return false;">Inventario General</a>
+                    <span class="breadcrumb-separador">›</span>
+                    <span class="breadcrumb-actual">Depósito Calle 3</span>
+                </div>
+                <h1>Depósito Calle 3</h1>
+                <p class="fecha-hoy">Artículos ubicados en Calle 3</p>
+            </div>
+            <div style="padding: 0 1.5rem;">
+                <div class="toolbar-inventario">
+                    <div class="toolbar-left">
+                        <div class="buscador-inventario">
+                            <span class="icono-buscar">🔍</span>
+                            <input type="text" id="inputBusquedaCalle3" placeholder="Buscar por nombre, categoría o patrimonio...">
+                        </div>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="btn-exportar" type="button">Exportar</button>
+                    </div>
+                </div>
+
+                <div id="contenedorCalle3">
+                    <p class="placeholder">Cargando artículos...</p>
+                </div>
+            </div>
         </div>
 
     </main>
