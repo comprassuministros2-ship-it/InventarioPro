@@ -620,7 +620,7 @@
                     </div>
                 </section>
 
-                <!-- SECCIÓN SEGUIMIENTO -->
+                <!-- SECCIÓN SEGUIMIENTO — Master-Detail 2 columnas -->
                 <section id="pedidosTabSeguimiento" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabSeguimientoPedidos">
                     <div class="pedidos-resumen-tira" aria-live="polite">
                         <div class="pedidos-resumen-item">
@@ -656,15 +656,25 @@
                         </div>
                     </div>
 
-                    <div id="contenedorHojaSeguimiento" class="pedidos-hoja-contenedor">
-                        <p class="placeholder">Cargando hoja de seguimiento...</p>
-                    </div>
-                </section>
+                    <!-- Grid Master-Detail: Izquierda=Lista, Derecha=Detalle (sticky) -->
+                    <div class="hoja-seguimiento-grid">
+                        <!-- Columna 1: Lista de pedidos -->
+                        <div class="panel-lista">
+                            <div id="contenedorHojaSeguimiento" class="pedidos-hoja-contenedor">
+                                <p class="placeholder">Cargando hoja de seguimiento...</p>
+                            </div>
+                        </div>
 
-                <section id="detallePedidoSeccion" class="estadistica-seccion pedidos-detalle-seccion" hidden>
-                    <h2 class="estadistica-titulo">Detalle del pedido</h2>
-                    <div id="detallePedido">
-                        <p class="placeholder">Seleccioná un pedido para ver el detalle.</p>
+                        <!-- Columna 2: Panel detalle estilo "Carrito/Ticket" (sticky) -->
+                        <section id="detallePedidoSeccion" class="panel-detalle-sticky" aria-label="Detalle del pedido">
+                            <div id="detallePedido" class="detalle-ticket">
+                                <!-- Estado vacío inicial -->
+                                <div class="detalle-empty-state">
+                                    <span class="detalle-empty-icon" aria-hidden="true">🛒</span>
+                                    <p>Seleccioná un pedido de la lista</p>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </section>
             </div>
@@ -900,7 +910,7 @@
                 <input type="text" id="editArtNombre" placeholder="Ej: Libreta A4">
             </div>
             
-            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1rem;">
+            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:1rem;">
                 <div class="form-group">
                     <label>CATEGORÍA *</label>
                     <input type="text" id="editArtCategoria" list="listaCategorias">
@@ -914,6 +924,13 @@
                         <option value="Resma">Resma</option>
                         <option value="Frasco">Frasco</option>
                         <option value="Docena">Docena</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>UBICACIÓN</label>
+                    <select id="editArtUbicacion" class="form-input">
+                        <option value="">Central (Por defecto)</option>
+                        <option value="Calle 3">Depósito Calle 3</option>
                     </select>
                 </div>
             </div>

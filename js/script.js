@@ -3305,6 +3305,7 @@ function abrirModalEditarArticulo(id) {
     document.getElementById('editArtMultiplicador').value = art.multiplicadorUnidades || 1;
     document.getElementById('editArtStockMin').value = art.stockMin || 0;
     document.getElementById('editArtObservaciones').value = art.observaciones || '';
+    document.getElementById('editArtUbicacion').value = art.ubicacion || '';
     document.getElementById('editArtError').textContent = '';
     document.getElementById('editArtImagenFile').value = '';
 
@@ -3358,7 +3359,8 @@ async function guardarEdicionArticulo() {
         }
     }
 
-    const datos = { id, nombre, categoria, unidadMedida, multiplicador, stockMin, observaciones, imagenBase64: base64Image };
+    const ubicacion = document.getElementById('editArtUbicacion').value;
+    const datos = { id, nombre, categoria, unidadMedida, multiplicador, stockMin, observaciones, imagenBase64: base64Image, ubicacion };
 
     try {
         const r = await apiService.post({ accion: 'editarArticulo', datos });
