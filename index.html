@@ -983,6 +983,50 @@
     </div>
 </div>
 
+<!-- MODAL DETALLE ARTÍCULO -->
+<div id="modalDetalleArticulo" class="modal-overlay" style="display:none;">
+    <div class="modal-contenido modal-contenido--editar">
+        <div class="modal-header">
+            <h3 id="detalleArtTitulo">Detalle del artículo</h3>
+            <button type="button" class="modal-cerrar" onclick="cerrarModalDetalleArticulo()" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="detalle-articulo-grid">
+                <div class="detalle-articulo-item">
+                    <label>STOCK ACTUAL</label>
+                    <span id="detalleArtStock" class="detalle-valor">—</span>
+                </div>
+                <div class="detalle-articulo-item">
+                    <label>ESTADO</label>
+                    <span id="detalleArtEstado" class="detalle-valor"><span class="badge" id="detalleArtBadge">—</span></span>
+                </div>
+                <div class="detalle-articulo-item">
+                    <label>CATEGORÍA</label>
+                    <span id="detalleArtCategoria" class="detalle-valor">—</span>
+                </div>
+                <div class="detalle-articulo-item">
+                    <label>UNIDAD DE MEDIDA</label>
+                    <span id="detalleArtUnidad" class="detalle-valor">—</span>
+                </div>
+                <div class="detalle-articulo-item">
+                    <label>STOCK MÍNIMO</label>
+                    <span id="detalleArtStockMin" class="detalle-valor">—</span>
+                </div>
+            </div>
+
+            <div class="detalle-articulo-seccion">
+                <h4>Últimos Movimientos</h4>
+                <div id="detalleArtMovimientos">
+                    <p class="placeholder">Cargando...</p>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancelar" onclick="cerrarModalDetalleArticulo()">Cerrar</button>
+        </div>
+    </div>
+</div>
+
 <!-- SCRIPTS -->
 <script src="js/Config.js"></script>
 <script src="js/services/ApiService.js"></script>

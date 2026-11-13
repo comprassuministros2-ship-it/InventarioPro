@@ -2571,6 +2571,128 @@ body {
 }
 
 /* =========================================
+   33c. MODAL DETALLE ARTÍCULO
+   ========================================= */
+.detalle-articulo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.detalle-articulo-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.detalle-articulo-item label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.detalle-valor {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.detalle-valor .badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.detalle-articulo-seccion {
+    margin-top: 0.5rem;
+}
+
+.detalle-articulo-seccion h4 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+#detalleArtMovimientos {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#detalleArtMovimientos .placeholder {
+    text-align: center;
+    padding: 2rem;
+}
+
+.lista-movimientos-detalle {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.lista-movimientos-detalle li {
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem 1rem;
+    transition: box-shadow 0.15s;
+}
+
+.lista-movimientos-detalle li:hover {
+    box-shadow: var(--shadow-sm);
+}
+
+.mov-detalle-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.mov-detalle-fecha {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.mov-detalle-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.mov-detalle-origen {
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.mov-detalle-obs {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+@media (max-width: 640px) {
+    .detalle-articulo-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================
    34. DASHBOARD
    ========================================= */
 .dashboard-tarjetas {

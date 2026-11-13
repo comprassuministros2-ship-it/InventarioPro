@@ -365,8 +365,18 @@ function renderizarArticulos(datos) {
 
             if (accion === 'relevamiento') irARelevamientoConArticulo(id);
             else if (accion === 'editar') abrirModalEditarArticulo(id);
-            else if (accion === 'historial') abrirModalHistorial(id);
+            else if (accion === 'historial') abrirModalDetalleArticulo(id);
             else if (accion === 'eliminar') eliminarArticulo(id);
+        });
+    });
+
+    // Event listener para abrir modal de detalle al clickear la tarjeta (excluye botones y flechita)
+    contenedor.querySelectorAll('.inventario-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // No abrir modal si el clic fue en un botón o en la flechita de expandir
+            if (e.target.closest('button')) return;
+            const id = this.dataset.id;
+            if (id) abrirModalDetalleArticulo(id);
         });
     });
 }
@@ -3442,6 +3452,110 @@ function abrirModalEditarArticulo(id) {
         preview.textContent = '📦';
     }
     document.getElementById('modalEditarArticulo').style.display = 'flex';
+}
+
+// ============================================================
+// 25b. MODAL DETALLE ARTÍCULO
+// ============================================================
+function abrirModalDetalleArticulo(id) {
+    const art = articulos.find(a => String(a.id) === String(id));
+    if (!art) return;
+
+    const stock = obtenerStock(art);
+    let estadoClase = 'badge-disponible';
+    let estadoTexto = 'Disponible';
+    if (stock === 0) { estadoClase = 'badge-sin-stock'; estadoTexto = 'Sin Stock'; }
+    else if (art.stockCritico > 0 && stock <= art.stockCritico) { estadoClase = 'badge-critico'; estadoTexto = 'Crítico'; }
+
+    document.getElementById('detalleArtTitulo').textContent = `${escapeHtml(art.articulo)} (ID: ${escapeHtml(art.id)})`;
+    document.getElementById('detalleArtStock').textContent = stock;
+    document.getElementById('detalleArtBadge').textContent = estadoTexto;
+    document.getElementById('detalleArtBadge').className = `badge ${estadoClase}`;
+    document.getElementById('detalleArtCategoria').textContent = escapeHtml(art.categoriaID || '—');
+    document.getElementById('detalleArtUnidad').textContent = escapeHtml(art.unidadMedida || 'Unidad');
+    document.getElementById('detalleArtStockMin').textContent = art.stockMin || 0;
+
+    // Cargar movimientos
+    cargarMovimientosDetalleArticulo(id);
+
+    document.getElementById('modalDetalleArticulo').style.display = 'flex';
+}
+
+function cerrarModalDetalleArticulo() {
+    document.getElementById('modalDetalleArticulo').style.display = 'none';
+}
+
+async function cargarMovimientosDetalleArticulo(id) {
+    const contenedor = document.getElementById('detalleArtMovimientos');
+    if (!contenedor) return;
+
+    contenedor.innerHTML = '<p class="placeholder">Cargando movimientos...</p>';
+
+    try {
+        const resultado = await apiService.post({ accion: 'listarMovimientos', idArticulo: id });
+        if (resultado && resultado.exito === false) throw new Error(resultado.error || 'Error al obtener movimientos');
+        const datos = Array.isArray(resultado) ? resultado : [];
+
+        if (datos.length === 0) {
+            contenedor.innerHTML = '<p class="placeholder">Sin movimientos registrados</p>';
+            return;
+        }
+
+        // Ordenar por fecha descendente
+        datos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
+
+        let html = '<ul class="lista-movimientos-detalle">';
+        datos.forEach(m => {
+            const fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }) : '—';
+
+            const esEntrada = m.tipo === 'Entrada';
+            const tipoClase = esEntrada ? 'badge-disponible' : 'badge-sin-stock';
+            const tipoTexto = m.tipo || '—';
+
+            const origenDestino = esEntrada
+                ? (m.proveedor || '—')
+                : (m.destino || m.proveedor || '—');
+
+            let cantTexto = '';
+            let cantColor = '#dc2626';
+
+            if (m.tipo === 'Entrada') {
+                cantTexto = `+${m.cantidad}`;
+                cantColor = '#16a34a';
+            } else if (m.tipo === 'Salida') {
+                cantTexto = `-${m.cantidad}`;
+                cantColor = '#dc2626';
+            } else if (m.tipo === 'Relevamiento') {
+                const dif = Number(m.cantidad) || 0;
+                cantTexto = dif > 0 ? `+${dif}` : `${dif}`;
+                cantColor = dif > 0 ? '#16a34a' : '#dc2626';
+            } else {
+                cantTexto = String(m.cantidad);
+            }
+
+            html += `
+                <li>
+                    <div class="mov-detalle-header">
+                        <span class="mov-detalle-fecha">${fecha}</span>
+                        <span class="badge ${tipoClase}">${tipoTexto}</span>
+                    </div>
+                    <div class="mov-detalle-body">
+                        <span class="mov-detalle-origen">${escapeHtml(origenDestino)}</span>
+                        <span class="mov-detalle-cantidad" style="color: ${cantColor}; font-weight: 700;">${cantTexto} uds</span>
+                    </div>
+                    ${m.observacion ? `<div class="mov-detalle-obs">${escapeHtml(m.observacion)}</div>` : ''}
+                </li>
+            `;
+        });
+        html += '</ul>';
+        contenedor.innerHTML = html;
+    } catch (error) {
+        console.error('Error cargando movimientos del artículo:', error);
+        contenedor.innerHTML = `<p class="placeholder">Error al cargar: ${escapeHtml(error.message)}</p>`;
+    }
 }
 
 async function guardarEdicionArticulo() {
