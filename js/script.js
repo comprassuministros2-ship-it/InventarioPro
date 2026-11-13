@@ -255,7 +255,7 @@ function renderizarArticulosCalle3(datos) {
 }
 
 // ============================================================
-// 4. RENDERIZADO DE TABLA DE INVENTARIO
+// 4. RENDERIZADO DE TARJETAS DE INVENTARIO (Nuevo diseño)
 // ============================================================
 function renderizarArticulos(datos) {
     const contenedor = document.getElementById("contenedorInventario");
@@ -269,57 +269,99 @@ function renderizarArticulos(datos) {
         return;
     }
 
-    let filas = "";
+    let tarjetas = "";
     datos.forEach(item => {
         const stock = obtenerStock(item);
-        const estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
-        const estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
-        const celdaArticulo = obtenerCeldaArticuloHTML(item);
+        let estadoClase = "badge-disponible";
+        let estadoTexto = "Disponible";
+        if (stock === 0) {
+            estadoClase = "badge-sin-stock";
+            estadoTexto = "Sin Stock";
+        } else if (item.stockCritico > 0 && stock <= item.stockCritico) {
+            estadoClase = "badge-critico";
+            estadoTexto = "Crítico";
+        }
 
-        filas += `
-            <tr>
-                <td>${celdaArticulo}</td>
-                <td><span class="stock-numero">${stock}</span></td>
-                <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
-                <td><span class="badge-categoria">${escapeHtml(item.categoriaID || '—')}</span></td>
-                <td class="td-centrado">
-                    <div class="acciones-wrapper">
-                        <button class="btn-mas-acciones" type="button" onclick="toggleMenuAcciones(this)">⋮</button>
-                        <div class="menu-acciones-dropdown">
-                            <button type="button" data-action="historial" data-id="${item.id}">👁️ Ver Historial</button>
-                            <button type="button" data-action="relevamiento" data-id="${item.id}">✏️ Relevar Stock</button>
-                            <button type="button" data-action="editar" data-id="${item.id}">📷 Editar / Foto</button>
-                            <button type="button" class="btn-eliminar" data-action="eliminar" data-id="${item.id}">🗑️ Eliminar</button>
+        // Imagen/emoji del artículo
+        const imgData = (item.imagen || '').trim();
+        let contenidoVisual = '';
+
+        function esUrlImagenSegura(url) {
+            return url.startsWith('https://') || url.startsWith('http://') || url.startsWith('data:image/');
+        }
+
+        if (imgData.startsWith('img/')) {
+            const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}?v=${new Date().getTime()}`;
+            if (esUrlImagenSegura(urlGitHub)) {
+                contenidoVisual = `<img src="${escapeHtml(urlGitHub)}" alt="" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+        } else if (esUrlImagenSegura(imgData)) {
+            contenidoVisual = `<img src="${escapeHtml(imgData)}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
+        } else if (imgData !== '') {
+            contenidoVisual = `<span class="emoji-articulo" style="font-size: 2rem;">${escapeHtml(imgData)}</span>`;
+        } else {
+            contenidoVisual = `<span class="emoji-articulo" style="font-size: 2rem;">📦</span>`;
+        }
+
+        tarjetas += `
+            <article class="inventario-card" data-id="${item.id}">
+                <!-- Parte superior (siempre visible) -->
+                <div class="inventario-card-header">
+                    <div class="inventario-card-top-row">
+                        <div class="inventario-card-image">${contenidoVisual}</div>
+                        <div class="inventario-card-info">
+                            <span class="inventario-card-name">${escapeHtml(item.articulo)}</span>
+                            <span class="inventario-card-category">${escapeHtml(item.categoriaID || '—')}</span>
+                        </div>
+                        <button type="button" class="inventario-card-expand-btn" aria-label="Expandir tarjeta" aria-expanded="false">▼</button>
+                    </div>
+                    <div class="inventario-card-stock-row">
+                        <div class="inventario-card-stock">
+                            <span class="inventario-card-stock-value">${stock}</span>
+                            <span class="inventario-card-stock-unit">unidades</span>
+                        </div>
+                        <span class="inventario-card-badge badge ${estadoClase}">${estadoTexto}</span>
+                    </div>
+                </div>
+
+                <!-- Parte inferior (expansible) -->
+                <div class="inventario-card-body">
+                    <div class="inventario-card-body-inner">
+                        <div class="inventario-card-movimientos">
+                            <span class="inventario-card-movimientos-icon">⏱️</span>
+                            <span>Sin movimientos recientes</span>
+                        </div>
+                        <div class="inventario-card-actions">
+                            <button type="button" class="inventario-card-action-btn" data-action="editar" data-id="${item.id}" title="Editar artículo">✏️</button>
+                            <button type="button" class="inventario-card-action-btn" data-action="relevamiento" data-id="${item.id}" title="Relevar stock">📋</button>
+                            <button type="button" class="inventario-card-action-btn" data-action="historial" data-id="${item.id}" title="Ver historial">👁️</button>
+                            <button type="button" class="inventario-card-action-btn" data-action="eliminar" data-id="${item.id}" title="Eliminar artículo">🗑️</button>
                         </div>
                     </div>
-                </td>
-            </tr>
+                </div>
+            </article>
         `;
     });
 
-    contenedor.innerHTML = `
-        <div class="inventario-tabla-wrapper">
-            <table class="inventario-tabla">
-                <thead>
-                    <tr>
-                        <th>Artículo</th>
-                        <th>Stock</th>
-                        <th>Estado</th>
-                        <th>Categoría</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>${filas}</tbody>
-            </table>
-        </div>
-    `;
+    contenedor.innerHTML = `<div class="inventario-cards-grid">${tarjetas}</div>`;
 
-    contenedor.querySelectorAll('.menu-acciones-dropdown button').forEach(btn => {
+    // Event listeners para expandir/colapsar tarjetas
+    contenedor.querySelectorAll('.inventario-card-expand-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const card = this.closest('.inventario-card');
+            const isExpanded = card.classList.toggle('expanded');
+            this.setAttribute('aria-expanded', isExpanded);
+            this.textContent = isExpanded ? '▲' : '▼';
+        });
+    });
+
+    // Event listeners para botones de acción
+    contenedor.querySelectorAll('.inventario-card-action-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const accion = this.dataset.action;
             const id = this.dataset.id;
-            document.querySelectorAll('.menu-acciones-dropdown').forEach(m => m.classList.remove('visible'));
 
             if (accion === 'relevamiento') irARelevamientoConArticulo(id);
             else if (accion === 'editar') abrirModalEditarArticulo(id);
