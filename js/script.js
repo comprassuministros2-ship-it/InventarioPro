@@ -2330,6 +2330,17 @@ function configurarPedidos() {
     document.querySelectorAll('[data-tab-pedidos]').forEach(btn => btn.addEventListener('click', () => cambiarTabPedidos(btn.dataset.tabPedidos)));
     document.querySelectorAll('[data-filtro-fecha]').forEach(btn => btn.addEventListener('click', () => { filtroFechaSeguimiento = btn.dataset.filtroFecha; document.querySelectorAll('[data-filtro-fecha]').forEach(chip => chip.classList.toggle('activo', chip === btn)); renderizarHojaSeguimiento(); }));
     document.querySelectorAll('[data-filtro-estado]').forEach(btn => btn.addEventListener('click', () => { filtroEstadoSeguimiento = filtroEstadoSeguimiento === btn.dataset.filtroEstado ? 'todos' : btn.dataset.filtroEstado; document.querySelectorAll('[data-filtro-estado]').forEach(chip => chip.classList.toggle('activo', chip.dataset.filtroEstado === filtroEstadoSeguimiento)); renderizarHojaSeguimiento(); }));
+    const inputBusqueda = document.getElementById('inputBusquedaPedidos');
+    if (inputBusqueda) {
+        let timeoutBusqueda = null;
+        inputBusqueda.addEventListener('input', () => {
+            clearTimeout(timeoutBusqueda);
+            timeoutBusqueda = setTimeout(() => {
+                filtroBusquedaPedidos = inputBusqueda.value.trim();
+                renderizarHojaSeguimiento();
+            }, 300);
+        });
+    }
     const form = document.getElementById('formPedido');
     if (form) form.addEventListener('submit', manejarSubmitPedido);
     configurarBuscadorArticulosPedido();
@@ -2525,13 +2536,37 @@ function configurarBuscadorDireccionesPedido() {
         onSelect: (item) => {
             if (item.freeText) {
                 hidden.value = item.value;
+                // Buscar director en caché para texto libre también
+                const dirLibre = item.value.trim();
+                if (dirLibre) autocompletarDirectorPorDireccion(dirLibre);
                 return;
             }
             input.value = item.nombre;
             hidden.value = item.nombre;
+            // Autocompletar director basado en historial de pedidos
+            autocompletarDirectorPorDireccion(item.nombre);
         }
     });
     dropdownInstances.push(instance);
+}
+
+// Busca en pedidosCache el último director que pidió en esa dirección y lo pone en #directorPedido
+function autocompletarDirectorPorDireccion(direccion) {
+    if (!direccion) return;
+    const directorInput = document.getElementById('directorPedido');
+    if (!directorInput) return;
+
+    // Buscar el pedido más reciente con esa misma dirección
+    const pedidoConDireccion = [...pedidosCache]
+        .sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0))
+        .find(p => p.direccion && normalizarTexto(p.direccion) === normalizarTexto(direccion));
+
+    if (pedidoConDireccion && pedidoConDireccion.director) {
+        directorInput.value = pedidoConDireccion.director;
+    } else {
+        // Si no hay historial, dejar vacío para que el operario lo escriba
+        directorInput.value = '';
+    }
 }
 
 // ============================================================
@@ -2539,6 +2574,18 @@ function configurarBuscadorDireccionesPedido() {
 // ============================================================
 let filtroFechaSeguimiento = 'hoy';
 let filtroEstadoSeguimiento = 'todos';
+let filtroBusquedaPedidos = '';
+
+function filtrarPedidosPorBusqueda(pedidos, termino) {
+    const lista = Array.isArray(pedidos) ? pedidos : [];
+    const terminoNormalizado = normalizarTexto(termino);
+    if (!terminoNormalizado) return lista;
+    return lista.filter(p => {
+        const nota = normalizarTexto(p.nota || `#${p.id}`);
+        const direccion = normalizarTexto(p.direccion || '');
+        return nota.includes(terminoNormalizado) || direccion.includes(terminoNormalizado);
+    });
+}
 
 function cambiarTabPedidos(tab) {
     const seleccionado = tab === 'nuevo' ? 'nuevo' : 'seguimiento';
@@ -2683,7 +2730,8 @@ function renderizarHojaSeguimiento() {
     if (!contenedor) return;
     renderizarResumenSeguimiento();
     const porFecha = filtrarPedidosPorFecha(pedidosCache, filtroFechaSeguimiento);
-    const filtrados = filtrarPedidosPorEstado(porFecha, filtroEstadoSeguimiento);
+    const porEstado = filtrarPedidosPorEstado(porFecha, filtroEstadoSeguimiento);
+    const filtrados = filtrarPedidosPorBusqueda(porEstado, filtroBusquedaPedidos);
     if (filtrados.length === 0) {
         contenedor.innerHTML = '<div class="estadistica-seccion"><p class="placeholder">No hay pedidos para los filtros seleccionados.</p></div>';
         return;
