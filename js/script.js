@@ -3365,15 +3365,35 @@ function abrirModalEditarArticulo(id) {
         return url.startsWith('https://') || url.startsWith('http://') || url.startsWith('data:image/');
     }
 
+    // Mostrar estado de carga inicial
+    preview.innerHTML = `<span class="foto-loading" aria-hidden="true">⏳ Cargando imagen...</span>`;
+
     if (imgData.startsWith('img/')) {
-        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}?v=${new Date().getTime()}`;
+        // URL limpia SIN parámetro ?v= para aprovechar caché del navegador
+        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}`;
         if (esUrlImagenSegura(urlGitHub)) {
-            preview.innerHTML = `<img src="${escapeHtml(urlGitHub)}" style="width:100%; height:100%; object-fit:cover;">`;
+            const img = new Image();
+            img.onload = function() {
+                // Solo mostramos la imagen cuando terminó de cargar
+                preview.innerHTML = `<img src="${escapeHtml(urlGitHub)}" style="width:100%; height:100%; object-fit:cover;">`;
+            };
+            img.onerror = function() {
+                // Fallback si falla la carga
+                preview.textContent = '📦';
+            };
+            img.src = urlGitHub;
         } else {
             preview.textContent = '📦';
         }
     } else if (esUrlImagenSegura(imgData)) {
-        preview.innerHTML = `<img src="${escapeHtml(imgData)}" style="width:100%; height:100%; object-fit:cover;">`;
+        const img = new Image();
+        img.onload = function() {
+            preview.innerHTML = `<img src="${escapeHtml(imgData)}" style="width:100%; height:100%; object-fit:cover;">`;
+        };
+        img.onerror = function() {
+            preview.textContent = '📦';
+        };
+        img.src = imgData;
     } else if (imgData !== '') {
         preview.textContent = escapeHtml(imgData);
     } else {

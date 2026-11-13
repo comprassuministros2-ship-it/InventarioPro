@@ -1520,15 +1520,10 @@ body {
    ========================================= */
 .relevamiento-wrapper {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr;
     gap: var(--space-lg);
-    max-width: 100%;
-}
-
-@media (max-width: 992px) {
-    .relevamiento-wrapper {
-        grid-template-columns: 1fr;
-    }
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .relevamiento-form {
@@ -1546,6 +1541,20 @@ body {
     color: var(--text);
 }
 
+/* Inputs más altos y espaciosos en Relevamiento */
+.relevamiento-form .form-group input,
+.relevamiento-form .form-group select,
+.relevamiento-form .form-group textarea {
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    min-height: 48px;
+}
+
+.relevamiento-form .form-group label {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
 .relevamiento-sidebar {
     display: flex;
     flex-direction: column;
@@ -1555,6 +1564,7 @@ body {
 @media (max-width: 768px) {
     .relevamiento-wrapper {
         gap: 1rem;
+        max-width: 100%;
     }
     .relevamiento-form {
         padding: 1.2rem;
@@ -1940,6 +1950,12 @@ body {
     to   { transform: translateY(0); opacity: 1; }
 }
 
+/* Modal Editar Artículo — Variante moderna */
+.modal-contenido--editar {
+    max-width: 900px;
+    max-width: 95vw;
+}
+
 .modal-header {
     display: flex;
     align-items: center;
@@ -1959,14 +1975,14 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     border: none;
     background: transparent;
     color: var(--text-muted);
-    font-size: 1rem;
+    font-size: 1.2rem;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 10px;
     transition: background 0.15s, color 0.15s;
 }
 
@@ -2037,6 +2053,194 @@ body {
     font-size: 0.85rem;
     margin-top: 0.5rem;
     min-height: 1rem;
+}
+
+/* =========================================
+   33b. MODAL EDITAR ARTÍCULO — Estilos específicos
+   ========================================= */
+
+/* Grid de 3 columnas */
+.fila-3 {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Grid de 2 columnas */
+.fila-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Campo de ubicación con min-width */
+.ubicacion-field {
+    min-width: 150px;
+}
+
+/* Sección foto */
+.foto {
+    background: var(--bg-hover);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px dashed var(--border);
+}
+
+.foto-preview-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.foto-preview {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.foto-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.foto-preview:hover {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.foto-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: center;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.foto-actions {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.btn-elegir-imagen {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 1rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    width: fit-content;
+}
+
+.btn-elegir-imagen:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+.foto-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+#editArtImagenFile {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus ring para inputs */
+.modal-body .form-group input:focus,
+.modal-body .form-group select:focus,
+.modal-body .form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+/* Inputs más altos y espaciosos en modal editar */
+.modal-contenido--editar .form-group input,
+.modal-contenido--editar .form-group select,
+.modal-contenido--editar .form-group textarea {
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    min-height: 48px;
+}
+
+.modal-contenido--editar .form-group label {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive para el modal */
+@media (max-width: 640px) {
+    .modal-contenido--editar {
+        max-width: 95%;
+        margin: 1rem;
+    }
+
+    .fila-3 {
+        grid-template-columns: 1fr;
+    }
+
+    .ubicacion-field {
+        min-width: 0;
+    }
+
+    .fila-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .foto-preview-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .foto-actions {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .btn-elegir-imagen {
+        width: 100%;
+    }
 }
 
 /* =========================================

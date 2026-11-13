@@ -641,6 +641,12 @@
                     </div>
 
                     <div class="pedidos-filtros">
+                        <div class="pedidos-filtros-busqueda" role="search" aria-label="Buscar pedidos">
+                            <div class="buscador-inventario" style="max-width: 400px; flex-shrink: 0;">
+                                <span class="icono-buscar">🔍</span>
+                                <input type="text" id="inputBusquedaPedidos" placeholder="Buscar por N° Nota o Dirección..." autocomplete="off">
+                            </div>
+                        </div>
                         <div class="pedidos-filtros-fecha" role="group" aria-label="Filtrar por fecha">
                             <button type="button" class="pedidos-chip activo" data-filtro-fecha="hoy">Hoy</button>
                             <button type="button" class="pedidos-chip" data-filtro-fecha="semana">Esta semana</button>
@@ -898,73 +904,77 @@
 
 <!-- MODAL EDITAR ARTÍCULO -->
 <div id="modalEditarArticulo" class="modal-overlay" style="display:none;">
-    <div class="modal-contenido">
+    <div class="modal-contenido modal-contenido--editar">
         <div class="modal-header">
             <h3>Editar artículo</h3>
-            <button type="button" class="modal-cerrar" onclick="document.getElementById('modalEditarArticulo').style.display='none'">✕</button>
+            <button type="button" class="modal-cerrar" onclick="document.getElementById('modalEditarArticulo').style.display='none'" aria-label="Cerrar">✕</button>
         </div>
         <div class="modal-body">
             <input type="hidden" id="editArtId">
-            <div class="form-group">
-                <label>NOMBRE *</label>
-                <input type="text" id="editArtNombre" placeholder="Ej: Libreta A4">
-            </div>
-            
-            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:1rem;">
-                <div class="form-group">
-                    <label>CATEGORÍA *</label>
-                    <input type="text" id="editArtCategoria" list="listaCategorias">
-                </div>
-                <div class="form-group">
-                    <label>UNIDAD DE MEDIDA *</label>
-                    <select id="editArtUnidad">
-                        <option value="Unidad">Unidad</option>
-                        <option value="Caja">Caja</option>
-                        <option value="Pack">Pack</option>
-                        <option value="Resma">Resma</option>
-                        <option value="Frasco">Frasco</option>
-                        <option value="Docena">Docena</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>UBICACIÓN</label>
-                    <select id="editArtUbicacion" class="form-input">
-                        <option value="">Central (Por defecto)</option>
-                        <option value="Calle 3">Depósito Calle 3</option>
-                    </select>
-                </div>
-            </div>
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+            <form id="formEditarArticulo" novalidate>
                 <div class="form-group">
-                    <label>MULTIPLICADOR *</label>
-                    <input type="number" id="editArtMultiplicador" min="1" value="1">
+                    <label for="editArtNombre">NOMBRE *</label>
+                    <input type="text" id="editArtNombre" placeholder="Ej: Libreta A4" required>
                 </div>
-                <div class="form-group">
-                    <label>STOCK MÍNIMO</label>
-                    <input type="number" id="editArtStockMin" min="0" value="0">
-                </div>
-            </div>
 
-            <!-- SECCIÓN FOTO -->
-            <div class="form-group" style="background: var(--bg-hover); padding: 10px; border-radius: 8px; border: 1px dashed var(--border);">
-                <label>FOTO DEL ARTÍCULO</label>
-                <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 10px;">
-                    <div id="editArtImagenPreview" style="width: 50px; height: 50px; border-radius: 6px; background: var(--bg-card); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; overflow: hidden;">
-                        📦
+                <div class="fila-3">
+                    <div class="form-group">
+                        <label for="editArtCategoria">CATEGORÍA *</label>
+                        <input type="text" id="editArtCategoria" list="listaCategorias" required>
                     </div>
-                    <div style="flex: 1;">
-                        <input type="file" id="editArtImagenFile" accept="image/*" capture="environment" style="font-size: 0.85rem; width: 100%;">
-                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Sacá una foto o subí una imagen (se achicará automáticamente).</p>
+                    <div class="form-group">
+                        <label for="editArtUnidad">UNIDAD DE MEDIDA *</label>
+                        <select id="editArtUnidad" required>
+                            <option value="Unidad">Unidad</option>
+                            <option value="Caja">Caja</option>
+                            <option value="Pack">Pack</option>
+                            <option value="Resma">Resma</option>
+                            <option value="Frasco">Frasco</option>
+                            <option value="Docena">Docena</option>
+                        </select>
+                    </div>
+                    <div class="form-group ubicacion-field">
+                        <label for="editArtUbicacion">UBICACIÓN</label>
+                        <select id="editArtUbicacion" class="form-input">
+                            <option value="">Central (Por defecto)</option>
+                            <option value="Calle 3">Depósito Calle 3</option>
+                        </select>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>OBSERVACIONES</label>
-                <textarea id="editArtObservaciones" rows="2"></textarea>
-            </div>
-            <p class="modal-error" id="editArtError" style="color: red;"></p>
+                <div class="fila-2">
+                    <div class="form-group">
+                        <label for="editArtMultiplicador">MULTIPLICADOR *</label>
+                        <input type="number" id="editArtMultiplicador" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editArtStockMin">STOCK MÍNIMO</label>
+                        <input type="number" id="editArtStockMin" min="0" value="0">
+                    </div>
+                </div>
+
+                <!-- SECCIÓN FOTO -->
+                <div class="form-group foto">
+                    <label>FOTO DEL ARTÍCULO</label>
+                    <div class="foto-preview-wrapper">
+                        <div id="editArtImagenPreview" class="foto-preview" aria-label="Vista previa de la imagen">
+                            <span class="foto-loading" aria-hidden="true">⏳ Cargando imagen...</span>
+                        </div>
+                        <div class="foto-actions">
+                            <label for="editArtImagenFile" class="btn-elegir-imagen">Elegir imagen</label>
+                            <input type="file" id="editArtImagenFile" accept="image/*" capture="environment" hidden>
+                            <p class="foto-hint">Sacá una foto o subí una imagen (se achicará automáticamente).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editArtObservaciones">OBSERVACIONES</label>
+                    <textarea id="editArtObservaciones" rows="3" placeholder="Notas adicionales..."></textarea>
+                </div>
+                <p class="modal-error" id="editArtError"></p>
+            </form>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn-cancelar" onclick="document.getElementById('modalEditarArticulo').style.display='none'">Cancelar</button>
