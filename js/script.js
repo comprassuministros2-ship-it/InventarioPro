@@ -2292,7 +2292,7 @@ function renderizarCarrito() {
 
         let imgHTML = '📦';
         if (imgData.startsWith('img/')) {
-            imgHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}?v=${new Date().getTime()}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">`;
+            imgHTML = `<img src="https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}" alt="" style="width: 24px; height: 24px; object-fit: cover; border-radius: 4px;">`;
         } else if (imgData !== '') {
             imgHTML = escapeHtml(imgData);
         }
@@ -3378,6 +3378,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hash = window.location.hash.replace('#', '');
     if (hash === 'direcciones') cargarDirecciones();
     if (hash === 'dashboard') cargarDashboard();
+
+    // ============================================================
+    // Atajos de teclado globales (Hotkeys)
+    // ============================================================
+    document.addEventListener('keydown', (e) => {
+        // Ignorar si el usuario está escribiendo en un input/textarea/select
+        const target = e.target;
+        const esInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable;
+        if (esInput) return;
+
+        // Escape: cerrar todos los modales
+        if (e.key === 'Escape') {
+            const modales = document.querySelectorAll('.modal-overlay[style*="display: flex"], .modal-overlay[style*="display:flex"], .modal-overlay.visible');
+            modales.forEach(m => m.style.display = 'none');
+            // También cerrar sidebar móvil si está abierto
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.classList.remove('open');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (overlay) overlay.classList.remove('show');
+        }
+
+        // Tecla "N": en pestaña Pedidos -> ir a "Nuevo Pedido"
+        if (e.key === 'n' || e.key === 'N') {
+            const paginaPedidos = document.getElementById('pagina-pedidos');
+            if (paginaPedidos && paginaPedidos.classList.contains('activa')) {
+                cambiarTabPedidos('nuevo');
+            }
+        }
+    });
 });
 
 // ============================================================
