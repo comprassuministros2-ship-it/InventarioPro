@@ -6,7 +6,7 @@
     <title>InventarioPro</title>
 
     <!-- CSP: Bloquea scripts maliciosos y restringe orígenes permitidos -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://raw.githubusercontent.com https://*.googleusercontent.com https://drive.google.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://raw.githubusercontent.com; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
 
     <!-- ========================================== -->
     <!-- INVENTARIO PRO — ESTRUCTURA HTML           -->
@@ -15,19 +15,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%232563eb%22/><path fill=%22%23fff%22 d=%22M50 20l30 17-30 17-30-17zM20 46l27 15.5V87L20 71zM80 46 53 61.5V87l27-16z%22/><path d=%22M41 37l6 6 12-12%22 fill=%22none%22 stroke=%22%232563eb%22 stroke-width=%226%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">
 
     <link rel="stylesheet" href="css/style.css">
-    <script>
-        (function() {
-            try {
-                var tema = localStorage.getItem('inventario-tema');
-                if (tema !== 'dark' && tema !== 'light') {
-                    tema = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                }
-                document.documentElement.setAttribute('data-theme', tema);
-            } catch (e) {
-                document.documentElement.setAttribute('data-theme', 'light');
-            }
-        })();
-    </script>
+    <script src="js/theme-init.js"></script>
     <style>
         .breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem; font-size: 0.82rem; margin-bottom: 0.45rem; }
         .breadcrumb a { color: var(--accent, #2563eb); text-decoration: none; font-weight: 600; padding: 2px 6px; border-radius: 6px; }
