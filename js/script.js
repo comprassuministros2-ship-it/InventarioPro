@@ -241,6 +241,9 @@ function _renderInventarioCards(datos, contenedor, mensajeVacio) {
             contenidoVisual = `<span class="emoji-articulo" style="font-size: 3rem;">📦</span>`;
         }
 
+        // Clase para badge de ubicación (estilo)
+        const ubicacionClass = ubicacion.toLowerCase().includes('calle 3') ? 'calle3' : 'central';
+
         tarjetas += `
             <article class="inventario-card" data-id="${item.id}">
                 <div class="inventario-card-image-wrapper">
@@ -251,7 +254,7 @@ function _renderInventarioCards(datos, contenedor, mensajeVacio) {
                     <span class="inventario-card-category">${escapeHtml(item.categoriaID || '—')}</span>
                     <div class="inventario-card-stock-row">
                         <span class="inventario-card-stock ${stockClase}">${stock} ${escapeHtml(item.unidadMedida || 'unidades')}</span>
-                        <span class="inventario-card-location">${escapeHtml(ubicacion)}</span>
+                        <span class="inventario-card-location ${ubicacionClass}">${escapeHtml(ubicacion)}</span>
                     </div>
                 </div>
             </article>
