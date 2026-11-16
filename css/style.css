@@ -2205,6 +2205,13 @@ body {
     max-width: 95vw;
 }
 
+/* Modal Detalle Artículo — Variante ancha horizontal */
+.modal-contenido--detalle {
+    max-width: 900px;
+    max-width: 90vw;
+    width: 90%;
+}
+
 .modal-header {
     display: flex;
     align-items: center;
@@ -2499,7 +2506,7 @@ body {
 /* Layout 2 columnas principal */
 .detalle-modal-grid {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 2rem;
     margin-bottom: 1.5rem;
 }
