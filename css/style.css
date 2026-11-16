@@ -405,7 +405,7 @@ body {
 }
 
 .topbar-menu-btn {
-    display: inline-flex !important;
+    display: none; /* Oculto en desktop, visible en móvil via media query */
     align-items: center;
     justify-content: center;
     padding: 8px;
@@ -438,6 +438,28 @@ body {
     display: flex;
     gap: 10px;
     margin-left: auto;
+}
+
+/* =========================================
+   07b. TOPBAR - MÓVIL (≤768px)
+   ========================================= */
+@media (max-width: 768px) {
+    .topbar {
+        padding: 12px 16px;
+        gap: 16px;
+    }
+
+    .topbar-menu-btn {
+        display: inline-flex !important;
+    }
+
+    .topbar-title h1 {
+        font-size: 15px;
+    }
+
+    .topbar-title p {
+        display: none; /* Ocultar subtítulo en móvil para ahorrar espacio */
+    }
 }
 
 /* =========================================
@@ -1555,6 +1577,19 @@ body {
 
 .btn-nuevo:hover { background: var(--accent-hover); }
 
+/* Móvil: botones de toolbar apilados verticalmente */
+@media (max-width: 768px) {
+    .toolbar-right {
+        flex-direction: column;
+        width: 100%;
+    }
+    .toolbar-right .btn-exportar,
+    .toolbar-right .btn-nuevo {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* =========================================
    22. MOVIMIENTOS — COLUMNAS PROPORCIONALES
    ========================================= */
@@ -1673,7 +1708,9 @@ body {
 
     .toolbar-inventario { flex-direction: column; align-items: stretch; }
     .buscador-inventario { width: 100%; }
-    .toolbar-right { justify-content: space-between; }
+    .toolbar-right { flex-direction: column; width: 100%; }
+    .toolbar-right .btn-exportar,
+    .toolbar-right .btn-nuevo { width: 100%; justify-content: center; }
 
     .entradas-wrapper,
     .salidas-wrapper {
@@ -3389,7 +3426,7 @@ body {
     .pedidos-grupo-dia { overflow-x: auto; }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
     .pedidos-contenido { padding: 0 1rem 1rem; }
     .pedidos-grid { grid-template-columns: 1fr; }
     .pedidos-resumen-tira {
@@ -3767,6 +3804,26 @@ body {
     gap: 1rem;
 }
 
+/* Móvil: toolbar-movimientos botones apilados */
+@media (max-width: 768px) {
+    .toolbar-movimientos {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .toolbar-movimientos .toolbar-left {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .toolbar-movimientos .toolbar-right {
+        flex-direction: column;
+        width: 100%;
+    }
+    .toolbar-movimientos .toolbar-right .btn-exportar {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* 2. Tabla: más aire en las celdas */
 .inventario-tabla {
     width: 100%;
@@ -3968,8 +4025,8 @@ body {
     .entradas-wrapper, .salidas-wrapper { flex-direction: column; }
 }
 
-/* CELULARES: iPhone 12 y similares (< 480px) */
-@media (max-width: 480px) {
+/* MÓVIL: ≤768px */
+@media (max-width: 768px) {
     .inventario-tabla th:nth-child(4), .inventario-tabla td:nth-child(4) { display: none; }
     body { font-size: 14px; }
     .main-content { padding: 0 0.5rem !important; }
@@ -3980,8 +4037,6 @@ body {
     }
     .modal-contenido { width: 95%; max-height: 95vh; margin: 10px auto; }
     .btn-mas-acciones { padding: 10px 14px; font-size: 1.5rem; }
-    .sidebar { position: fixed; left: -100%; transition: left 0.3s; z-index: 1000; }
-    .sidebar.open { left: 0; }
 
     /* REPORTES — Mobile: filtros apilados, botones full-width */
     .reportes-filtros {
@@ -3996,4 +4051,11 @@ body {
         width: 100%;
         min-width: 0;
     }
+}
+
+/* CELULARES PEQUEÑOS: < 480px - ajustes adicionales */
+@media (max-width: 480px) {
+    .inventario-tabla th:nth-child(5), .inventario-tabla td:nth-child(5) { display: none; }
+    .page-header h1 { font-size: 1.4rem; }
+    .btn-nuevo, .btn-exportar { padding: 0.7rem 1rem; font-size: 0.85rem; }
 }
