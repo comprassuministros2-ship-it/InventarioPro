@@ -189,69 +189,7 @@ function renderizarArticulosCalle3(datos) {
     const contenedor = document.getElementById("contenedorCalle3");
     if (!contenedor) return;
 
-    if (!datos || datos.length === 0) {
-        contenedor.innerHTML = `<p class="placeholder">No hay artículos en el Depósito Calle 3.</p>`;
-        return;
-    }
-
-    let filas = "";
-    datos.forEach(item => {
-        const stock = obtenerStock(item);
-        const estadoClase = stock > 0 ? "badge-disponible" : "badge-sin-stock";
-        const estadoTexto = stock > 0 ? "Disponible" : "Sin stock";
-        const celdaArticulo = obtenerCeldaArticuloHTML(item);
-
-        filas += `
-            <tr>
-                <td>${celdaArticulo}</td>
-                <td><span class="stock-numero">${stock}</span></td>
-                <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
-                <td><span class="badge-categoria">${escapeHtml(item.categoriaID || '—')}</span></td>
-                <td class="td-centrado">
-                    <div class="acciones-wrapper">
-                        <button class="btn-mas-acciones" type="button" onclick="toggleMenuAcciones(this)">⋮</button>
-                        <div class="menu-acciones-dropdown">
-                            <button type="button" data-action="historial" data-id="${item.id}">👁️ Ver Historial</button>
-                            <button type="button" data-action="relevamiento" data-id="${item.id}">✏️ Relevar Stock</button>
-                            <button type="button" data-action="editar" data-id="${item.id}">📷 Editar / Foto</button>
-                            <button type="button" class="btn-eliminar" data-action="eliminar" data-id="${item.id}">🗑️ Eliminar</button>
-                        </div>
-                    </div>
-                </td>
-            </tr>
-        `;
-    });
-
-    contenedor.innerHTML = `
-        <div class="inventario-tabla-wrapper">
-            <table class="inventario-tabla">
-                <thead>
-                    <tr>
-                        <th>Artículo</th>
-                        <th>Stock</th>
-                        <th>Estado</th>
-                        <th>Categoría</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>${filas}</tbody>
-            </table>
-        </div>
-    `;
-
-    contenedor.querySelectorAll('.menu-acciones-dropdown button').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const accion = this.dataset.action;
-            const id = this.dataset.id;
-            document.querySelectorAll('.menu-acciones-dropdown').forEach(m => m.classList.remove('visible'));
-
-            if (accion === 'relevamiento') irARelevamientoConArticulo(id);
-            else if (accion === 'editar') abrirModalEditarArticulo(id);
-            else if (accion === 'historial') abrirModalHistorial(id);
-            else if (accion === 'eliminar') eliminarArticulo(id);
-        });
-    });
+    _renderInventarioCards(datos, contenedor, 'No hay artículos en el Depósito Calle 3.');
 }
 
 // ============================================================
@@ -264,25 +202,25 @@ function renderizarArticulos(datos) {
     // Filtro: el inventario general NO muestra los de Calle 3
     datos = datos.filter(item => String(item.ubicacion || '').trim() !== 'Calle 3');
 
+    _renderInventarioCards(datos, contenedor, 'No se encontraron artículos que coincidan con la búsqueda.');
+}
+
+// -------------------------------------------------------------------------
+// NUEVA FUNCIÓN UNIFICADA: Renderizado de tarjetas limpias (Mercado Libre style)
+// -------------------------------------------------------------------------
+function _renderInventarioCards(datos, contenedor, mensajeVacio) {
     if (!datos || datos.length === 0) {
-        contenedor.innerHTML = `<p class="placeholder">No se encontraron artículos que coincidan con la búsqueda.</p>`;
+        contenedor.innerHTML = `<p class="placeholder">${escapeHtml(mensajeVacio)}</p>`;
         return;
     }
 
     let tarjetas = "";
     datos.forEach(item => {
         const stock = obtenerStock(item);
-        let estadoClase = "badge-disponible";
-        let estadoTexto = "Disponible";
-        if (stock === 0) {
-            estadoClase = "badge-sin-stock";
-            estadoTexto = "Sin Stock";
-        } else if (item.stockCritico > 0 && stock <= item.stockCritico) {
-            estadoClase = "badge-critico";
-            estadoTexto = "Crítico";
-        }
+        const stockClase = _obtenerClaseStock(stock, item);
+        const ubicacion = (item.ubicacion || 'Central').trim() || 'Central';
 
-        // Imagen/emoji del artículo
+        // Imagen/emoji del artículo - FOTO GRANDE sin cache-busting
         const imgData = (item.imagen || '').trim();
         let contenidoVisual = '';
 
@@ -291,52 +229,29 @@ function renderizarArticulos(datos) {
         }
 
         if (imgData.startsWith('img/')) {
-            const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}?v=${new Date().getTime()}`;
+            const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}`;
             if (esUrlImagenSegura(urlGitHub)) {
-                contenidoVisual = `<img src="${escapeHtml(urlGitHub)}" alt="" style="width: 100%; height: 100%; object-fit: cover;">`;
+                contenidoVisual = `<img src="${escapeHtml(urlGitHub)}" alt="${escapeHtml(item.articulo)}" loading="lazy">`;
             }
         } else if (esUrlImagenSegura(imgData)) {
-            contenidoVisual = `<img src="${escapeHtml(imgData)}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
+            contenidoVisual = `<img src="${escapeHtml(imgData)}" alt="${escapeHtml(item.articulo)}" loading="lazy" onerror="this.style.display='none'; this.parentElement.style.background='transparent';">`;
         } else if (imgData !== '') {
-            contenidoVisual = `<span class="emoji-articulo" style="font-size: 2rem;">${escapeHtml(imgData)}</span>`;
+            contenidoVisual = `<span class="emoji-articulo" style="font-size: 3rem;">${escapeHtml(imgData)}</span>`;
         } else {
-            contenidoVisual = `<span class="emoji-articulo" style="font-size: 2rem;">📦</span>`;
+            contenidoVisual = `<span class="emoji-articulo" style="font-size: 3rem;">📦</span>`;
         }
 
         tarjetas += `
             <article class="inventario-card" data-id="${item.id}">
-                <!-- Parte superior (siempre visible) -->
-                <div class="inventario-card-header">
-                    <div class="inventario-card-top-row">
-                        <div class="inventario-card-image">${contenidoVisual}</div>
-                        <div class="inventario-card-info">
-                            <span class="inventario-card-name">${escapeHtml(item.articulo)}</span>
-                            <span class="inventario-card-category">${escapeHtml(item.categoriaID || '—')}</span>
-                        </div>
-                        <button type="button" class="inventario-card-expand-btn" aria-label="Expandir tarjeta" aria-expanded="false">▼</button>
-                    </div>
-                    <div class="inventario-card-stock-row">
-                        <div class="inventario-card-stock">
-                            <span class="inventario-card-stock-value">${stock}</span>
-                            <span class="inventario-card-stock-unit">unidades</span>
-                        </div>
-                        <span class="inventario-card-badge badge ${estadoClase}">${estadoTexto}</span>
-                    </div>
+                <div class="inventario-card-image-wrapper">
+                    ${contenidoVisual}
                 </div>
-
-                <!-- Parte inferior (expansible) -->
-                <div class="inventario-card-body">
-                    <div class="inventario-card-body-inner">
-                        <div class="inventario-card-movimientos">
-                            <span class="inventario-card-movimientos-icon">⏱️</span>
-                            <span>Sin movimientos recientes</span>
-                        </div>
-                        <div class="inventario-card-actions">
-                            <button type="button" class="inventario-card-action-btn" data-action="editar" data-id="${item.id}" title="Editar artículo">✏️</button>
-                            <button type="button" class="inventario-card-action-btn" data-action="relevamiento" data-id="${item.id}" title="Relevar stock">📋</button>
-                            <button type="button" class="inventario-card-action-btn" data-action="historial" data-id="${item.id}" title="Ver historial">👁️</button>
-                            <button type="button" class="inventario-card-action-btn" data-action="eliminar" data-id="${item.id}" title="Eliminar artículo">🗑️</button>
-                        </div>
+                <div class="inventario-card-content">
+                    <h3 class="inventario-card-name">${escapeHtml(item.articulo)}</h3>
+                    <span class="inventario-card-category">${escapeHtml(item.categoriaID || '—')}</span>
+                    <div class="inventario-card-stock-row">
+                        <span class="inventario-card-stock ${stockClase}">${stock} ${escapeHtml(item.unidadMedida || 'unidades')}</span>
+                        <span class="inventario-card-location">${escapeHtml(ubicacion)}</span>
                     </div>
                 </div>
             </article>
@@ -345,40 +260,23 @@ function renderizarArticulos(datos) {
 
     contenedor.innerHTML = `<div class="inventario-cards-grid">${tarjetas}</div>`;
 
-    // Event listeners para expandir/colapsar tarjetas
-    contenedor.querySelectorAll('.inventario-card-expand-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const card = this.closest('.inventario-card');
-            const isExpanded = card.classList.toggle('expanded');
-            this.setAttribute('aria-expanded', isExpanded);
-            this.textContent = isExpanded ? '▲' : '▼';
-        });
-    });
-
-    // Event listeners para botones de acción
-    contenedor.querySelectorAll('.inventario-card-action-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const accion = this.dataset.action;
-            const id = this.dataset.id;
-
-            if (accion === 'relevamiento') irARelevamientoConArticulo(id);
-            else if (accion === 'editar') abrirModalEditarArticulo(id);
-            else if (accion === 'historial') abrirModalDetalleArticulo(id);
-            else if (accion === 'eliminar') eliminarArticulo(id);
-        });
-    });
-
-    // Event listener para abrir modal de detalle al clickear la tarjeta (excluye botones y flechita)
+    // Click en tarjeta completa -> abrir modal detalle
     contenedor.querySelectorAll('.inventario-card').forEach(card => {
         card.addEventListener('click', function(e) {
-            // No abrir modal si el clic fue en un botón o en la flechita de expandir
-            if (e.target.closest('button')) return;
             const id = this.dataset.id;
             if (id) abrirModalDetalleArticulo(id);
         });
     });
+}
+
+// -------------------------------------------------------------------------
+// Determinar clase CSS según stock y umbrales
+// -------------------------------------------------------------------------
+function _obtenerClaseStock(stock, item) {
+    if (stock === 0) return 'stock-cero';
+    if (item.stockCritico > 0 && stock <= item.stockCritico) return 'stock-critico';
+    if (item.stockMinimo > 0 && stock <= item.stockMinimo) return 'stock-bajo';
+    return 'stock-ok';
 }
 
 function obtenerCeldaArticuloHTML(articulo) {
@@ -3484,31 +3382,109 @@ function abrirModalEditarArticulo(id) {
 }
 
 // ============================================================
-// 25b. MODAL DETALLE ARTÍCULO
+// 25b. MODAL DETALLE ARTÍCULO (Rediseñado - 2 columnas + Acciones)
 // ============================================================
 function abrirModalDetalleArticulo(id) {
     const art = articulos.find(a => String(a.id) === String(id));
     if (!art) return;
 
     const stock = obtenerStock(art);
-    let estadoClase = 'badge-disponible';
-    let estadoTexto = 'Disponible';
-    if (stock === 0) { estadoClase = 'badge-sin-stock'; estadoTexto = 'Sin Stock'; }
-    else if (art.stockCritico > 0 && stock <= art.stockCritico) { estadoClase = 'badge-critico'; estadoTexto = 'Crítico'; }
+    const stockClase = _obtenerClaseStock(stock, art);
+    const ubicacion = (art.ubicacion || 'Central').trim() || 'Central';
 
-    document.getElementById('detalleArtTitulo').textContent = `${escapeHtml(art.articulo)} (ID: ${escapeHtml(art.id)})`;
-    document.getElementById('detalleArtStock').textContent = stock;
-    document.getElementById('detalleArtBadge').textContent = estadoTexto;
-    document.getElementById('detalleArtBadge').className = `badge ${estadoClase}`;
+    // Poblar título
+    document.getElementById('detalleArtTitulo').textContent = escapeHtml(art.articulo);
+
+    // Poblar columna izquierda - Imagen
+    const imgEl = document.getElementById('detalleArtImagenGrande');
+    const imgData = (art.imagen || '').trim();
+
+    function esUrlImagenSegura(url) {
+        return url.startsWith('https://') || url.startsWith('http://') || url.startsWith('data:image/');
+    }
+
+    if (imgData.startsWith('img/')) {
+        const urlGitHub = `https://raw.githubusercontent.com/comprassuministros2-ship-it/InventarioPro/main/${imgData}`;
+        if (esUrlImagenSegura(urlGitHub)) {
+            imgEl.src = urlGitHub;
+            imgEl.alt = escapeHtml(art.articulo);
+            imgEl.style.display = 'block';
+        } else {
+            imgEl.style.display = 'none';
+        }
+    } else if (esUrlImagenSegura(imgData)) {
+        imgEl.src = imgData;
+        imgEl.alt = escapeHtml(art.articulo);
+        imgEl.style.display = 'block';
+    } else {
+        imgEl.style.display = 'none';
+    }
+
+    // Poblar botones de acción con data-id
+    document.querySelectorAll('.detalle-btn[data-id]').forEach(btn => {
+        btn.dataset.id = id;
+    });
+
+    // Poblar columna derecha - Datos
+    document.getElementById('detalleArtId').textContent = escapeHtml(art.id);
     document.getElementById('detalleArtCategoria').textContent = escapeHtml(art.categoriaID || '—');
-    document.getElementById('detalleArtUnidad').textContent = escapeHtml(art.unidadMedida || 'Unidad');
-    document.getElementById('detalleArtStockMin').textContent = art.stockMin || 0;
+    document.getElementById('detalleArtNombreDetalle').textContent = escapeHtml(art.articulo);
 
-    // Cargar movimientos
+    const stockEl = document.getElementById('detalleArtStockDetalle');
+    stockEl.textContent = `${stock} ${escapeHtml(art.unidadMedida || 'unidades')}`;
+    stockEl.className = `stock-colored ${stockClase}`;
+
+    document.getElementById('detalleArtUnidad').textContent = escapeHtml(art.unidadMedida || 'Unidad');
+    document.getElementById('detalleArtStockMinDetalle').textContent = art.stockMin || 0;
+    document.getElementById('detalleArtStockCritDetalle').textContent = art.stockCritico || 0;
+    document.getElementById('detalleArtObsDetalle').textContent = escapeHtml(art.observaciones || '—');
+
+    // Cargar movimientos (Paso 3 - limitado a 5)
     cargarMovimientosDetalleArticulo(id);
 
+    // Mostrar modal
     document.getElementById('modalDetalleArticulo').style.display = 'flex';
 }
+
+// Event listeners para botones de acción del modal detalle
+(function() {
+    // Delegación en el modal para botones de acción
+    const modal = document.getElementById('modalDetalleArticulo');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            const btn = e.target.closest('.detalle-btn');
+            if (!btn) return;
+
+            const id = btn.dataset.id;
+            if (!id) return;
+
+            if (btn.classList.contains('detalle-btn-editar')) {
+                cerrarModalDetalleArticulo();
+                abrirModalEditarArticulo(id);
+            } else if (btn.classList.contains('detalle-btn-relevar')) {
+                cerrarModalDetalleArticulo();
+                irARelevamientoConArticulo(id);
+            } else if (btn.classList.contains('detalle-btn-eliminar')) {
+                if (confirm('¿Eliminar este artículo? Esta acción no se puede deshacer.')) {
+                    cerrarModalDetalleArticulo();
+                    eliminarArticulo(id);
+                }
+            }
+        });
+
+        // Botón "Ver historial completo"
+        const btnVerCompleto = document.getElementById('detalleBtnVerHistorialCompleto');
+        if (btnVerCompleto) {
+            btnVerCompleto.addEventListener('click', function() {
+                const id = this.dataset.id;
+                cerrarModalDetalleArticulo();
+                // Navegar a pestaña Movimientos con filtro preseleccionado
+                navegarAPagina('movimientos');
+                // TODO: Aplicar filtro por artículo (pendiente implementación en Movimientos)
+            });
+        }
+    }
+})();
 
 function cerrarModalDetalleArticulo() {
     document.getElementById('modalDetalleArticulo').style.display = 'none';
@@ -3516,9 +3492,13 @@ function cerrarModalDetalleArticulo() {
 
 async function cargarMovimientosDetalleArticulo(id) {
     const contenedor = document.getElementById('detalleArtMovimientos');
+    const contadorEl = document.getElementById('detalleHistorialCount');
+    const btnVerCompleto = document.getElementById('detalleBtnVerHistorialCompleto');
     if (!contenedor) return;
 
     contenedor.innerHTML = '<p class="placeholder">Cargando movimientos...</p>';
+    if (contadorEl) contadorEl.textContent = '';
+    if (btnVerCompleto) btnVerCompleto.style.display = 'none';
 
     try {
         const resultado = await apiService.post({ accion: 'listarMovimientos', idArticulo: id });
@@ -3530,11 +3510,25 @@ async function cargarMovimientosDetalleArticulo(id) {
             return;
         }
 
-        // Ordenar por fecha descendente
+        // Ordenar por fecha descendente (más reciente primero)
         datos.sort((a, b) => new Date(b.fecha || 0) - new Date(a.fecha || 0));
 
+        const total = datos.length;
+        const mostrar = datos.slice(0, 5); // Solo últimos 5
+
+        // Actualizar contador: "5 de 23"
+        if (contadorEl) {
+            contadorEl.textContent = `(${mostrar.length} de ${total})`;
+        }
+
+        // Mostrar botón "Ver historial completo" si hay más de 5
+        if (btnVerCompleto && total > 5) {
+            btnVerCompleto.dataset.id = id; // Guardar ID para el click handler
+            btnVerCompleto.style.display = 'inline-flex';
+        }
+
         let html = '<ul class="lista-movimientos-detalle">';
-        datos.forEach(m => {
+        mostrar.forEach(m => {
             const fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
                 hour: '2-digit', minute: '2-digit'
