@@ -120,10 +120,9 @@ function navegarAPagina(nombre) {
 
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebarOverlay');
-    if (window.matchMedia("(max-width: 768px)").matches) {
-        if (sidebar) sidebar.classList.remove('open');
-        if (overlay) overlay.classList.remove('show');
-    }
+    // Sidebar es overlay en TODAS las pantallas ahora, cerrar siempre al navegar
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('show');
 }
 
 function configurarNavegacion() {
