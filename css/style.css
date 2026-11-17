@@ -147,37 +147,54 @@ body {
    ========================================= */
 .app-layout {
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-columns: 1fr;
     grid-template-rows: 92px minmax(0, 1fr);
-    grid-template-areas: 'sidebar topbar' 'sidebar main';
+    grid-template-areas: 'topbar' 'main';
     min-height: 100vh;
-    transition: grid-template-columns 0.3s ease;
-}
-
-.app-layout.sidebar-collapsed {
-    grid-template-columns: 70px minmax(0, 1fr);
 }
 
 /* =========================================
    06. SIDEBAR
    ========================================= */
 .sidebar {
-    grid-area: sidebar;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    width: 260px;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     gap: 28px;
-    height: 100vh;
     padding: 24px 16px 3rem 16px;
     background: var(--sidebar-bg);
     border-right: 1px solid var(--sidebar-border);
-    transition: background-color 0.3s, transform 0.3s ease, margin-left 0.3s ease;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+    box-shadow: 0 0 40px rgba(15, 23, 42, 0.15);
 }
 
-.sidebar.hidden {
-    transform: translateX(-100%);
-    margin-left: -240px;
+.sidebar.open {
+    transform: translateX(0);
+}
+
+/* Overlay for sidebar */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.4);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 999;
+}
+
+.sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
 }
 
 .sidebar-logo {
@@ -413,7 +430,7 @@ body {
 }
 
 .topbar-menu-btn {
-    display: none; /* Oculto en desktop, visible en móvil via media query */
+    display: inline-flex; /* Visible en todas las pantallas */
     align-items: center;
     justify-content: center;
     padding: 8px;
@@ -548,8 +565,8 @@ body {
    10. CABECERA DE PÁGINA
    ========================================= */
 .page-header {
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 
 .page-header h1 {
@@ -1561,19 +1578,6 @@ body {
 }
 
 /* =========================================
-   23. OVERLAY DEL MENÚ (móvil)
-   ========================================= */
-.sidebar-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.4);
-    z-index: 999;
-}
-
-.sidebar-overlay.show { display: block; }
-
-/* =========================================
    24. UTILIDADES
    ========================================= */
 .placeholder {
@@ -1585,25 +1589,9 @@ body {
    25. RESPONSIVE GENERAL (móvil ≤768px)
    ========================================= */
 @media (max-width: 768px) {
-    .app-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto minmax(0, 1fr);
-        grid-template-areas: 'topbar' 'main';
-    }
-
     .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 260px;
-        z-index: 1000;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
         box-shadow: 0 0 40px rgba(15, 23, 42, 0.15);
     }
-
-    .sidebar.open { transform: translateX(0); }
-    .sidebar.hidden { transform: translateX(-100%); margin-left: 0; }
 
     .topbar { gap: 16px; padding: 12px 20px; }
     .main-content { padding: 1.5rem; }
@@ -3085,7 +3073,7 @@ body {
     display: flex;
     gap: .5rem;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 1.25rem;
+    margin-bottom: 2rem;
 }
 
 .pedidos-tab {
@@ -3720,6 +3708,7 @@ body {
     font-size: 0.85rem;
     margin-top: 1.5rem;
     margin-bottom: 1.2rem;
+    padding-top: 1rem;
     font-family: 'Inter', sans-serif;
 }
 
