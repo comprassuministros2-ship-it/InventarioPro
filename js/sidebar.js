@@ -5,6 +5,8 @@
 
     if (!sidebar || !menuButton || !overlay) return;
 
+    const isDesktop = () => window.matchMedia('(min-width: 1024px)').matches;
+
     const closeSidebar = () => {
         sidebar.classList.remove('open');
         overlay.classList.remove('show');
@@ -23,7 +25,22 @@
         sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
     };
 
-    // Toggle al tocar el botón hamburguesa
+    // --- HOVER DESKTOP (≥1024px) ---
+    if (isDesktop()) {
+        // Área invisible de 20px a la izquierda para abrir
+        const hoverArea = document.createElement('div');
+        hoverArea.className = 'sidebar-hover-trigger';
+        hoverArea.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 20px; height: 100vh;
+            z-index: 998; background: transparent;
+        `;
+        document.body.appendChild(hoverArea);
+
+        hoverArea.addEventListener('mouseenter', openSidebar);
+        sidebar.addEventListener('mouseleave', closeSidebar);
+    }
+
+    // Toggle al tocar el botón hamburguesa (funciona en móvil y desktop)
     menuButton.addEventListener('click', toggleSidebar);
 
     // Cerrar al tocar el overlay (fuera del sidebar)
