@@ -351,6 +351,138 @@ function formatearUnidades(cantidad) {
     return Number(cantidad || 0).toLocaleString('es-AR');
 }
 
+// ============================================================
+// EXPORTAR INVENTARIO A CSV
+// ============================================================
+function exportarInventarioCSV() {
+    // Detectar qué página está activa
+    const paginaInventario = document.getElementById('pagina-inventario');
+    const paginaCalle3 = document.getElementById('pagina-calle3');
+    const esInventarioGeneral = paginaInventario?.classList.contains('activa');
+    const esCalle3 = paginaCalle3?.classList.contains('activa');
+
+    if (!esInventarioGeneral && !esCalle3) {
+        mostrarToast('La exportación solo está disponible en Inventario General o Depósito Calle 3', 'error');
+        return;
+    }
+
+    // Obtener el término de búsqueda actual
+    const inputBusqueda = esInventarioGeneral
+        ? document.getElementById('inputBusqueda')
+        : document.getElementById('inputBusquedaCalle3');
+    const terminoBusqueda = inputBusqueda?.value?.trim() || '';
+
+    // Obtener el filtro de categoría/estado activo
+    const filtroCategoria = filtroActivo || 'todos';
+
+    // Filtrar artículos según la página
+    let datos = [...articulos];
+
+    if (esCalle3) {
+        // Calle 3: solo artículos con ubicación "Calle 3"
+        datos = datos.filter(item => String(item.ubicacion || '').trim() === 'Calle 3');
+    } else {
+        // Inventario General: excluir Calle 3
+        datos = datos.filter(item => String(item.ubicacion || '').trim() !== 'Calle 3');
+    }
+
+    // Aplicar búsqueda
+    if (terminoBusqueda) {
+        const terminoNormalizado = normalizarTexto(terminoBusqueda);
+        datos = datos.filter(item => {
+            const idCoincideExacto = normalizarTexto(item.id) === terminoNormalizado;
+            const camposParciales = [item.articulo, item.categoriaID, item.patrimonio];
+            const coincideParcial = camposParciales.some(campo => normalizarTexto(campo).includes(terminoNormalizado));
+            return idCoincideExacto || coincideParcial;
+        });
+    }
+
+    // Aplicar filtro de categoría/estado (misma lógica que aplicarFiltro)
+    datos = datos.filter(item => {
+        const stock = obtenerStock(item);
+        if (filtroCategoria === "disponibles") return stock > 0;
+        if (filtroCategoria === "stock-bajo") return stock >= 1 && stock <= 5;
+        if (filtroCategoria === "sin-stock") return stock === 0;
+        if (filtroCategoria === "criticos") return stock === 0 || (item.stockCritico > 0 && stock <= item.stockCritico);
+        if (filtroCategoria === "todos" || !filtroCategoria) return true;
+        const categoriaItem = normalizarTexto(item.categoriaID);
+        const categoriaFiltro = normalizarTexto(filtroCategoria);
+        return categoriaItem === categoriaFiltro || categoriaItem.includes(categoriaFiltro) || categoriaFiltro.includes(categoriaItem);
+    });
+
+    if (datos.length === 0) {
+        mostrarToast('No hay artículos para exportar con los filtros actuales', 'error');
+        return;
+    }
+
+    // Calcular estado para cada artículo
+    const calcularEstado = (item) => {
+        const stock = obtenerStock(item);
+        if (stock === 0) return 'Sin Stock';
+        if (item.stockCritico > 0 && stock <= item.stockCritico) return 'Crítico';
+        return 'Disponible';
+    };
+
+    // Escapar valores para CSV (proteger contra CSV Injection y comillas)
+    const escapeCsv = (val) => {
+        let str = String(val ?? '').replace(/"/g, '""');
+        if (/^[=+\-@]/.test(str)) str = "'" + str;
+        return `"${str}"`;
+    };
+
+    // Encabezados
+    const headers = ['ID', 'Artículo', 'Stock', 'Categoría', 'Ubicación', 'Estado'];
+
+    // Filas
+    const rows = datos.map(item => {
+        const stock = obtenerStock(item);
+        const ubicacion = (item.ubicacion || 'Central').trim() || 'Central';
+        const estado = calcularEstado(item);
+
+        return [
+            escapeCsv(item.id),
+            escapeCsv(item.articulo),
+            escapeCsv(stock),
+            escapeCsv(item.categoriaID || '—'),
+            escapeCsv(ubicacion),
+            escapeCsv(estado)
+        ].join(';');
+    });
+
+    // BOM UTF-8 (﻿) para que Excel lea tildes y ñ correctamente
+    const csvContent = '﻿' + headers.join(';') + '\n' + rows.join('\n');
+
+    // Descargar
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const paginaNombre = esCalle3 ? 'Calle3' : 'General';
+    link.download = `Inventario_${paginaNombre}_${timestamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    mostrarToast(`${datos.length} artículos exportados a CSV`, 'exito');
+}
+
+// Configurar listeners de los botones Exportar
+function configurarBtnExportarInventario() {
+    // Botón en Inventario General
+    const btnInventario = document.querySelector('#pagina-inventario .btn-exportar');
+    if (btnInventario) {
+        btnInventario.addEventListener('click', exportarInventarioCSV);
+    }
+
+    // Botón en Depósito Calle 3
+    const btnCalle3 = document.querySelector('#pagina-calle3 .btn-exportar');
+    if (btnCalle3) {
+        btnCalle3.addEventListener('click', exportarInventarioCSV);
+    }
+}
+
 function actualizarCalculoEntrada() {
     const id = document.getElementById('articuloId')?.value;
     const articulo = articulos.find(item => String(item.id) === String(id));
@@ -3216,6 +3348,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     configurarModalDireccion();
     configurarModalArticulo();
     inicializarDragAndDropImagen();
+    configurarBtnExportarInventario();
 
     configurarBuscadorDropdown(
         'inputArticulo', 'articuloId',
