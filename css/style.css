@@ -1585,6 +1585,20 @@ body {
     font-style: italic;
 }
 
+/* Contenedor centrado para contenido de páginas */
+.page-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Alinear page-header con el contenido centrado */
+.page-header {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
 /* =========================================
    25. RESPONSIVE GENERAL (móvil ≤768px)
    ========================================= */
@@ -1595,6 +1609,32 @@ body {
 
     .topbar { gap: 16px; padding: 12px 20px; }
     .main-content { padding: 1.5rem; }
+
+    .page-content { padding: 0 1rem; }
+    .page-header { padding: 0 1rem; margin: 1.5rem auto; }
+
+    .pedidos-resumen-tira {
+        grid-template-columns: 1fr;
+        gap: .35rem;
+    }
+    .pedidos-resumen-item {
+        flex-direction: row;
+        align-items: baseline;
+        gap: .5rem;
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
+        padding: .65rem .25rem;
+    }
+    .pedidos-resumen-item:last-child { border-bottom: 0; }
+    .pedidos-resumen-item strong { font-size: 1.4rem; }
+
+    .pedidos-filtros {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 0;
+    }
+    .pedidos-filtros-busqueda { width: 100%; }
+    .buscador-inventario { max-width: none; width: 100%; }
 
     .inventario-tabla th,
     .inventario-tabla td { padding: 0.7rem 0.8rem; }
@@ -3076,6 +3116,35 @@ body {
     margin-bottom: 2rem;
 }
 
+/* Grid Master-Detail para Hoja de Seguimiento */
+.hoja-seguimiento-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.panel-lista {
+    min-width: 0; /* evita overflow en grid */
+}
+
+.panel-detalle-sticky {
+    position: sticky;
+    top: calc(92px + 2rem); /* alto topbar + margen page-header */
+    height: calc(100vh - 92px - 4rem);
+    overflow-y: auto;
+}
+
+@media (max-width: 992px) {
+    .hoja-seguimiento-grid {
+        grid-template-columns: 1fr;
+    }
+    .panel-detalle-sticky {
+        position: static;
+        height: auto;
+    }
+}
+
 .pedidos-tab {
     border: 0;
     border-bottom: 3px solid transparent;
@@ -3129,6 +3198,9 @@ body {
     border: 1px solid var(--border);
     border-radius: 14px;
     box-shadow: var(--shadow-sm);
+    max-width: 1400px;
+    margin: 0 auto 1.5rem;
+    box-sizing: border-box;
 }
 
 .pedidos-resumen-item {
@@ -3162,7 +3234,10 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: .75rem;
-    margin: 1rem 0;
+    margin: 0 auto 1.5rem;
+    max-width: 1400px;
+    padding: 0 1rem;
+    box-sizing: border-box;
 }
 
 .pedidos-filtros-fecha,

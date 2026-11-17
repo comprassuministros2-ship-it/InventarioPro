@@ -96,7 +96,7 @@
                 <p class="fecha-hoy">Gestión de artículos y stock</p>
             </div>
 
-            <div style="padding: 0 1.5rem;">
+            <div class="page-content">
                 <div class="toolbar-inventario">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
@@ -131,79 +131,81 @@
                 <p class="fecha-hoy">Panel de control - <span id="fechaActual"></span></p>
             </div>
 
-            <div class="entradas-wrapper">
-                <div class="entradas-form">
-                    <h2>Registrar entrada de stock</h2>
-                    <form id="formEntrada">
-                        <div class="form-group buscador-articulo-group">
-                            <label for="inputArticulo">ARTÍCULO *</label>
-                            <div class="buscador-wrapper">
-                                <input type="text" id="inputArticulo" placeholder="Escribí para buscar..." autocomplete="off" required>
-                                <span class="icono-lupa">🔍</span>
-                                <ul id="listaArticulosCustom" class="dropdown-lista"></ul>
-                            </div>
-                            <input type="hidden" id="articuloId" value="">
-                        </div>
-                        <div class="form-group" id="grupoCantidadEntrada">
-                            <div id="avisoPresentacionEntrada" class="aviso-presentacion" hidden>
-                                Presentación: <span id="textoPresentacionEntrada"></span>
-                            </div>
-                            <div class="cantidad-entrada-grid" id="cantidadEntradaGrid">
-                                <div id="contenedorPacksEntrada">
-                                    <label for="cantidadPacksEntrada" id="labelPacksEntrada">CANTIDAD</label>
-                                    <input type="number" id="cantidadPacksEntrada" min="0" value="0">
+            <div class="page-content">
+                <div class="entradas-wrapper">
+                    <div class="entradas-form">
+                        <h2>Registrar entrada de stock</h2>
+                        <form id="formEntrada">
+                            <div class="form-group buscador-articulo-group">
+                                <label for="inputArticulo">ARTÍCULO *</label>
+                                <div class="buscador-wrapper">
+                                    <input type="text" id="inputArticulo" placeholder="Escribí para buscar..." autocomplete="off" required>
+                                    <span class="icono-lupa">🔍</span>
+                                    <ul id="listaArticulosCustom" class="dropdown-lista"></ul>
                                 </div>
-                                <div>
-                                    <label for="cantidadSueltasEntrada">UNIDADES SUELTAS</label>
-                                    <input type="number" id="cantidadSueltasEntrada" min="0" value="0">
+                                <input type="hidden" id="articuloId" value="">
+                            </div>
+                            <div class="form-group" id="grupoCantidadEntrada">
+                                <div id="avisoPresentacionEntrada" class="aviso-presentacion" hidden>
+                                    Presentación: <span id="textoPresentacionEntrada"></span>
                                 </div>
+                                <div class="cantidad-entrada-grid" id="cantidadEntradaGrid">
+                                    <div id="contenedorPacksEntrada">
+                                        <label for="cantidadPacksEntrada" id="labelPacksEntrada">CANTIDAD</label>
+                                        <input type="number" id="cantidadPacksEntrada" min="0" value="0">
+                                    </div>
+                                    <div>
+                                        <label for="cantidadSueltasEntrada">UNIDADES SUELTAS</label>
+                                        <input type="number" id="cantidadSueltasEntrada" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div id="recuadroCalculoEntrada" class="recuadro-calculo-cantidad">
+                                    <div class="recuadro-calculo-etiqueta">Total a ingresar al stock</div>
+                                    <div class="recuadro-calculo-total" id="textoCalculoEntrada">0 unidades</div>
+                                    <div class="recuadro-calculo-stock" id="textoStockFuturoEntrada">Stock actual: 0 → 0</div>
+                                </div>
+                                <input type="hidden" id="cantidad" value="0">
                             </div>
-                            <div id="recuadroCalculoEntrada" class="recuadro-calculo-cantidad">
-                                <div class="recuadro-calculo-etiqueta">Total a ingresar al stock</div>
-                                <div class="recuadro-calculo-total" id="textoCalculoEntrada">0 unidades</div>
-                                <div class="recuadro-calculo-stock" id="textoStockFuturoEntrada">Stock actual: 0 → 0</div>
+                            <div class="form-group">
+                                <label for="fechaEntrada">FECHA *</label>
+                                <input type="date" id="fechaEntrada" required>
                             </div>
-                            <input type="hidden" id="cantidad" value="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="fechaEntrada">FECHA *</label>
-                            <input type="date" id="fechaEntrada" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="proveedor">PROVEEDOR</label>
-                            <input type="text" id="proveedor" placeholder="Nombre del proveedor">
-                        </div>
-                        <div class="form-group">
-                            <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
-                            <input type="text" id="factura" placeholder="Ej: FAC-00234">
-                        </div>
-                        <div class="form-group">
-                            <label for="tipoCompra">TIPO DE ORDEN DE COMPRA</label>
-                            <input type="text" id="tipoCompra" placeholder="Ej: Orden de Compra, Compra Directa...">
-                        </div>
-                        <div class="form-group">
-                            <label for="observaciones">OBSERVACIONES</label>
-                            <textarea id="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="registradoPor">REGISTRADO POR *</label>
-                            <input type="text" id="registradoPor" value="Samuel Steves" required>
-                        </div>
-                        <button type="submit" class="btn-submit" id="btnRegistrar">Registrar entrada</button>
-                    </form>
-                </div>
-
-                <div class="entradas-sidebar">
-                    <div class="vista-previa">
-                        <h3>Artículo seleccionado</h3>
-                        <div id="vistaPreviaContenido">
-                            <p class="placeholder">Seleccioná un artículo para ver su stock actual</p>
-                        </div>
+                            <div class="form-group">
+                                <label for="proveedor">PROVEEDOR</label>
+                                <input type="text" id="proveedor" placeholder="Nombre del proveedor">
+                            </div>
+                            <div class="form-group">
+                                <label for="factura">N° FACTURA / REMITO PROVEEDOR</label>
+                                <input type="text" id="factura" placeholder="Ej: FAC-00234">
+                            </div>
+                            <div class="form-group">
+                                <label for="tipoCompra">TIPO DE ORDEN DE COMPRA</label>
+                                <input type="text" id="tipoCompra" placeholder="Ej: Orden de Compra, Compra Directa...">
+                            </div>
+                            <div class="form-group">
+                                <label for="observaciones">OBSERVACIONES</label>
+                                <textarea id="observaciones" rows="3" placeholder="Notas adicionales..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="registradoPor">REGISTRADO POR *</label>
+                                <input type="text" id="registradoPor" value="Samuel Steves" required>
+                            </div>
+                            <button type="submit" class="btn-submit" id="btnRegistrar">Registrar entrada</button>
+                        </form>
                     </div>
-                    <div class="ultimas-entradas">
-                        <h3>Últimas entradas</h3>
-                        <div id="ultimasEntradasContenido">
-                            <p class="placeholder">Cargando...</p>
+
+                    <div class="entradas-sidebar">
+                        <div class="vista-previa">
+                            <h3>Artículo seleccionado</h3>
+                            <div id="vistaPreviaContenido">
+                                <p class="placeholder">Seleccioná un artículo para ver su stock actual</p>
+                            </div>
+                        </div>
+                        <div class="ultimas-entradas">
+                            <h3>Últimas entradas</h3>
+                            <div id="ultimasEntradasContenido">
+                                <p class="placeholder">Cargando...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -222,78 +224,80 @@
                 <p class="fecha-hoy">Panel de control - <span id="fechaActualSalidas"></span></p>
             </div>
 
-            <div class="salidas-wrapper">
-                <div class="salidas-form">
-                    <h2>Registrar salida de stock</h2>
-                    <form id="formSalida">
-                        <div class="form-group buscador-articulo-group">
-                            <label for="inputArticuloSalida">ARTÍCULO *</label>
-                            <div class="buscador-wrapper">
-                                <input type="text" id="inputArticuloSalida" placeholder="Escribí para buscar..." autocomplete="off" required>
-                                <span class="icono-lupa">🔍</span>
-                                <ul id="listaArticulosCustomSalida" class="dropdown-lista"></ul>
-                            </div>
-                            <input type="hidden" id="articuloIdSalida" value="">
-                        </div>
-                       <div class="form-group" id="grupoCantidadSalida">
-                            <div id="avisoPresentacionSalida" class="aviso-presentacion" hidden>
-                                Stock actual: <span id="textoStockActualSalida"></span>
-                            </div>
-                            <label for="cantidadUnidadesSalida">CANTIDAD *</label>
-                            <div style="display: flex; gap: 0.8rem; align-items: center;">
-                                <input type="number" id="cantidadUnidadesSalida" min="1" value="1" required style="flex: 1;">
-                                <select id="selectTipoSalida" style="width: auto; min-width: 120px; display: none;">
-                                    <option value="unidad">Unidades</option>
-                                    <option value="pack" id="optPackSalida">Pack</option>
-                                </select>
-                            </div>
-                            <input type="hidden" id="cantidadSalida" value="1">
-                        </div>
-                        <div class="form-group">
-                            <label for="fechaSalida">FECHA *</label>
-                            <input type="date" id="fechaSalida" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="inputDestinoSalida">DESTINO / DIRECCIÓN *</label>
-                            <div class="destino-wrapper">
-                                <div class="destino-input-wrapper">
-                                    <input type="text" id="inputDestinoSalida" placeholder="Buscar dirección..." autocomplete="off" required>
+            <div class="page-content">
+                <div class="salidas-wrapper">
+                    <div class="salidas-form">
+                        <h2>Registrar salida de stock</h2>
+                        <form id="formSalida">
+                            <div class="form-group buscador-articulo-group">
+                                <label for="inputArticuloSalida">ARTÍCULO *</label>
+                                <div class="buscador-wrapper">
+                                    <input type="text" id="inputArticuloSalida" placeholder="Escribí para buscar..." autocomplete="off" required>
                                     <span class="icono-lupa">🔍</span>
-                                    <ul id="listaDestinosCustom" class="dropdown-lista"></ul>
+                                    <ul id="listaArticulosCustomSalida" class="dropdown-lista"></ul>
                                 </div>
-                                <button type="button" class="btn-agregar-direccion" id="btnAgregarDireccion" title="Agregar nueva dirección">
-                                    + Nueva
-                                </button>
+                                <input type="hidden" id="articuloIdSalida" value="">
                             </div>
-                            <input type="hidden" id="destinoSalida" value="">
-                        </div>
-                        <div class="form-group">
-                            <label for="facturaSalida">N° NOTA / REMITO</label>
-                            <input type="text" id="facturaSalida" placeholder="Ej: NOTA-00234">
-                        </div>
-                        <div class="form-group">
-                            <label for="observacionesSalida">OBSERVACIONES</label>
-                            <textarea id="observacionesSalida" rows="3" placeholder="Notas adicionales..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="registradoPorSalida">REGISTRADO POR *</label>
-                            <input type="text" id="registradoPorSalida" value="Samuel Steves" required>
-                        </div>
-                        <button type="submit" class="btn-submit" id="btnRegistrarSalida">Registrar salida</button>
-                    </form>
-                </div>
-
-                <div class="salidas-sidebar">
-                    <div class="vista-previa">
-                        <h3>Artículo seleccionado</h3>
-                        <div id="vistaPreviaContenidoSalida">
-                            <p class="placeholder">Seleccioná un artículo para ver su stock actual</p>
-                        </div>
+                           <div class="form-group" id="grupoCantidadSalida">
+                                <div id="avisoPresentacionSalida" class="aviso-presentacion" hidden>
+                                    Stock actual: <span id="textoStockActualSalida"></span>
+                                </div>
+                                <label for="cantidadUnidadesSalida">CANTIDAD *</label>
+                                <div style="display: flex; gap: 0.8rem; align-items: center;">
+                                    <input type="number" id="cantidadUnidadesSalida" min="1" value="1" required style="flex: 1;">
+                                    <select id="selectTipoSalida" style="width: auto; min-width: 120px; display: none;">
+                                        <option value="unidad">Unidades</option>
+                                        <option value="pack" id="optPackSalida">Pack</option>
+                                    </select>
+                                </div>
+                                <input type="hidden" id="cantidadSalida" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="fechaSalida">FECHA *</label>
+                                <input type="date" id="fechaSalida" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputDestinoSalida">DESTINO / DIRECCIÓN *</label>
+                                <div class="destino-wrapper">
+                                    <div class="destino-input-wrapper">
+                                        <input type="text" id="inputDestinoSalida" placeholder="Buscar dirección..." autocomplete="off" required>
+                                        <span class="icono-lupa">🔍</span>
+                                        <ul id="listaDestinosCustom" class="dropdown-lista"></ul>
+                                    </div>
+                                    <button type="button" class="btn-agregar-direccion" id="btnAgregarDireccion" title="Agregar nueva dirección">
+                                        + Nueva
+                                    </button>
+                                </div>
+                                <input type="hidden" id="destinoSalida" value="">
+                            </div>
+                            <div class="form-group">
+                                <label for="facturaSalida">N° NOTA / REMITO</label>
+                                <input type="text" id="facturaSalida" placeholder="Ej: NOTA-00234">
+                            </div>
+                            <div class="form-group">
+                                <label for="observacionesSalida">OBSERVACIONES</label>
+                                <textarea id="observacionesSalida" rows="3" placeholder="Notas adicionales..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="registradoPorSalida">REGISTRADO POR *</label>
+                                <input type="text" id="registradoPorSalida" value="Samuel Steves" required>
+                            </div>
+                            <button type="submit" class="btn-submit" id="btnRegistrarSalida">Registrar salida</button>
+                        </form>
                     </div>
-                    <div class="ultimas-salidas">
-                        <h3>Últimas salidas</h3>
-                        <div id="ultimasSalidasContenido">
-                            <p class="placeholder">Cargando...</p>
+
+                    <div class="salidas-sidebar">
+                        <div class="vista-previa">
+                            <h3>Artículo seleccionado</h3>
+                            <div id="vistaPreviaContenidoSalida">
+                                <p class="placeholder">Seleccioná un artículo para ver su stock actual</p>
+                            </div>
+                        </div>
+                        <div class="ultimas-salidas">
+                            <h3>Últimas salidas</h3>
+                            <div id="ultimasSalidasContenido">
+                                <p class="placeholder">Cargando...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -312,7 +316,7 @@
                 <p class="fecha-hoy">Historial de entradas y salidas</p>
             </div>
 
-            <div style="padding: 0 1.5rem;">
+            <div class="page-content">
                 <div class="toolbar-movimientos">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
@@ -348,7 +352,7 @@
                 <p class="fecha-hoy">Destinos que más reciben - <span id="fechaActualDirecciones"></span></p>
             </div>
 
-            <div style="padding: 0 1.5rem;">
+            <div class="page-content">
                 <div class="toolbar-inventario">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
@@ -396,7 +400,7 @@
                 <p class="fecha-hoy">Panel de control - <span id="fechaActualDashboard"></span></p>
             </div>
 
-            <div style="padding: 0 1.5rem;">
+            <div class="page-content">
                 <div class="dashboard-tarjetas">
                     <div class="dashboard-tarjeta">
                         <div class="dashboard-tarjeta-icono">📦</div>
@@ -494,54 +498,56 @@
                 <p class="fecha-hoy">Ajuste de inventario físico - <span id="fechaActualRelevamiento"></span></p>
             </div>
 
-            <div class="relevamiento-wrapper">
-                <div class="relevamiento-form">
-                    <h2>Registrar relevamiento</h2>
-                    <form id="formRelevamiento">
-                        <div class="form-group buscador-articulo-group">
-                            <label for="inputArticuloRelevamiento">ARTÍCULO *</label>
-                            <div class="buscador-wrapper">
-                                <input type="text" id="inputArticuloRelevamiento" placeholder="Escribí para buscar..." autocomplete="off" required>
-                                <span class="icono-lupa">🔍</span>
-                                <ul id="listaArticulosCustomRelevamiento" class="dropdown-lista"></ul>
+            <div class="page-content">
+                <div class="relevamiento-wrapper">
+                    <div class="relevamiento-form">
+                        <h2>Registrar relevamiento</h2>
+                        <form id="formRelevamiento">
+                            <div class="form-group buscador-articulo-group">
+                                <label for="inputArticuloRelevamiento">ARTÍCULO *</label>
+                                <div class="buscador-wrapper">
+                                    <input type="text" id="inputArticuloRelevamiento" placeholder="Escribí para buscar..." autocomplete="off" required>
+                                    <span class="icono-lupa">🔍</span>
+                                    <ul id="listaArticulosCustomRelevamiento" class="dropdown-lista"></ul>
+                                </div>
+                                <input type="hidden" id="articuloIdRelevamiento" value="">
                             </div>
-                            <input type="hidden" id="articuloIdRelevamiento" value="">
-                        </div>
 
-                        <div class="form-group">
-                            <label for="stockSistema">STOCK DEL SISTEMA</label>
-                            <input type="text" id="stockSistema" value="—" readonly style="background: var(--bg-hover); cursor: not-allowed;">
-                        </div>
+                            <div class="form-group">
+                                <label for="stockSistema">STOCK DEL SISTEMA</label>
+                                <input type="text" id="stockSistema" value="—" readonly style="background: var(--bg-hover); cursor: not-allowed;">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="stockReal">STOCK REAL CONTADO *</label>
-                            <input type="number" id="stockReal" min="0" value="" placeholder="Ingresá el stock contado físicamente" required>
-                        </div>
+                            <div class="form-group">
+                                <label for="stockReal">STOCK REAL CONTADO *</label>
+                                <input type="number" id="stockReal" min="0" value="" placeholder="Ingresá el stock contado físicamente" required>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="diferencia">DIFERENCIA</label>
-                            <input type="text" id="diferencia" value="—" readonly style="background: var(--bg-hover); cursor: not-allowed; font-weight: 700;">
-                        </div>
+                            <div class="form-group">
+                                <label for="diferencia">DIFERENCIA</label>
+                                <input type="text" id="diferencia" value="—" readonly style="background: var(--bg-hover); cursor: not-allowed; font-weight: 700;">
+                            </div>
 
-                        <div class="form-group">
-                            <label for="observacionesRelevamiento">OBSERVACIÓN</label>
-                            <textarea id="observacionesRelevamiento" rows="3" placeholder="Motivo del ajuste (opcional)..."></textarea>
-                        </div>
+                            <div class="form-group">
+                                <label for="observacionesRelevamiento">OBSERVACIÓN</label>
+                                <textarea id="observacionesRelevamiento" rows="3" placeholder="Motivo del ajuste (opcional)..."></textarea>
+                            </div>
 
-                        <div class="form-group">
-                            <label for="registradoPorRelevamiento">REGISTRADO POR *</label>
-                            <input type="text" id="registradoPorRelevamiento" value="Samuel Steves" required>
-                        </div>
+                            <div class="form-group">
+                                <label for="registradoPorRelevamiento">REGISTRADO POR *</label>
+                                <input type="text" id="registradoPorRelevamiento" value="Samuel Steves" required>
+                            </div>
 
-                        <button type="submit" class="btn-submit" id="btnRegistrarRelevamiento">Registrar relevamiento</button>
-                    </form>
-                </div>
+                            <button type="submit" class="btn-submit" id="btnRegistrarRelevamiento">Registrar relevamiento</button>
+                        </form>
+                    </div>
 
-                <div class="relevamiento-sidebar">
-                    <div class="vista-previa">
-                        <h3>Artículo seleccionado</h3>
-                        <div id="vistaPreviaContenidoRelevamiento">
-                            <p class="placeholder">Seleccioná un artículo para ver su stock actual</p>
+                    <div class="relevamiento-sidebar">
+                        <div class="vista-previa">
+                            <h3>Artículo seleccionado</h3>
+                            <div id="vistaPreviaContenidoRelevamiento">
+                                <p class="placeholder">Seleccioná un artículo para ver su stock actual</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -560,130 +566,132 @@
                 <h1>Pedidos</h1>
                 <p class="fecha-hoy">Gestión de pedidos - <span id="fechaActualPedidos"></span></p>
             </div>
-            <div class="pedidos-contenido">
-                <!-- ★ Pestañas en el orden solicitado -->
-                <div class="pedidos-tabs" role="tablist" aria-label="Secciones de pedidos">
-                    <button type="button" class="pedidos-tab activo" id="tabSeguimientoPedidos" role="tab" aria-selected="true" aria-controls="pedidosTabSeguimiento" data-tab-pedidos="seguimiento">Hoja de seguimiento</button>
-                    <button type="button" class="pedidos-tab" id="tabNuevoPedido" role="tab" aria-selected="false" aria-controls="pedidosTabNuevo" data-tab-pedidos="nuevo">Nuevo pedido</button>
+            <div class="page-content">
+                <div class="pedidos-contenido">
+                    <!-- ★ Pestañas en el orden solicitado -->
+                    <div class="pedidos-tabs" role="tablist" aria-label="Secciones de pedidos">
+                        <button type="button" class="pedidos-tab activo" id="tabSeguimientoPedidos" role="tab" aria-selected="true" aria-controls="pedidosTabSeguimiento" data-tab-pedidos="seguimiento">Hoja de seguimiento</button>
+                        <button type="button" class="pedidos-tab" id="tabNuevoPedido" role="tab" aria-selected="false" aria-controls="pedidosTabNuevo" data-tab-pedidos="nuevo">Nuevo pedido</button>
+                    </div>
+
+                    <!-- SECCIÓN NUEVO PEDIDO -->
+                    <section id="pedidosTabNuevo" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabNuevoPedido" hidden>
+                        <div class="pedidos-grid">
+                            <div class="pedidos-form">
+                                <h2>Datos del pedido</h2>
+                                <form id="formPedido">
+                                    <div class="form-group buscador-articulo-group">
+                                        <label for="inputDireccionPedido">DIRECCIÓN SOLICITANTE *</label>
+                                        <div class="buscador-wrapper">
+                                            <input type="text" id="inputDireccionPedido" placeholder="Buscar dirección..." autocomplete="off" required>
+                                            <span class="icono-lupa">🔍</span>
+                                            <ul id="listaDireccionesPedido" class="dropdown-lista"></ul>
+                                        </div>
+                                        <input type="hidden" id="direccionPedido" value="">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="directorPedido">SOLICITADO POR</label>
+                                        <input type="text" id="directorPedido" placeholder="Nombre del solicitante">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="referenciaPedido">REFERENCIA / MOTIVO</label>
+                                        <input type="text" id="referenciaPedido" placeholder="Ej: Reposición mensual">
+                                    </div>
+                                    <div class="form-group buscador-articulo-group">
+                                        <label for="inputArticuloPedido">AGREGAR ARTÍCULO AL CARRITO</label>
+                                        <div class="buscador-wrapper">
+                                            <input type="text" id="inputArticuloPedido" placeholder="Buscar artículo..." autocomplete="off">
+                                            <span class="icono-lupa">🔍</span>
+                                            <ul id="listaArticulosPedido" class="dropdown-lista"></ul>
+                                        </div>
+                                    </div>
+                                    <div id="carritoPedido" class="carrito-contenedor">
+                                        <p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>
+                                    </div>
+                                    <div class="carrito-resumen">
+                                        <div class="carrito-total-bloque">
+                                            <span class="carrito-total-label">TOTAL DEL PEDIDO</span>
+                                            <strong><span id="carritoTotal">0</span> unidades</strong>
+                                        </div>
+                                        <button type="submit" class="btn-submit" id="btnConfirmarPedido">Confirmar pedido →</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <aside class="pedidos-sidebar">
+                                <div class="estadistica-seccion">
+                                    <h2 class="estadistica-titulo">Pedidos recientes</h2>
+                                    <div id="listaPedidosRecientes">
+                                        <p class="placeholder">Cargando pedidos...</p>
+                                    </div>
+                                </div>
+                            </aside>
+                        </div>
+                    </section>
+
+                    <!-- SECCIÓN SEGUIMIENTO — Master-Detail 2 columnas -->
+                    <section id="pedidosTabSeguimiento" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabSeguimientoPedidos">
+                        <div class="pedidos-resumen-tira" aria-live="polite">
+                            <div class="pedidos-resumen-item">
+                                <span class="pedidos-resumen-label">PEDIDOS PENDIENTES DE HOY</span>
+                                <strong id="pedidosPendientesHoy">0</strong>
+                                <span>pedidos</span>
+                            </div>
+                            <div class="pedidos-resumen-item">
+                                <span class="pedidos-resumen-label">A LLEVAR HOY</span>
+                                <strong id="pedidosUnidadesHoy">0</strong>
+                                <span>unidades</span>
+                            </div>
+                            <div class="pedidos-resumen-item">
+                                <span class="pedidos-resumen-label">CONFIRMADOS HOY</span>
+                                <strong id="pedidosConfirmadosHoy">0</strong>
+                                <span>pedidos</span>
+                            </div>
+                        </div>
+
+                        <div class="pedidos-filtros">
+                            <div class="pedidos-filtros-busqueda" role="search" aria-label="Buscar pedidos">
+                                <div class="buscador-inventario" style="max-width: 400px; flex-shrink: 0;">
+                                    <span class="icono-buscar">🔍</span>
+                                    <input type="text" id="inputBusquedaPedidos" placeholder="Buscar por N° Nota o Dirección..." autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="pedidos-filtros-fecha" role="group" aria-label="Filtrar por fecha">
+                                <button type="button" class="pedidos-chip activo" data-filtro-fecha="hoy">Hoy</button>
+                                <button type="button" class="pedidos-chip" data-filtro-fecha="semana">Esta semana</button>
+                                <button type="button" class="pedidos-chip" data-filtro-fecha="todos">Todos</button>
+                            </div>
+                            <div class="pedidos-filtros-estado" role="group" aria-label="Filtrar por estado">
+                                <button type="button" class="pedidos-chip pedidos-chip-estado" data-filtro-estado="Pendiente">
+                                    <span class="pedidos-punto pendiente"></span>Pendientes <strong id="contadorPendientes">0</strong>
+                                </button>
+                                <button type="button" class="pedidos-chip pedidos-chip-estado" data-filtro-estado="Confirmado">
+                                    <span class="pedidos-punto confirmado"></span>Confirmados hoy <strong id="contadorConfirmadosHoy">0</strong>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Grid Master-Detail: Izquierda=Lista, Derecha=Detalle (sticky) -->
+                        <div class="hoja-seguimiento-grid">
+                            <!-- Columna 1: Lista de pedidos -->
+                            <div class="panel-lista">
+                                <div id="contenedorHojaSeguimiento" class="pedidos-hoja-contenedor">
+                                    <p class="placeholder">Cargando hoja de seguimiento...</p>
+                                </div>
+                            </div>
+
+                            <!-- Columna 2: Panel detalle estilo "Carrito/Ticket" (sticky) -->
+                            <section id="detallePedidoSeccion" class="panel-detalle-sticky" aria-label="Detalle del pedido">
+                                <div id="detallePedido" class="detalle-ticket">
+                                    <!-- Estado vacío inicial -->
+                                    <div class="detalle-empty-state">
+                                        <span class="detalle-empty-icon" aria-hidden="true">🛒</span>
+                                        <p>Seleccioná un pedido de la lista</p>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </section>
                 </div>
-
-                <!-- SECCIÓN NUEVO PEDIDO -->
-                <section id="pedidosTabNuevo" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabNuevoPedido" hidden>
-                    <div class="pedidos-grid">
-                        <div class="pedidos-form">
-                            <h2>Datos del pedido</h2>
-                            <form id="formPedido">
-                                <div class="form-group buscador-articulo-group">
-                                    <label for="inputDireccionPedido">DIRECCIÓN SOLICITANTE *</label>
-                                    <div class="buscador-wrapper">
-                                        <input type="text" id="inputDireccionPedido" placeholder="Buscar dirección..." autocomplete="off" required>
-                                        <span class="icono-lupa">🔍</span>
-                                        <ul id="listaDireccionesPedido" class="dropdown-lista"></ul>
-                                    </div>
-                                    <input type="hidden" id="direccionPedido" value="">
-                                </div>
-                                <div class="form-group">
-                                    <label for="directorPedido">SOLICITADO POR</label>
-                                    <input type="text" id="directorPedido" placeholder="Nombre del solicitante">
-                                </div>
-                                <div class="form-group">
-                                    <label for="referenciaPedido">REFERENCIA / MOTIVO</label>
-                                    <input type="text" id="referenciaPedido" placeholder="Ej: Reposición mensual">
-                                </div>
-                                <div class="form-group buscador-articulo-group">
-                                    <label for="inputArticuloPedido">AGREGAR ARTÍCULO AL CARRITO</label>
-                                    <div class="buscador-wrapper">
-                                        <input type="text" id="inputArticuloPedido" placeholder="Buscar artículo..." autocomplete="off">
-                                        <span class="icono-lupa">🔍</span>
-                                        <ul id="listaArticulosPedido" class="dropdown-lista"></ul>
-                                    </div>
-                                </div>
-                                <div id="carritoPedido" class="carrito-contenedor">
-                                    <p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>
-                                </div>
-                                <div class="carrito-resumen">
-                                    <div class="carrito-total-bloque">
-                                        <span class="carrito-total-label">TOTAL DEL PEDIDO</span>
-                                        <strong><span id="carritoTotal">0</span> unidades</strong>
-                                    </div>
-                                    <button type="submit" class="btn-submit" id="btnConfirmarPedido">Confirmar pedido →</button>
-                                </div>
-                            </form>
-                        </div>
-                        <aside class="pedidos-sidebar">
-                            <div class="estadistica-seccion">
-                                <h2 class="estadistica-titulo">Pedidos recientes</h2>
-                                <div id="listaPedidosRecientes">
-                                    <p class="placeholder">Cargando pedidos...</p>
-                                </div>
-                            </div>
-                        </aside>
-                    </div>
-                </section>
-
-                <!-- SECCIÓN SEGUIMIENTO — Master-Detail 2 columnas -->
-                <section id="pedidosTabSeguimiento" class="pedidos-tab-panel" role="tabpanel" aria-labelledby="tabSeguimientoPedidos">
-                    <div class="pedidos-resumen-tira" aria-live="polite">
-                        <div class="pedidos-resumen-item">
-                            <span class="pedidos-resumen-label">PEDIDOS PENDIENTES DE HOY</span>
-                            <strong id="pedidosPendientesHoy">0</strong>
-                            <span>pedidos</span>
-                        </div>
-                        <div class="pedidos-resumen-item">
-                            <span class="pedidos-resumen-label">A LLEVAR HOY</span>
-                            <strong id="pedidosUnidadesHoy">0</strong>
-                            <span>unidades</span>
-                        </div>
-                        <div class="pedidos-resumen-item">
-                            <span class="pedidos-resumen-label">CONFIRMADOS HOY</span>
-                            <strong id="pedidosConfirmadosHoy">0</strong>
-                            <span>pedidos</span>
-                        </div>
-                    </div>
-
-                    <div class="pedidos-filtros">
-                        <div class="pedidos-filtros-busqueda" role="search" aria-label="Buscar pedidos">
-                            <div class="buscador-inventario" style="max-width: 400px; flex-shrink: 0;">
-                                <span class="icono-buscar">🔍</span>
-                                <input type="text" id="inputBusquedaPedidos" placeholder="Buscar por N° Nota o Dirección..." autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="pedidos-filtros-fecha" role="group" aria-label="Filtrar por fecha">
-                            <button type="button" class="pedidos-chip activo" data-filtro-fecha="hoy">Hoy</button>
-                            <button type="button" class="pedidos-chip" data-filtro-fecha="semana">Esta semana</button>
-                            <button type="button" class="pedidos-chip" data-filtro-fecha="todos">Todos</button>
-                        </div>
-                        <div class="pedidos-filtros-estado" role="group" aria-label="Filtrar por estado">
-                            <button type="button" class="pedidos-chip pedidos-chip-estado" data-filtro-estado="Pendiente">
-                                <span class="pedidos-punto pendiente"></span>Pendientes <strong id="contadorPendientes">0</strong>
-                            </button>
-                            <button type="button" class="pedidos-chip pedidos-chip-estado" data-filtro-estado="Confirmado">
-                                <span class="pedidos-punto confirmado"></span>Confirmados hoy <strong id="contadorConfirmadosHoy">0</strong>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Grid Master-Detail: Izquierda=Lista, Derecha=Detalle (sticky) -->
-                    <div class="hoja-seguimiento-grid">
-                        <!-- Columna 1: Lista de pedidos -->
-                        <div class="panel-lista">
-                            <div id="contenedorHojaSeguimiento" class="pedidos-hoja-contenedor">
-                                <p class="placeholder">Cargando hoja de seguimiento...</p>
-                            </div>
-                        </div>
-
-                        <!-- Columna 2: Panel detalle estilo "Carrito/Ticket" (sticky) -->
-                        <section id="detallePedidoSeccion" class="panel-detalle-sticky" aria-label="Detalle del pedido">
-                            <div id="detallePedido" class="detalle-ticket">
-                                <!-- Estado vacío inicial -->
-                                <div class="detalle-empty-state">
-                                    <span class="detalle-empty-icon" aria-hidden="true">🛒</span>
-                                    <p>Seleccioná un pedido de la lista</p>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-                </section>
             </div>
         </div>
         <!-- ★ FIN PEDIDOS -->
@@ -695,45 +703,49 @@
                 <p class="fecha-hoy">Análisis y estadísticas</p>
             </div>
 
-            <section class="estadistica-seccion" style="margin-bottom: 1.5rem;">
-                <h2 class="estadistica-titulo">Filtros del Reporte</h2>
-                <div class="reportes-filtros" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; flex-wrap: wrap; align-items: end;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="reporteFechaDesde">Desde</label>
-                        <input type="date" id="reporteFechaDesde" class="form-input">
+            <div class="page-content">
+                <section class="estadistica-seccion" style="margin-bottom: 1.5rem;">
+                    <h2 class="estadistica-titulo">Filtros del Reporte</h2>
+                    <div class="reportes-filtros" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; flex-wrap: wrap; align-items: end;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="reporteFechaDesde">Desde</label>
+                            <input type="date" id="reporteFechaDesde" class="form-input">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="reporteFechaHasta">Hasta</label>
+                            <input type="date" id="reporteFechaHasta" class="form-input">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="reporteCategoria">Categoría</label>
+                            <select id="reporteCategoria" class="form-input">
+                                <option value="">Todas las categorías</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="reporteDireccion">Dirección</label>
+                            <select id="reporteDireccion" class="form-input">
+                                <option value="">Todas las direcciones</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                            <button type="button" id="btnGenerarReporte" class="btn-submit">Generar Reporte</button>
+                            <button type="button" id="btnExportarExcel" class="btn-exportar">📊 Exportar a Excel</button>
+                        </div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="reporteFechaHasta">Hasta</label>
-                        <input type="date" id="reporteFechaHasta" class="form-input">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="reporteCategoria">Categoría</label>
-                        <select id="reporteCategoria" class="form-input">
-                            <option value="">Todas las categorías</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="reporteDireccion">Dirección</label>
-                        <select id="reporteDireccion" class="form-input">
-                            <option value="">Todas las direcciones</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                        <button type="button" id="btnGenerarReporte" class="btn-submit">Generar Reporte</button>
-                        <button type="button" id="btnExportarExcel" class="btn-exportar">📊 Exportar a Excel</button>
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <div id="contenedorResultadosReportes" class="inventario-tabla-wrapper" style="min-height: 300px;">
-                <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 300px;">
-                    <p class="placeholder">Seleccioná los filtros y generá el reporte.</p>
+                <div id="contenedorResultadosReportes" class="inventario-tabla-wrapper" style="min-height: 300px;">
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 300px;">
+                        <p class="placeholder">Seleccioná los filtros y generá el reporte.</p>
+                    </div>
                 </div>
             </div>
         </div>
         <div id="pagina-configuracion" class="pagina">
             <div class="page-header"><h1>Configuración</h1><p class="fecha-hoy">Ajustes</p></div>
-            <p class="placeholder" style="padding:1.5rem;">Próximamente.</p>
+            <div class="page-content">
+                <p class="placeholder" style="padding:1.5rem;">Próximamente.</p>
+            </div>
         </div>
 
         <!-- ============ PÁGINA: DEPÓSITO CALLE 3 ============ -->
@@ -747,7 +759,7 @@
                 <h1>Depósito Calle 3</h1>
                 <p class="fecha-hoy">Artículos ubicados en Calle 3</p>
             </div>
-            <div style="padding: 0 1.5rem;">
+            <div class="page-content">
                 <div class="toolbar-inventario">
                     <div class="toolbar-left">
                         <div class="buscador-inventario">
