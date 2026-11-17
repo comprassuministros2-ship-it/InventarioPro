@@ -1516,31 +1516,15 @@ function configurarMovimientos() {
         });
     }
 }
+
 // ============================================================
 // 13. MENÚ LATERAL COLAPSABLE
 // ============================================================
+// NOTA: La lógica del menú (hamburguesa + overlay en TODAS las pantallas)
+// ahora está en js/sidebar.js para evitar conflictos.
+// Esta función queda vacía por compatibilidad (se llama desde DOMContentLoaded).
 function configurarMenu() {
-    const btnMenu = document.getElementById('btnMenu');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const layout = document.querySelector('.app-layout');
-    if (!btnMenu || !sidebar) return;
-    function toggleMenu() {
-        if (window.matchMedia("(max-width: 768px)").matches) {
-            sidebar.classList.toggle('open');
-            if (overlay) overlay.classList.toggle('show');
-        } else {
-            sidebar.classList.toggle('collapsed');
-            if (layout) layout.classList.toggle('sidebar-collapsed');
-        }
-    }
-    btnMenu.addEventListener('click', toggleMenu);
-    if (overlay) {
-        overlay.addEventListener('click', function() {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('show');
-        });
-    }
+    // No-op: sidebar.js maneja el toggle del menú y overlay
 }
 
 // ============================================================
