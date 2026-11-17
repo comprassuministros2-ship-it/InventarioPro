@@ -2,7 +2,6 @@
     const sidebar = document.getElementById('sidebar');
     const menuButton = document.getElementById('btnMenu');
     const overlay = document.getElementById('sidebarOverlay');
-    const mobileView = window.matchMedia('(max-width: 768px)');
 
     if (!sidebar || !menuButton || !overlay) return;
 
@@ -10,11 +9,10 @@
         sidebar.classList.remove('open');
         overlay.classList.remove('show');
         menuButton.setAttribute('aria-expanded', 'false');
-        if (mobileView.matches) sidebar.setAttribute('inert', '');
+        sidebar.setAttribute('inert', '');
     };
 
     const openSidebar = () => {
-        if (!mobileView.matches) return;
         sidebar.classList.add('open');
         overlay.classList.add('show');
         sidebar.removeAttribute('inert');
@@ -23,11 +21,6 @@
 
     const toggleSidebar = () => {
         sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
-    };
-
-    const syncSidebar = () => {
-        closeSidebar();
-        if (!mobileView.matches) sidebar.removeAttribute('inert');
     };
 
     // Toggle al tocar el botón hamburguesa
@@ -49,9 +42,6 @@
     // Cerrar al navegar a otra página (pagehide)
     window.addEventListener('pagehide', closeSidebar);
 
-    // Sincronizar al cambiar de tamaño de pantalla
-    mobileView.addEventListener('change', syncSidebar);
-
-    // Estado inicial
-    syncSidebar();
+    // Estado inicial: sidebar cerrado
+    closeSidebar();
 })();
