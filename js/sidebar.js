@@ -10,14 +10,14 @@
         sidebar.classList.remove('open');
         overlay.classList.remove('show');
         menuButton.setAttribute('aria-expanded', 'false');
-        if (mobileView.matches) sidebar.setAttribute('aria-hidden', 'true');
+        if (mobileView.matches) sidebar.setAttribute('inert', '');
     };
 
     const openSidebar = () => {
         if (!mobileView.matches) return;
         sidebar.classList.add('open');
         overlay.classList.add('show');
-        sidebar.setAttribute('aria-hidden', 'false');
+        sidebar.removeAttribute('inert');
         menuButton.setAttribute('aria-expanded', 'true');
     };
 
@@ -27,7 +27,7 @@
 
     const syncSidebar = () => {
         closeSidebar();
-        if (!mobileView.matches) sidebar.setAttribute('aria-hidden', 'false');
+        if (!mobileView.matches) sidebar.removeAttribute('inert');
     };
 
     // Toggle al tocar el botón hamburguesa
