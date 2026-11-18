@@ -3743,20 +3743,35 @@ async function guardarEdicionArticulo() {
 
 function procesarYReducirImagen(file) {
     if (!file.type.startsWith('image/')) return Promise.reject(new Error('Solo se permiten imágenes'));
-    if (file.size > 5 * 1024 * 1024) return Promise.reject(new Error('Máximo 5MB.'));
+    if (file.size > 3 * 1024 * 1024) return Promise.reject(new Error('Máximo 3MB.'));
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = function(e) {
             const img = new Image();
             img.onload = function() {
-                const canvas = document.createElement('canvas');
+                // Pre-escalar si la imagen es muy grande en dimensiones (evita OOM en canvas)
                 let width = img.width; let height = img.height;
-                const maxAncho = 800;
-                if (width > maxAncho) { height = Math.round((height * maxAncho) / width); width = maxAncho; }
+                const maxDimension = 500;
+
+                // Calcular factor de escala para que ninguna dimensión supere maxDimension
+                let scale = 1;
+                if (width > maxDimension || height > maxDimension) {
+                    scale = Math.min(maxDimension / width, maxDimension / height);
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+
+                const canvas = document.createElement('canvas');
                 canvas.width = width; canvas.height = height;
                 const ctx = canvas.getContext('2d');
+
+                // Usar imageSmoothingQuality para mejor calidad al reducir
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
+
+                // Forzar JPEG calidad 0.5 (formato ligero, ~30-40KB)
+                resolve(canvas.toDataURL('image/jpeg', 0.5));
             };
             img.onerror = () => reject(new Error('Archivo no válido'));
             img.src = e.target.result;
@@ -3786,18 +3801,20 @@ function inicializarDragAndDropImagen() {
     dropZone.addEventListener('drop', (e) => {
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            if (!files[0].type.startsWith('image/')) { mostrarToast('Solo se permiten imágenes', 'error'); return; }
-            if (files[0].size > 5 * 1024 * 1024) { mostrarToast('El archivo supera los 5MB', 'error'); return; }
+            const file = files[0];
+            if (!file.type.startsWith('image/')) { mostrarToast('Solo se permiten imágenes', 'error'); return; }
+            if (file.size > 3 * 1024 * 1024) { mostrarToast('La imagen es muy pesada. Máximo 3MB.', 'error'); return; }
             fileInput.files = files;
-            actualizarPreviewImagen(files[0], dropZone);
+            actualizarPreviewImagen(file, dropZone);
         }
     });
 
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-            if (!e.target.files[0].type.startsWith('image/')) { mostrarToast('Solo se permiten imágenes', 'error'); e.target.value=''; return; }
-            if (e.target.files[0].size > 5 * 1024 * 1024) { mostrarToast('El archivo supera los 5MB', 'error'); e.target.value=''; return; }
-            actualizarPreviewImagen(e.target.files[0], dropZone);
+            const file = e.target.files[0];
+            if (!file.type.startsWith('image/')) { mostrarToast('Solo se permiten imágenes', 'error'); e.target.value=''; return; }
+            if (file.size > 3 * 1024 * 1024) { mostrarToast('La imagen es muy pesada. Máximo 3MB.', 'error'); e.target.value=''; return; }
+            actualizarPreviewImagen(file, dropZone);
         }
     });
 
