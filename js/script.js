@@ -2611,8 +2611,13 @@ function configurarBuscadorDireccionesPedido() {
             }
             input.value = item.nombre;
             hidden.value = item.nombre;
-            // Autocompletar director basado en historial de pedidos
-            autocompletarDirectorPorDireccion(item.nombre);
+            // Auto-aprendizaje: usar director de la dirección si existe, sino fallback a historial
+            const directorInput = document.getElementById('directorPedido');
+            if (item.director && item.director.trim() && directorInput) {
+                directorInput.value = item.director.trim();
+            } else {
+                autocompletarDirectorPorDireccion(item.nombre);
+            }
         }
     });
     dropdownInstances.push(instance);
