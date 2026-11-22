@@ -1360,6 +1360,7 @@ function renderizarMovimientos(datos) {
         filtrados = filtrados.filter(m => {
             const campos = [
                 m.nombre,
+                m.idArticulo,
                 m.proveedor,
                 m.destino,
                 m.observacion,
@@ -3602,9 +3603,12 @@ function abrirModalDetalleArticulo(id) {
             btnVerCompleto.addEventListener('click', function() {
                 const id = this.dataset.id;
                 cerrarModalDetalleArticulo();
-                // Navegar a pestaña Movimientos con filtro preseleccionado
                 navegarAPagina('movimientos');
-                // TODO: Aplicar filtro por artículo (pendiente implementación en Movimientos)
+                const input = document.getElementById('inputBusquedaMov');
+                if (input) {
+                    input.value = id;
+                    input.dispatchEvent(new Event('input'));
+                }
             });
         }
     }
