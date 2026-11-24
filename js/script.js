@@ -2455,7 +2455,11 @@ async function manejarSubmitPedido(e) {
                 ? cantidadPresentacion * multiplicador
                 : cantidadPresentacion;
 
-            const presentacion = obtenerNombrePresentacion(articulo);
+            let presentacion = obtenerNombrePresentacion(articulo);
+            // Si la presentación es "Unidad" pero tiene multiplicador > 1, usar "Pack" como etiqueta
+            if (presentacion.toLowerCase() === 'unidad' && multiplicador > 1) {
+                presentacion = 'Pack';
+            }
             const textoCantidad = esPack
                 ? `${cantidadPresentacion} ${presentacion}${cantidadPresentacion === 1 ? '' : 's'} (${unidadesTotales} unidades)`
                 : `${unidadesTotales} ${unidadesTotales === 1 ? 'unidad' : 'unidades'}`;
@@ -2692,11 +2696,25 @@ function actualizarTotalCarrito() {
 
         if (esPack) {
             totalUnidades += cant * multiplicador;
-            const presentacion = obtenerNombrePresentacion(articulo);
+            // Si la presentación es "Unidad" pero tiene multiplicador > 1, usar "Pack" como etiqueta
+            let presentacion = obtenerNombrePresentacion(articulo);
+            if (presentacion.toLowerCase() === 'unidad' && multiplicador > 1) {
+                presentacion = 'Pack';
+            }
             detallePacks.push(`${cant} ${presentacion}${cant > 1 ? 's' : ''} (×${multiplicador})`);
         } else {
             totalUnidades += cant;
-            if (cant > 0) detallePacks.push(`${cant} unidades`);
+            if (cant > 0) {
+                // Para items sueltos, mostrar la presentación si tiene multiplicador
+                const multiplicador = obtenerMultiplicadorUnidades(articulo);
+                if (multiplicador > 1) {
+                    let presentacion = obtenerNombrePresentacion(articulo);
+                    if (presentacion.toLowerCase() === 'unidad') presentacion = 'Pack';
+                    detallePacks.push(`${cant} ${presentacion.toLowerCase()}${cant > 1 ? 's' : ''} (×${multiplicador})`);
+                } else {
+                    detallePacks.push(`${cant} unidades`);
+                }
+            }
         }
     });
 
