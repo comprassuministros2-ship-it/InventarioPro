@@ -2715,7 +2715,7 @@ function actualizarTotalCarrito() {
                     const packs = cant / multiplicador;
                     let presentacion = obtenerNombrePresentacion(articulo);
                     if (presentacion.toLowerCase() === 'unidad') presentacion = 'Pack';
-                    lineas.push(`${packs} ${presentacion}${packs > 1 ? 's' : ''} (×${multiplicador}) = ${cant.toLocaleString('es-AR')} ud.`);
+                    lineas.push(`${packs} ${presentacion}${packs > 1 ? 's' : ''} (×${multiplicador})`);
                 } else {
                     lineas.push(`${cant} ${cant === 1 ? 'unidad' : 'unidades'}`);
                 }
@@ -2723,11 +2723,11 @@ function actualizarTotalCarrito() {
         }
     });
 
-    // Formato simple: "1 Pack (×500) + 1 Pack (×10) = 510 ud."
+    // Formato simple: "+ 1 Pack (×500) + 1 Pack (×10)"
     if (lineas.length > 0) {
-        total.innerHTML = `${lineas.join(' + ')} = <strong>${totalUnidades.toLocaleString('es-AR')}</strong> ud.`;
+        total.innerHTML = `+ ${lineas.join(' + ')}`;
     } else {
-        total.textContent = totalUnidades;
+        total.textContent = '0';
     }
 }
 
