@@ -2382,7 +2382,7 @@ function renderizarCarrito() {
             if (carritoPedido[idx]) {
                 if (carritoPedido[idx].tipo !== nuevoTipo) {
                     carritoPedido[idx].tipo = nuevoTipo;
-                    // NO resetear cantidad: mantener la que el usuario puso
+                    carritoPedido[idx].cantidad = 1; // Reset a 1 al cambiar modo
                 }
                 renderizarCarrito();
             }
@@ -2428,6 +2428,11 @@ async function manejarSubmitPedido(e) {
 
     if (!direccion) {
         mostrarToast('Seleccioná una dirección', 'error');
+        return;
+    }
+    if (!director) {
+        mostrarToast('El solicitante (director) es obligatorio', 'error');
+        document.getElementById('directorPedido')?.focus();
         return;
     }
 
@@ -2515,6 +2520,7 @@ async function manejarSubmitPedido(e) {
         renderizarCarrito();
         await cargarListaPedidos();
     } catch (err) {
+        console.error('❌ Error guardando pedido:', err);
         mostrarToast('Error: ' + (err?.message || 'No se pudo guardar el pedido'), 'error');
         if (btn) btn.textContent = txtOriginal;
     } finally {
@@ -2685,7 +2691,7 @@ function actualizarTotalCarrito() {
     if (!total) return;
 
     let totalUnidades = 0;
-    let detallePacks = [];
+    let lineas = [];
 
     carritoPedido.forEach(item => {
         const articulo = articulos.find(a => String(a.id) === String(item.id));
@@ -2696,24 +2702,30 @@ function actualizarTotalCarrito() {
 
         if (esPack) {
             totalUnidades += cant * multiplicador;
-            // Si la presentación es "Unidad" pero tiene multiplicador > 1, usar "Pack" como etiqueta
             let presentacion = obtenerNombrePresentacion(articulo);
             if (presentacion.toLowerCase() === 'unidad' && multiplicador > 1) {
                 presentacion = 'Pack';
             }
-            detallePacks.push(`${cant} ${presentacion}${cant > 1 ? 's' : ''} (×${multiplicador}) = ${(cant * multiplicador).toLocaleString('es-AR')} ud.`);
+            lineas.push(`${cant} ${presentacion}${cant > 1 ? 's' : ''} (×${multiplicador})`);
         } else {
             totalUnidades += cant;
             if (cant > 0) {
-                // Solo mostrar como "unidades" - NO mostrar "packs" si no está en modo pack
-                detallePacks.push(`${cant} ${cant === 1 ? 'unidad' : 'unidades'} = ${cant.toLocaleString('es-AR')} ud.`);
+                // Si tiene multiplicador > 1 pero está en modo unidad, mostrar equivalencia en packs
+                if (multiplicador > 1 && cant % multiplicador === 0) {
+                    const packs = cant / multiplicador;
+                    let presentacion = obtenerNombrePresentacion(articulo);
+                    if (presentacion.toLowerCase() === 'unidad') presentacion = 'Pack';
+                    lineas.push(`${packs} ${presentacion}${packs > 1 ? 's' : ''} (×${multiplicador}) = ${cant.toLocaleString('es-AR')} ud.`);
+                } else {
+                    lineas.push(`${cant} ${cant === 1 ? 'unidad' : 'unidades'}`);
+                }
             }
         }
     });
 
-    // Mostrar: "1 Pack (×500) = 500 ud. + 10 unidades = 10 ud. = 510 ud."
-    if (detallePacks.length > 0) {
-        total.innerHTML = `${detallePacks.join(' + ')} = <strong>${totalUnidades.toLocaleString('es-AR')}</strong> ud.`;
+    // Formato simple: "1 Pack (×500) + 1 Pack (×10) = 510 ud."
+    if (lineas.length > 0) {
+        total.innerHTML = `${lineas.join(' + ')} = <strong>${totalUnidades.toLocaleString('es-AR')}</strong> ud.`;
     } else {
         total.textContent = totalUnidades;
     }
