@@ -2701,24 +2701,17 @@ function actualizarTotalCarrito() {
             if (presentacion.toLowerCase() === 'unidad' && multiplicador > 1) {
                 presentacion = 'Pack';
             }
-            detallePacks.push(`${cant} ${presentacion}${cant > 1 ? 's' : ''} (×${multiplicador})`);
+            detallePacks.push(`${cant} ${presentacion}${cant > 1 ? 's' : ''} (×${multiplicador}) = ${(cant * multiplicador).toLocaleString('es-AR')} ud.`);
         } else {
             totalUnidades += cant;
             if (cant > 0) {
-                // Para items sueltos, mostrar la presentación si tiene multiplicador
-                const multiplicador = obtenerMultiplicadorUnidades(articulo);
-                if (multiplicador > 1) {
-                    let presentacion = obtenerNombrePresentacion(articulo);
-                    if (presentacion.toLowerCase() === 'unidad') presentacion = 'Pack';
-                    detallePacks.push(`${cant} ${presentacion.toLowerCase()}${cant > 1 ? 's' : ''} (×${multiplicador})`);
-                } else {
-                    detallePacks.push(`${cant} unidades`);
-                }
+                // Solo mostrar como "unidades" - NO mostrar "packs" si no está en modo pack
+                detallePacks.push(`${cant} ${cant === 1 ? 'unidad' : 'unidades'} = ${cant.toLocaleString('es-AR')} ud.`);
             }
         }
     });
 
-    // Mostrar: "2 Cajas (×500) + 1 Pack (×10) = 1010 ud."
+    // Mostrar: "1 Pack (×500) = 500 ud. + 10 unidades = 10 ud. = 510 ud."
     if (detallePacks.length > 0) {
         total.innerHTML = `${detallePacks.join(' + ')} = <strong>${totalUnidades.toLocaleString('es-AR')}</strong> ud.`;
     } else {
