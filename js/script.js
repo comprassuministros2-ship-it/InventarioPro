@@ -2382,7 +2382,7 @@ function renderizarCarrito() {
             if (carritoPedido[idx]) {
                 if (carritoPedido[idx].tipo !== nuevoTipo) {
                     carritoPedido[idx].tipo = nuevoTipo;
-                    carritoPedido[idx].cantidad = 1; 
+                    // NO resetear cantidad: mantener la que el usuario puso
                 }
                 renderizarCarrito();
             }
@@ -2464,7 +2464,7 @@ async function manejarSubmitPedido(e) {
                 id: it.id,
                 nombre: it.nombre,
                 categoria: it.categoria,
-                cantidad: unidadesTotales,
+                cantidad: cantidadPresentacion,  // FIX: envía cantidad de PACKS (unidades de presentación), no unidades totales
                 textoCantidad: textoCantidad
             };
         });
@@ -2555,16 +2555,18 @@ function configurarBuscadorArticulosPedido() {
 
 function agregarAlCarrito(item) {
     const existente = carritoPedido.find(x => String(x.id) === String(item.id));
+    const multiplicador = obtenerMultiplicadorUnidades(item);
+    const tipoPorDefecto = multiplicador > 1 ? 'pack' : 'unidad';
+
     if (existente) {
         existente.cantidad += 1;
     } else {
-        const multiplicador = obtenerMultiplicadorUnidades(item);
         carritoPedido.push({
             id: item.id,
             nombre: item.articulo,
             categoria: item.categoriaID || '',
             cantidad: 1,
-            tipo: 'unidad'
+            tipo: tipoPorDefecto  // Si tiene multiplicador, empieza en 'pack'
         });
     }
     renderizarCarrito();
@@ -2679,20 +2681,31 @@ function actualizarTotalCarrito() {
     if (!total) return;
 
     let totalUnidades = 0;
+    let detallePacks = [];
 
     carritoPedido.forEach(item => {
         const articulo = articulos.find(a => String(a.id) === String(item.id));
         const multiplicador = obtenerMultiplicadorUnidades(articulo);
         const cant = Number(item.cantidad) || 0;
+        const tipo = item.tipo || 'unidad';
+        const esPack = tipo === 'pack' && multiplicador > 1;
 
-        if ((item.tipo || 'unidad') === 'pack' && multiplicador > 1) {
+        if (esPack) {
             totalUnidades += cant * multiplicador;
+            const presentacion = obtenerNombrePresentacion(articulo);
+            detallePacks.push(`${cant} ${presentacion}${cant > 1 ? 's' : ''} (×${multiplicador})`);
         } else {
             totalUnidades += cant;
+            if (cant > 0) detallePacks.push(`${cant} unidades`);
         }
     });
 
-    total.textContent = totalUnidades;
+    // Mostrar: "2 Cajas (×500) + 1 Pack (×10) = 1010 ud."
+    if (detallePacks.length > 0) {
+        total.innerHTML = `${detallePacks.join(' + ')} = <strong>${totalUnidades.toLocaleString('es-AR')}</strong> ud.`;
+    } else {
+        total.textContent = totalUnidades;
+    }
 }
 
 function incrementarCantidadCarrito(idx) {
@@ -3799,7 +3812,7 @@ function inicializarDragAndDropImagen() {
         dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
     });
 
-    ['dragenter', 'dragover'].forEach(eventName => {
+['dragenter', 'dragover'].forEach(eventName => {
         dropZone.addEventListener(eventName, () => { dropZone.style.borderColor = 'var(--accent)'; dropZone.style.backgroundColor = 'var(--accent-soft)'; }, false);
     });
 
