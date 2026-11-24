@@ -9,6 +9,19 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://raw.githubusercontent.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self'; form-action 'self';">
 
     <!-- ========================================== -->
+    <!-- PWA — Progressive Web App                  -->
+    <!-- ========================================== -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a5f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="InventarioPro">
+    <link rel="apple-touch-icon" href="img/icons/icon.svg">
+    <link rel="icon" type="image/svg+xml" href="img/icons/icon.svg">
+    <link rel="icon" type="image/png" sizes="192x192" href="img/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="img/icons/icon-512.png">
+
+    <!-- ========================================== -->
     <!-- INVENTARIO PRO — ESTRUCTURA HTML           -->
     <!-- ========================================== -->
 
@@ -16,6 +29,17 @@
 
     <link rel="stylesheet" href="css/style.css">
     <script src="js/theme-init.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js', { scope: '/InventarioPro/' })
+            .then(reg => console.log('[SW] Registrado:', reg.scope))
+            .catch(err => console.log('[SW] Error:', err));
+        });
+      }
+    </script>
 </head>
 <body>
 <div class="app-layout">
@@ -673,14 +697,10 @@
                                 </div>
                             </div>
 
-                            <!-- Columna 2: Panel detalle estilo "Carrito/Ticket" (sticky) -->
+                            <!-- Columna 2: Panel detalle (sticky) -->
                             <section id="detallePedidoSeccion" class="panel-detalle-sticky" aria-label="Detalle del pedido">
                                 <div id="detallePedido" class="detalle-ticket">
-                                    <!-- Estado vacío inicial -->
-                                    <div class="detalle-empty-state">
-                                        <span class="detalle-empty-icon" aria-hidden="true">🛒</span>
-                                        <p>Seleccioná un pedido de la lista</p>
-                                    </div>
+                                    <!-- Contenido se inyecta via JS al seleccionar un pedido -->
                                 </div>
                             </section>
                         </div>

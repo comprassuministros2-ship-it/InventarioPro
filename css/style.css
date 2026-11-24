@@ -1615,6 +1615,15 @@ body {
     padding: 0 2rem;
 }
 
+/* Pedidos: usar ancho completo para la tabla de seguimiento */
+#pagina-pedidos .page-content {
+    max-width: 100%;
+}
+#pagina-pedidos .page-header {
+    max-width: 100%;
+    padding: 0 2rem;
+}
+
 /* =========================================
    25. RESPONSIVE GENERAL (móvil ≤768px)
    ========================================= */
@@ -3135,9 +3144,16 @@ body {
 /* Grid Master-Detail para Hoja de Seguimiento */
 .hoja-seguimiento-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
+    grid-template-columns: minmax(0, 1fr) 440px;
     gap: 1.5rem;
     align-items: start;
+}
+
+/* En pantallas muy anchas, dar más espacio al panel detalle */
+@media (min-width: 1600px) {
+    .hoja-seguimiento-grid {
+        grid-template-columns: minmax(0, 1fr) 480px;
+    }
 }
 
 .panel-lista {
