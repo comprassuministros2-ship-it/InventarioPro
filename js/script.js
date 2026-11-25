@@ -2078,6 +2078,7 @@ function configurarDashboard() {
 // ============================================================
 // 18. PEDIDOS — Frontend real
 // ============================================================
+// Estructura: { id, nombre, categoria, cantidad_unidades }
 let carritoPedido = [];
 let pedidoSeleccionado = null;
 let pedidosCache = [];
@@ -2153,7 +2154,7 @@ function renderizarDetallePedido() {
         <tr>
             <td>${escapeHtml(it.articuloNombre)}</td>
             <td><span class="badge-categoria">ID ${escapeHtml(it.articuloId)}</span></td>
-            <td style="font-weight:700;">${Number(it.cantidad) || 0}</td>
+            <td style="font-weight:700;">${Number(it.cantidad) || 0} unidades</td>
         </tr>
     `).join('') || '<tr><td colspan="3"><p class="placeholder">Sin artículos.</p></td></tr>';
     
@@ -2225,16 +2226,33 @@ async function manejarAccionPedido(accion, pedido) {
         document.getElementById('referenciaPedido').value = pedido.referencia || '';
         document.getElementById('inputDireccionPedido').value = pedido.direccion || '';
         document.getElementById('direccionPedido').value = pedido.direccion || '';
+
+        // Detectar si es pedido histórico (formato anterior con packs/cajas/bultos en textoCantidad)
+        const esHistorico = (pedido.items || []).some(it =>
+            it.textoCantidad && /pack|caja|bulto/i.test(it.textoCantidad)
+        );
+
         carritoPedido = (pedido.items || []).map(it => ({
             id: it.articuloId,
             nombre: it.articuloNombre,
             categoria: it.categoria,
-            cantidad: it.cantidad
+            cantidad_unidades: it.cantidad  // Asumimos que ahora SIEMPRE son unidades
         }));
+
         document.getElementById('btnConfirmarPedido').textContent = 'Guardar cambios';
         renderizarCarrito();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        mostrarToast('Editando pedido #' + pedido.id, 'exito');
+
+        if (esHistorico) {
+            // Modal de advertencia para pedidos históricos
+            setTimeout(() => {
+                if (confirm('⚠️ ATENCIÓN: Este pedido fue creado con el formato anterior (packs/cajas).\n\nLas cantidades cargadas se interpretan ahora como UNIDADES INDIVIDUALES.\n\nVerificá que las cantidades sean correctas antes de guardar.')) {
+                    mostrarToast('Revisá las cantidades antes de confirmar', 'error');
+                }
+            }, 300);
+        } else {
+            mostrarToast('Editando pedido #' + pedido.id, 'exito');
+        }
         return;
     }
 
@@ -2291,20 +2309,21 @@ async function manejarAccionPedido(accion, pedido) {
     }
 }
 
-// ✅ CARRITO REPARADO: Se restauró el botón de Unidades/Cajas y el input de cantidad
+// Renderizado simplificado del carrito: solo unidades, stock visible, input con max=stock
 function renderizarCarrito() {
     const contenedor = document.getElementById('carritoPedido');
-    const totalEl = document.getElementById('carritoTotal');
+    const resumenEl = document.querySelector('.carrito-resumen .carrito-total-label');
     if (!contenedor) return;
 
     if (carritoPedido.length === 0) {
         contenedor.innerHTML = '<p class="placeholder">El carrito está vacío. Buscá un artículo arriba para agregarlo.</p>';
-        if (totalEl) totalEl.textContent = '0';
+        if (resumenEl) resumenEl.textContent = '0 artículos en el pedido';
         return;
     }
 
     contenedor.innerHTML = carritoPedido.map((it, idx) => {
         const articulo = articulos.find(a => String(a.id) === String(it.id));
+        const stock = articulo ? obtenerStock(articulo) : 0;
         const imgData = (articulo?.imagen || '').trim();
 
         let imgHTML = '📦';
@@ -2314,51 +2333,31 @@ function renderizarCarrito() {
             imgHTML = escapeHtml(imgData);
         }
 
-        const stock = articulo ? obtenerStock(articulo) : '—';
-        const multiplicador = obtenerMultiplicadorUnidades(articulo);
-        const nombrePresentacion = obtenerNombrePresentacion(articulo);
-        const tipoActual = it.tipo || 'unidad';
-        const cantMostrar = it.cantidad || 1;
-
-        let selectorTipoHTML = '';
-        if (multiplicador > 1) {
-            const nombrePack = escapeHtml(nombrePresentacion.toUpperCase() + 'S');
-            selectorTipoHTML = `
-                <div style="display: inline-flex; gap: 4px; margin-left: 10px; vertical-align: middle;">
-                    <button type="button" class="btn-tipo-cantidad ${tipoActual === 'unidad' ? 'activo' : ''}" data-tipo-idx="${idx}" data-tipo-val="unidad" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; border: 1px solid var(--border); background: ${tipoActual === 'unidad' ? 'var(--accent)' : 'var(--bg-card)'}; color: ${tipoActual === 'unidad' ? '#fff' : 'var(--text-muted)'}; cursor: pointer; font-weight: 600;">UNIDADES</button>
-                    <button type="button" class="btn-tipo-cantidad ${tipoActual === 'pack' ? 'activo' : ''}" data-tipo-idx="${idx}" data-tipo-val="pack" style="padding: 2px 8px; font-size: 0.7rem; border-radius: 4px; border: 1px solid var(--border); background: ${tipoActual === 'pack' ? 'var(--accent)' : 'var(--bg-card)'}; color: ${tipoActual === 'pack' ? '#fff' : 'var(--text-muted)'}; cursor: pointer; font-weight: 600;">${nombrePack} (x${multiplicador})</button>
-                </div>`;
-        }
-
-        let equivalenciaHTML = '';
-        if (tipoActual === 'pack' && multiplicador > 1) {
-            const totalUnidades = cantMostrar * multiplicador;
-            equivalenciaHTML = `<span class="carrito-item-stock" style="color: #16a34a; font-weight: 600; font-size: 0.85rem;">👉 Son ${totalUnidades} unidades en total</span>`;
-        } else {
-            equivalenciaHTML = `<span class="carrito-item-stock">Stock: ${stock}</span>`;
-        }
+        const cantidad = Number(it.cantidad_unidades) || 1;
 
         return `
-            <div class="carrito-item" style="align-items: flex-start;">
-                <span class="carrito-item-emoji" aria-hidden="true" style="margin-top: 5px;">${imgHTML}</span>
-                <div style="flex: 1;">
-                    <span class="carrito-item-nombre" style="display: block; margin-bottom: 4px;">${escapeHtml(it.nombre)}</span>
-                    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
-                        ${selectorTipoHTML}
-                        ${equivalenciaHTML}
+            <div class="carrito-item-simple" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: var(--bg-card); border-radius: 8px; margin-bottom: 8px;">
+                <span class="carrito-item-emoji" style="font-size: 1.5rem;">${imgHTML}</span>
+                <div style="flex: 1; min-width: 0;">
+                    <div class="carrito-item-nombre" style="font-weight: 600; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(it.nombre)}</div>
+                    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                        <span class="carrito-badge-unidades" style="background: var(--accent-soft); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Unidades</span>
+                        <span class="carrito-stock-badge" style="color: #16a34a; font-weight: 700; font-size: 0.85rem;">Stock: ${stock.toLocaleString('es-AR')}</span>
                     </div>
                 </div>
-                <div class="carrito-stepper" style="margin-top: 5px;">
-                    <button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}">−</button>
-                    <input type="number" class="carrito-input-cantidad" data-idx="${idx}" value="${cantMostrar}" min="1" style="width: 50px; text-align: center; padding: 4px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem;">
-                    <button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}">+</button>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="carrito-btn-stepper" data-step="menos" data-idx="${idx}" style="width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); cursor: pointer; font-size: 1rem;" aria-label="Disminuir">−</button>
+                    <input type="number" class="carrito-input-cantidad" data-idx="${idx}" value="${cantidad}" min="1" max="${stock}" style="width: 80px; text-align: center; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; font-weight: 600;">
+                    <button type="button" class="carrito-btn-stepper" data-step="mas" data-idx="${idx}" style="width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); cursor: pointer; font-size: 1rem;" aria-label="Aumentar">+</button>
                 </div>
-                <button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" style="margin-top: 5px;">✕</button>
+                <button type="button" class="carrito-btn-quitar" data-quitar="${idx}" title="Quitar artículo" style="width: 32px; height: 32px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; border-radius: 6px;" aria-label="Quitar">✕</button>
             </div>`;
     }).join('');
 
-    actualizarTotalCarrito();
+    // Actualizar resumen: "X artículos en el pedido"
+    if (resumenEl) resumenEl.textContent = `${carritoPedido.length} artículo${carritoPedido.length !== 1 ? 's' : ''} en el pedido`;
 
+    // Event listeners
     contenedor.querySelectorAll('.carrito-btn-stepper').forEach(btn => btn.addEventListener('click', () => {
         const idx = Number(btn.dataset.idx);
         if (btn.dataset.step === 'mas') incrementarCantidadCarrito(idx);
@@ -2369,23 +2368,12 @@ function renderizarCarrito() {
         input.addEventListener('change', (e) => {
             const idx = Number(e.target.dataset.idx);
             let val = parseInt(e.target.value);
+            const articulo = articulos.find(a => String(a.id) === String(carritoPedido[idx]?.id));
+            const stock = articulo ? obtenerStock(articulo) : 999999;
             if (isNaN(val) || val < 1) val = 1;
-            carritoPedido[idx].cantidad = val;
+            if (val > stock) val = stock;
+            carritoPedido[idx].cantidad_unidades = val;
             renderizarCarrito();
-        });
-    });
-
-    contenedor.querySelectorAll('.btn-tipo-cantidad').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const idx = Number(btn.dataset.tipoIdx);
-            const nuevoTipo = btn.dataset.tipoVal;
-            if (carritoPedido[idx]) {
-                if (carritoPedido[idx].tipo !== nuevoTipo) {
-                    carritoPedido[idx].tipo = nuevoTipo;
-                    carritoPedido[idx].cantidad = 1; // Reset a 1 al cambiar modo
-                }
-                renderizarCarrito();
-            }
         });
     });
 
@@ -2441,6 +2429,25 @@ async function manejarSubmitPedido(e) {
         return;
     }
 
+    // Validaciones: al menos uno con cantidad > 0, ninguna supera stock
+    let hayConCantidad = false;
+    for (const it of carritoPedido) {
+        const articulo = articulos.find(a => String(a.id) === String(it.id));
+        const stock = articulo ? obtenerStock(articulo) : 0;
+        const cant = Number(it.cantidad_unidades) || 0;
+
+        if (cant > 0) hayConCantidad = true;
+        if (cant > stock) {
+            mostrarToast(`Stock insuficiente para ${it.nombre}: disponible ${stock}, pediste ${cant}`, 'error');
+            return;
+        }
+    }
+
+    if (!hayConCantidad) {
+        mostrarToast('Ingresá al menos una cantidad mayor a cero', 'error');
+        return;
+    }
+
     const btn = document.getElementById('btnConfirmarPedido');
     const txtOriginal = btn?.textContent || 'Confirmar pedido';
 
@@ -2450,84 +2457,73 @@ async function manejarSubmitPedido(e) {
     }
 
     try {
+        // Enviar SOLO unidades individuales
         const items = carritoPedido.map(it => {
             const articulo = articulos.find(a => String(a.id) === String(it.id));
-            const multiplicador = obtenerMultiplicadorUnidades(articulo);
-            const cantidadPresentacion = Math.max(1, Number(it.cantidad) || 1);
-            const tipo = it.tipo || 'unidad';
-            const esPack = tipo === 'pack' && multiplicador > 1;
-            const unidadesTotales = esPack
-                ? cantidadPresentacion * multiplicador
-                : cantidadPresentacion;
-
-            let presentacion = obtenerNombrePresentacion(articulo);
-            // Si la presentación es "Unidad" pero tiene multiplicador > 1, usar "Pack" como etiqueta
-            if (presentacion.toLowerCase() === 'unidad' && multiplicador > 1) {
-                presentacion = 'Pack';
-            }
-            const textoCantidad = esPack
-                ? `${cantidadPresentacion} ${presentacion}${cantidadPresentacion === 1 ? '' : 's'} (${unidadesTotales} unidades)`
-                : `${unidadesTotales} ${unidadesTotales === 1 ? 'unidad' : 'unidades'}`;
+            const cantidadUnidades = Math.max(1, Number(it.cantidad_unidades) || 1);
 
             return {
                 id: it.id,
                 nombre: it.nombre,
                 categoria: it.categoria,
-                cantidad: cantidadPresentacion,  // FIX: envía cantidad de PACKS (unidades de presentación), no unidades totales
-                textoCantidad: textoCantidad
+                cantidad: cantidadUnidades,  // ✅ Unidades directas
+                textoCantidad: `${cantidadUnidades.toLocaleString('es-AR')} unidades`
             };
         });
 
-        const payload = {
-            direccion,
-            director,
-            referencia,
-            items
-        };
+        const payload = { direccion, director, referencia, items };
 
         const resultado = modoEdicionPedido
-            ? await apiService.post({
-                accion: 'editarPedido',
-                id: modoEdicionPedido,
-                ...payload
-            })
-            : await apiService.post({
-                accion: 'crearPedido',
-                ...payload
-            });
+            ? await apiService.post({ accion: 'editarPedido', id: modoEdicionPedido, ...payload })
+            : await apiService.post({ accion: 'crearPedido', ...payload });
 
         if (!resultado || resultado.exito === false) {
             throw new Error(resultado?.error || 'No se pudo guardar el pedido');
         }
 
         const estabaEditando = Boolean(modoEdicionPedido);
-        mostrarToast(estabaEditando ? 'Pedido actualizado' : 'Pedido creado', 'exito');
+        const nuevoPedidoId = resultado.id || resultado.pedidoId || resultado.idPedido;
 
-        carritoPedido = [];
-        modoEdicionPedido = null;
+        if (estabaEditando) {
+            mostrarToast('Pedido actualizado', 'exito');
+            carritoPedido = [];
+            modoEdicionPedido = null;
+            document.getElementById('formPedido')?.reset();
+            document.getElementById('direccionPedido').value = '';
+            document.getElementById('directorPedido').value = '';
+            document.getElementById('referenciaPedido').value = '';
+            if (btn) btn.textContent = 'Confirmar pedido';
+            renderizarCarrito();
+            await cargarListaPedidos();
+        } else {
+            // NUEVO PEDIDO: ir a Seguimiento y seleccionar el pedido recién creado
+            mostrarToast('Pedido creado - redirigiendo a seguimiento...', 'exito');
+            carritoPedido = [];
+            modoEdicionPedido = null;
+            document.getElementById('formPedido')?.reset();
+            document.getElementById('direccionPedido').value = '';
+            document.getElementById('directorPedido').value = '';
+            document.getElementById('referenciaPedido').value = '';
+            if (btn) btn.textContent = 'Confirmar pedido';
+            renderizarCarrito();
 
-        document.getElementById('formPedido')?.reset();
+            // Cambiar a pestaña Seguimiento y esperar a que cargue la lista
+            cambiarTabPedidos('seguimiento');
+            await cargarListaPedidos();
 
-        const direccionPedido = document.getElementById('direccionPedido');
-        const directorPedido = document.getElementById('directorPedido');
-        const referenciaPedido = document.getElementById('referenciaPedido');
-
-        if (direccionPedido) direccionPedido.value = '';
-        if (directorPedido) directorPedido.value = '';
-        if (referenciaPedido) referenciaPedido.value = '';
-
-        if (btn) btn.textContent = 'Confirmar pedido';
-        renderizarCarrito();
-        await cargarListaPedidos();
+            // Seleccionar el pedido recién creado en la lista
+            if (nuevoPedidoId) {
+                pedidoSeleccionado = String(nuevoPedidoId);
+                renderizarListaPedidos(); // Marca la tarjeta como activa
+                renderizarDetallePedido(); // Muestra el detalle con botones Confirmar/PDF
+            }
+        }
     } catch (err) {
         console.error('❌ Error guardando pedido:', err);
         mostrarToast('Error: ' + (err?.message || 'No se pudo guardar el pedido'), 'error');
         if (btn) btn.textContent = txtOriginal;
     } finally {
-        if (btn) {
-            btn.disabled = false;
-            if (modoEdicionPedido === null) btn.textContent = 'Confirmar pedido';
-        }
+        if (btn) btn.disabled = false;
     }
 }
 
@@ -2565,18 +2561,15 @@ function configurarBuscadorArticulosPedido() {
 
 function agregarAlCarrito(item) {
     const existente = carritoPedido.find(x => String(x.id) === String(item.id));
-    const multiplicador = obtenerMultiplicadorUnidades(item);
-    const tipoPorDefecto = multiplicador > 1 ? 'pack' : 'unidad';
 
     if (existente) {
-        existente.cantidad += 1;
+        existente.cantidad_unidades += 1;
     } else {
         carritoPedido.push({
             id: item.id,
             nombre: item.articulo,
             categoria: item.categoriaID || '',
-            cantidad: 1,
-            tipo: tipoPorDefecto  // Si tiene multiplicador, empieza en 'pack'
+            cantidad_unidades: 1  // Inicia en 1 unidad
         });
     }
     renderizarCarrito();
@@ -2686,60 +2679,24 @@ function cambiarTabPedidos(tab) {
     if (seguimiento) seguimiento.hidden = seleccionado !== 'seguimiento';
 }
 
+// Simplificado: ya no se usa, el resumen se actualiza en renderizarCarrito()
 function actualizarTotalCarrito() {
-    const total = document.getElementById('carritoTotal');
-    if (!total) return;
-
-    let totalUnidades = 0;
-    let lineas = [];
-
-    carritoPedido.forEach(item => {
-        const articulo = articulos.find(a => String(a.id) === String(item.id));
-        const multiplicador = obtenerMultiplicadorUnidades(articulo);
-        const cant = Number(item.cantidad) || 0;
-        const tipo = item.tipo || 'unidad';
-        const esPack = tipo === 'pack' && multiplicador > 1;
-
-        if (esPack) {
-            totalUnidades += cant * multiplicador;
-            let presentacion = obtenerNombrePresentacion(articulo);
-            if (presentacion.toLowerCase() === 'unidad' && multiplicador > 1) {
-                presentacion = 'Pack';
-            }
-            lineas.push(`${cant} ${presentacion}${cant > 1 ? 's' : ''} (×${multiplicador})`);
-        } else {
-            totalUnidades += cant;
-            if (cant > 0) {
-                // Si tiene multiplicador > 1 pero está en modo unidad, mostrar equivalencia en packs
-                if (multiplicador > 1 && cant % multiplicador === 0) {
-                    const packs = cant / multiplicador;
-                    let presentacion = obtenerNombrePresentacion(articulo);
-                    if (presentacion.toLowerCase() === 'unidad') presentacion = 'Pack';
-                    lineas.push(`${packs} ${presentacion}${packs > 1 ? 's' : ''} (×${multiplicador})`);
-                } else {
-                    lineas.push(`${cant} ${cant === 1 ? 'unidad' : 'unidades'}`);
-                }
-            }
-        }
-    });
-
-    // Formato simple: "+ 1 Pack (×500) + 1 Pack (×10)"
-    if (lineas.length > 0) {
-        total.innerHTML = `+ ${lineas.join(' + ')}`;
-    } else {
-        total.textContent = '0';
-    }
+    // No-op: el resumen "X artículos en el pedido" se maneja en renderizarCarrito()
 }
 
 function incrementarCantidadCarrito(idx) {
     if (!carritoPedido[idx]) return;
-    carritoPedido[idx].cantidad = (Number(carritoPedido[idx].cantidad) || 0) + 1;
-    renderizarCarrito();
+    const articulo = articulos.find(a => String(a.id) === String(carritoPedido[idx].id));
+    const stock = articulo ? obtenerStock(articulo) : 999999;
+    if (carritoPedido[idx].cantidad_unidades < stock) {
+        carritoPedido[idx].cantidad_unidades += 1;
+        renderizarCarrito();
+    }
 }
 
 function decrementarCantidadCarrito(idx) {
     if (!carritoPedido[idx]) return;
-    carritoPedido[idx].cantidad = Math.max(1, (Number(carritoPedido[idx].cantidad) || 1) - 1);
+    carritoPedido[idx].cantidad_unidades = Math.max(1, carritoPedido[idx].cantidad_unidades - 1);
     renderizarCarrito();
 }
 
@@ -2855,7 +2812,7 @@ function renderizarHojaSeguimiento() {
                 <tbody>${grupo.pedidos.map(p => {
                     const fecha = p.fecha ? new Date(p.fecha) : null;
                     const hora = fecha && !Number.isNaN(fecha.getTime()) ? fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '—';
-                    const items = (p.items || []).map(item => `${escapeHtml(item.articuloNombre || 'Artículo')} (${Number(item.cantidad) || 0})`).join(', ') || 'Sin artículos';
+                    const items = (p.items || []).map(item => `${escapeHtml(item.articuloNombre || 'Artículo')} (${Number(item.cantidad) || 0} ud.)`).join(', ') || 'Sin artículos';
                     const unidades = Number(p.totalUnidades) || (p.items || []).reduce((suma, item) => suma + (Number(item.cantidad) || 0), 0);
                     const estadoClase = normalizarTexto(p.estado || '').replace(/\s+/g, '-');
                     const acciones = p.estado === 'Pendiente'
