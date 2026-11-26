@@ -1969,9 +1969,9 @@ async function cargarDashboard() {
     document.getElementById('dashEntradasMes').textContent = (datos.entradasMes || 0).toLocaleString('es-AR');
     document.getElementById('dashSalidasMes').textContent = (datos.salidasMes || 0).toLocaleString('es-AR');
 
-    renderizarDashUltimosMovimientos(datos.entradasHoy || []);
     renderizarDashArticulosCriticos(datos.top5Criticos || []);
-    renderizarDashSalidasConRemito(datos.salidasConRemito || []);
+    renderizarDashStockMes(datos.entradasMes || 0, datos.salidasMes || 0);
+    renderizarUltimosMovimientosUnificados(datos.entradasHoy || [], datos.salidasConRemito || []);
 }
 
 function renderizarDashUltimosMovimientos(entradas) {
@@ -1998,6 +1998,110 @@ function renderizarDashUltimosMovimientos(entradas) {
     });
     html += '</ul>';
     contenedor.innerHTML = html;
+}
+
+// ===== NUEVAS FUNCIONES DASHBOARD =====
+
+function renderizarDashStockMes(entradasMes, salidasMes) {
+    const contenedor = document.getElementById('dashStockMes');
+    if (!contenedor) return;
+
+    const neto = entradasMes - salidasMes;
+    const netoClase = neto >= 0 ? 'positivo' : 'negativo';
+    const netoSigno = neto >= 0 ? '+' : '';
+
+    contenedor.innerHTML = `
+        <div class="stock-mes-grid">
+            <div class="stock-mes-item">
+                <span class="stock-mes-label">Entradas</span>
+                <span class="stock-mes-valor entrada">${entradasMes.toLocaleString('es-AR')} uds</span>
+            </div>
+            <div class="stock-mes-item">
+                <span class="stock-mes-label">Salidas</span>
+                <span class="stock-mes-valor salida">${salidasMes.toLocaleString('es-AR')} uds</span>
+            </div>
+            <div class="stock-mes-item total">
+                <span class="stock-mes-label">Neto</span>
+                <span class="stock-mes-valor ${netoClase}">${netoSigno}${neto.toLocaleString('es-AR')} uds</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderizarUltimosMovimientosUnificados(entradasHoy, salidasConRemito) {
+    const contenedor = document.getElementById('dashUltimosMovimientosUnificados');
+    if (!contenedor) return;
+
+    // Combinar y ordenar por fecha descendente
+    const todos = [
+        ...(entradasHoy || []).map(e => ({
+            fecha: e.fecha,
+            tipo: 'entrada',
+            icono: '⬆️',
+            articulo: e.articulo,
+            cantidad: e.cantidad,
+            detalle: e.proveedor || '—',
+            clase: 'entrada',
+            signo: '+'
+        })),
+        ...(salidasConRemito || []).map(s => ({
+            fecha: s.fecha,
+            tipo: 'salida',
+            icono: '⬇️',
+            articulo: s.articulo,
+            cantidad: s.cantidad,
+            detalle: s.destino || '—',
+            remito: s.remito,
+            clase: 'salida',
+            signo: '-'
+        }))
+    ].sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+    .slice(0, 10); // Solo los 10 más recientes
+
+    if (todos.length === 0) {
+        contenedor.innerHTML = '<p class="placeholder">No hay movimientos recientes.</p>';
+        return;
+    }
+
+    let filas = '';
+    todos.forEach(m => {
+        const fecha = m.fecha ? new Date(m.fecha).toLocaleString('es-AR', {
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        }) : '—';
+        const remitoHtml = m.remito ? `<br><span class="mov-remito">Remito: ${escapeHtml(m.remito)}</span>` : '';
+
+        filas += `
+            <tr class="mov-fila mov-${m.clase}">
+                <td class="mov-fecha">${fecha}</td>
+                <td class="mov-tipo">
+                    <span class="mov-icono">${m.icono}</span>
+                    <span class="mov-tipo-texto">${m.tipo === 'entrada' ? 'Entrada' : 'Salida'}</span>
+                </td>
+                <td class="mov-articulo">
+                    <strong>${escapeHtml(m.articulo)}</strong>
+                </td>
+                <td class="mov-detalle">${escapeHtml(m.detalle)}${remitoHtml}</td>
+                <td class="mov-cantidad ${m.clase}">${m.signo}${Number(m.cantidad).toLocaleString('es-AR')} uds</td>
+            </tr>
+        `;
+    });
+
+    contenedor.innerHTML = `
+        <div class="movimientos-tabla-wrapper">
+            <table class="movimientos-tabla">
+                <thead>
+                    <tr>
+                        <th>Fecha / Hora</th>
+                        <th>Tipo</th>
+                        <th>Artículo</th>
+                        <th>Detalle / Remito</th>
+                        <th class="text-right">Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>
+    `;
 }
 
 function renderizarDashArticulosCriticos(criticos) {

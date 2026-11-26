@@ -3341,6 +3341,199 @@ body {
     border-bottom: none;
 }
 
+/* ===== NUEVOS ESTILOS DASHBOARD ===== */
+
+.stock-mes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.stock-mes-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.8rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stock-mes-item.total {
+    grid-column: span 3;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+}
+
+.stock-mes-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.stock-mes-valor {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.stock-mes-valor.entrada { color: #16a34a; }
+.stock-mes-valor.salida { color: #dc2626; }
+.stock-mes-valor.positivo { color: #16a34a; }
+.stock-mes-valor.negativo { color: #dc2626; }
+
+/* Tabla unificada de movimientos */
+.movimientos-tabla-wrapper {
+    overflow-x: auto;
+    margin-top: 0.5rem;
+}
+
+.movimientos-tabla {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.85rem;
+}
+
+.movimientos-tabla th {
+    text-align: left;
+    padding: 0.7rem 0.8rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    border-bottom: 2px solid var(--border);
+    background: var(--bg-hover);
+    white-space: nowrap;
+}
+
+.movimientos-tabla td {
+    padding: 0.7rem 0.8rem;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+.movimientos-tabla tr:last-child td {
+    border-bottom: none;
+}
+
+.movimientos-tabla tbody tr:hover {
+    background: var(--bg-hover);
+}
+
+/* Columna Fecha */
+.mov-fecha {
+    font-family: monospace;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    color: var(--text-muted);
+}
+
+/* Columna Tipo */
+.mov-tipo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.mov-icono {
+    font-size: 1rem;
+}
+
+.mov-tipo-texto {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+.mov-fila.entrada .mov-tipo-texto {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.mov-fila.salida .mov-tipo-texto {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.mov-fila.relevamiento .mov-tipo-texto {
+    background: #ffedd5;
+    color: #c2410c;
+}
+
+/* Columna Artículo */
+.mov-articulo {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Columna Detalle */
+.mov-detalle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mov-remito {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.65rem;
+    color: var(--accent);
+    font-weight: 500;
+}
+
+/* Columna Cantidad */
+.mov-cantidad {
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.mov-cantidad.entrada { color: #16a34a; }
+.mov-cantidad.salida { color: #dc2626; }
+.mov-cantidad.relevamiento { color: #c2410c; }
+
+/* Responsive: ≤768px - apilar en tarjetas */
+@media (max-width: 768px) {
+    .stock-mes-grid {
+        grid-template-columns: 1fr;
+    }
+    .stock-mes-item.total {
+        grid-column: auto;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .movimientos-tabla-wrapper {
+        margin: 0 -0.5rem;
+        border-radius: 0;
+    }
+
+    .movimientos-tabla {
+        min-width: 500px; /* fuerza scroll horizontal en móvil */
+    }
+
+    .mov-detalle {
+        max-width: 150px;
+    }
+}
+
 /* =========================================
    35. PEDIDOS — Layout, carrito, seguimiento
    ========================================= */
