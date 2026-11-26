@@ -2245,8 +2245,13 @@ async function manejarAccionPedido(accion, pedido) {
 
         if (esHistorico) {
             // Modal de advertencia para pedidos históricos
-            setTimeout(() => {
-                if (confirm('⚠️ ATENCIÓN: Este pedido fue creado con el formato anterior (packs/cajas).\n\nLas cantidades cargadas se interpretan ahora como UNIDADES INDIVIDUALES.\n\nVerificá que las cantidades sean correctas antes de guardar.')) {
+            setTimeout(async () => {
+                const confirmado = await confirmModal.confirmarSimple(
+                    '⚠️ Pedido histórico',
+                    'Este pedido fue creado con el formato anterior (packs/cajas).\n\nLas cantidades cargadas se interpretan ahora como UNIDADES INDIVIDUALES.\n\nVerificá que las cantidades sean correctas antes de guardar.',
+                    true  // danger = true para variante roja
+                );
+                if (confirmado) {
                     mostrarToast('Revisá las cantidades antes de confirmar', 'error');
                 }
             }, 300);
@@ -2257,7 +2262,13 @@ async function manejarAccionPedido(accion, pedido) {
     }
 
     if (accion === 'cancelar') {
-        if (!confirm('¿Cancelar el pedido #' + pedido.id + '?')) return;
+        const confirmado = await confirmModal.confirmarAccion({
+            titulo: 'Cancelar pedido',
+            mensaje: '¿Cancelar el pedido #' + pedido.id + '?',
+            danger: true,
+            textoConfirmar: 'Sí, cancelar'
+        });
+        if (!confirmado) return;
         try {
             const r = await apiService.post({ accion: 'cancelarPedido', id: pedido.id });
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
@@ -2275,7 +2286,20 @@ async function manejarAccionPedido(accion, pedido) {
     }
 
     if (accion === 'confirmar') {
-        if (!confirm('¿Confirmar pedido #' + pedido.id + '?\n\nSe descontará stock y se generará el remito.')) return;
+        // Preparar items para el modal
+        const itemsModal = (pedido.items || []).map(it => ({
+            nombre: it.articuloNombre,
+            cantidad: `${Number(it.cantidad).toLocaleString('es-AR')} uds`
+        }));
+
+        const confirmado = await confirmModal.confirmarAccion({
+            titulo: 'Confirmar pedido',
+            mensaje: 'Vas a confirmar el siguiente pedido:',
+            items: itemsModal,
+            direccion: pedido.direccion || '',
+            solicitante: pedido.director || ''
+        });
+        if (!confirmado) return;
         try {
             const r = await apiService.post({ accion: 'confirmarPedido', id: pedido.id });
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
@@ -3061,7 +3085,13 @@ async function eliminarArticulo(id) {
         mensaje += `\n\n⚠️ El artículo todavía tiene stock. Si lo eliminás, perdés el registro del stock actual.`;
     }
 
-    if (!confirm(mensaje)) return;
+    const confirmado = await confirmModal.confirmarAccion({
+        titulo: 'Eliminar artículo',
+        mensaje: mensaje,
+        danger: true,
+        textoConfirmar: 'Sí, eliminar'
+    });
+    if (!confirmado) return;
 
     try {
         const r = await apiService.post({ accion: 'eliminarArticulo', id: id });
@@ -3569,7 +3599,7 @@ function abrirModalDetalleArticulo(id) {
     // Delegación en el modal para botones de acción
     const modal = document.getElementById('modalDetalleArticulo');
     if (modal) {
-        modal.addEventListener('click', function(e) {
+        modal.addEventListener('click', async function(e) {
             const btn = e.target.closest('.detalle-btn');
             if (!btn) return;
 
@@ -3583,7 +3613,13 @@ function abrirModalDetalleArticulo(id) {
                 cerrarModalDetalleArticulo();
                 irARelevamientoConArticulo(id);
             } else if (btn.classList.contains('detalle-btn-eliminar')) {
-                if (confirm('¿Eliminar este artículo? Esta acción no se puede deshacer.')) {
+                const confirmado = await confirmModal.confirmarAccion({
+                    titulo: 'Eliminar artículo',
+                    mensaje: '¿Eliminar este artículo? Esta acción no se puede deshacer.',
+                    danger: true,
+                    textoConfirmar: 'Sí, eliminar'
+                });
+                if (confirmado) {
                     cerrarModalDetalleArticulo();
                     eliminarArticulo(id);
                 }

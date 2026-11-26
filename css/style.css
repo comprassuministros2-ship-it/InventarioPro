@@ -2393,6 +2393,218 @@ body {
 }
 
 /* =========================================
+   33c. MODAL DE CONFIRMACIÓN PERSONALIZADO
+========================================= */
+.modal-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 2100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-confirm-overlay[hidden] {
+    display: none !important;
+}
+
+.modal-confirm {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--cartel-shadow);
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: modalConfirmEnter 0.25s ease;
+}
+
+@keyframes modalConfirmEnter {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+.modal-confirm--danger {
+    border-color: #fecaca;
+    background: #fef2f2;
+}
+
+.modal-confirm--danger .modal-confirm-title {
+    color: #dc2626;
+}
+
+.modal-confirm-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s, color 0.15s;
+    z-index: 1;
+}
+
+.modal-confirm-close:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.modal-confirm-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    padding: 1.25rem 1.5rem 0.5rem;
+}
+
+.modal-confirm-message {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+    padding: 0 1.5rem 0.75rem;
+    line-height: 1.5;
+}
+
+.modal-confirm-details {
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin: 0.5rem 1.5rem 1rem;
+    font-size: 0.85rem;
+    color: var(--text);
+    line-height: 1.7;
+    border: 1px solid var(--border);
+}
+
+.modal-confirm-details .confirm-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0;
+}
+
+.modal-confirm-details .confirm-item:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-confirm-details .confirm-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.modal-confirm-details .confirm-value {
+    font-weight: 600;
+    color: var(--text);
+    text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.modal-confirm-details .confirm-divider {
+    margin: 0.5rem 0;
+    border-top: 1px solid var(--border);
+}
+
+.modal-confirm-details .confirm-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.modal-confirm-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding: 0.75rem 1.5rem 1.25rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
+}
+
+.modal-confirm-actions .btn-cancel,
+.modal-confirm-actions .btn-confirm {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 100px;
+}
+
+.modal-confirm-actions .btn-cancel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.modal-confirm-actions .btn-cancel:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+}
+
+.modal-confirm-actions .btn-confirm {
+    background: var(--accent);
+    border: none;
+    color: white;
+}
+
+.modal-confirm-actions .btn-confirm:hover {
+    background: var(--accent-hover);
+}
+
+.modal-confirm--danger .modal-confirm-actions .btn-confirm {
+    background: #dc2626;
+}
+
+.modal-confirm--danger .modal-confirm-actions .btn-confirm:hover {
+    background: #b91c1c;
+}
+
+@media (max-width: 768px) {
+    .modal-confirm-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-confirm {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        border-bottom: none;
+        box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.15);
+        animation: modalConfirmSlideUp 0.3s ease;
+    }
+
+    @keyframes modalConfirmSlideUp {
+        from { transform: translateY(100%); opacity: 0; }
+        to   { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-confirm-close {
+        top: 0.5rem;
+        right: 0.5rem;
+    }
+
+    .modal-confirm-actions {
+        padding-bottom: max(1.25rem, env(safe-area-inset-bottom) + 0.5rem);
+    }
+}
+
+/* =========================================
    33b. MODAL EDITAR ARTÍCULO — Estilos específicos
    ========================================= */
 
