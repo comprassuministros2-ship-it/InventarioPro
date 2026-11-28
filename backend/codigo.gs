@@ -1,7 +1,9 @@
-**
+/**
  * ============================================================
  * INVENTARIO PRO - API (Backend)
  * VERSION: ESTABLE + LOCKSERVICE + 14 CAMPOS + PATRIMONIO/TALLE + DIRECTOR + FILTRO MOVIMIENTOS
+ * MODIFICADO: Soporte formato_cantidad (columna H) para distinguir pedidos nuevos (unidades) vs históricos
+ * NUEVO v2: Flujo Pedidos — Confirmar (solo guarda lista) → Entregar (descuenta stock + PDF con firmas)
  * ============================================================
  */
 
@@ -56,7 +58,6 @@ function doPost(e) {
         break;
 
       case "listarMovimientos":
-        // ✅ FIX: Pasamos el idArticulo para filtrar
         resultado = listarMovimientos(body.idArticulo);
         break;
 
@@ -116,6 +117,11 @@ function doPost(e) {
         resultado = confirmarPedido(body.id);
         break;
 
+      // ===== NUEVO: Entregar pedido (descuenta stock + PDF con firmas) =====
+      case "generarRemitoEntrega":
+        resultado = generarRemitoEntrega(body.id);
+        break;
+
       case "crearArticulo":
         resultado = crearArticulo(body.datos || body);
         break;
@@ -148,9 +154,6 @@ const ID_EXTERNO_SEGUIMIENTO = "1cW7v2PcFCW2N3yQv01poW7PPyqxYNCWAfbdCoNh4VUA";
 const REPO_OWNER = "comprassuministros2-ship-it";
 const REPO_NAME = "InventarioPro";
 
-// ⚠️ TOKEN DE GITHUB — Configurar en Apps Script → Configuración del proyecto → Propiedades del script
-// Clave: GITHUB_TOKEN  |  Valor: tu token personal (ghp_...)
-// No hardcodear el token aquí para evitar filtraciones en repos públicos.
 const GITHUB_TOKEN = PropertiesService.getScriptProperties().getProperty("GITHUB_TOKEN") || "";
 
 function respuestaJSON(datos) {
@@ -180,11 +183,11 @@ function construirFecha(fecha) {
 
 function escaparHTML(txt) {
   return String(txt || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/&/g, "&")
+    .replace(/</g, "<")
+    .replace(/>/g, ">")
+    .replace(/"/g, """)
+    .replace(/'/g, "'");
 }
 
 function generarIDCorto() {
@@ -193,7 +196,7 @@ function generarIDCorto() {
 
 function normalizarNombreDireccion(nombre) {
   let n = String(nombre || "").trim().toLowerCase();
-  n = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  n = n.normalize("NFD").replace(/[̀-ͯ]/g, "");
   n = n.replace(/direcion/g, "direccion").replace(/\s+/g, " ");
   return n;
 }
@@ -766,7 +769,7 @@ function registrarRelevamiento(id, stockReal, observacion, fecha) {
         filaArt = i + 1;
         nombreArticulo = datosArt[i][1];
         stockSistema = Number(datosArt[i][2]) || 0;
-        stockCritico = Number(datosArt[i][11]) || 0;  // Columna L = stockCritico
+        stockCritico = Number(datosArt[i][11]) || 0;
         break;
       }
     }
@@ -790,7 +793,6 @@ function registrarRelevamiento(id, stockReal, observacion, fecha) {
       };
     }
 
-    // Validar: si hay diferencia, observación es obligatoria
     const obsTrim = String(observacion || "").trim();
     if (!obsTrim) {
       return {
@@ -893,20 +895,18 @@ function obtenerUltimasSalidas(cantidad) {
   return ultimas;
 }
 
-// ✅ FIX: listarMovimientos ahora filtra por idArticulo
 function listarMovimientos(idArticulo) {
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Movimientos");
   if (!hoja) return [];
 
   const datos = hoja.getDataRange().getValues();
-  datos.shift(); // Quitar cabecera
+  datos.shift();
 
   const resultado = [];
 
   for (let i = 0; i < datos.length; i++) {
     const fila = datos[i];
 
-    // Si se pide un artículo específico, filtrar. Si no, devolver todo (para la página general de Movimientos).
     if (idArticulo && String(fila[1]).trim() !== String(idArticulo).trim()) {
       continue;
     }
@@ -948,7 +948,7 @@ function listarDirecciones() {
       nombre: String(datos[i][1] || "").trim(),
       tipo: String(datos[i][2] || "").trim(),
       dependenciaSuperior: String(datos[i][3] || "").trim(),
-      director: String(datos[i][6] || "").trim()  // Columna G = Director
+      director: String(datos[i][6] || "").trim()
     });
   }
 
@@ -1277,7 +1277,8 @@ function listarPedidos() {
       articuloId: String(datosDet[i][3] || "").trim(),
       categoria: String(datosDet[i][4] || "").trim(),
       cantidad: Number(datosDet[i][5]) || 0,
-      textoCantidad: String(datosDet[i][6] || "")
+      textoCantidad: String(datosDet[i][6] || ""),
+      formatoCantidad: String(datosDet[i][7] || "unidades").trim()
     });
   }
 
@@ -1367,7 +1368,8 @@ function crearPedido(datos) {
         String(item.id || ""),
         item.categoria || "",
         Number(item.cantidad) || 0,
-        item.textoCantidad || ""
+        item.textoCantidad || "",
+        "unidades"
       ]);
     });
 
@@ -1376,11 +1378,11 @@ function crearPedido(datos) {
       const hojaEst = ss.getSheetByName("Estructura");
       if (hojaEst) {
         const director = datos.director.trim();
-        const dirNorm = normalizarNombreDireccion(datos.direccion); // Match por DIRECCIÓN, no por director
+        const dirNorm = normalizarNombreDireccion(datos.direccion);
         const datosEst = hojaEst.getDataRange().getValues();
         let filaMatch = -1;
         for (let i = 1; i < datosEst.length; i++) {
-          const nombreDir = String(datosEst[i][1] || "").trim(); // Columna B = Nombre dirección
+          const nombreDir = String(datosEst[i][1] || "").trim();
           if (normalizarNombreDireccion(nombreDir) === dirNorm) {
             filaMatch = i + 1;
             break;
@@ -1389,7 +1391,7 @@ function crearPedido(datos) {
         if (filaMatch !== -1) {
           const gActual = String(datosEst[filaMatch - 1][6] || "").trim();
           if (!gActual) {
-            hojaEst.getRange(filaMatch, 7).setValue(director); // Columna G = Director
+            hojaEst.getRange(filaMatch, 7).setValue(director);
           }
         }
       }
@@ -1484,7 +1486,8 @@ function editarPedido(idPedido, datos) {
         String(item.id || ""),
         item.categoria || "",
         Number(item.cantidad) || 0,
-        item.textoCantidad || ""
+        item.textoCantidad || "",
+        "unidades"
       ]);
     });
   }
@@ -1559,7 +1562,7 @@ function cancelarPedido(idPedido) {
 }
 
 // ------------------------------------------------------------
-// CONFIRMAR PEDIDO - CON LOCKSERVICE
+// CONFIRMAR PEDIDO - SOLO GUARDA LISTA (valida stock, NO descuenta, NO PDF)
 // ------------------------------------------------------------
 
 function confirmarPedido(idPedido) {
@@ -1576,9 +1579,8 @@ function confirmarPedido(idPedido) {
     const hojaPed = ss.getSheetByName("Pedidos");
     const hojaDet = ss.getSheetByName("Detalle_Pedido");
     const hojaArt = ss.getSheetByName("API_Prueba");
-    const hojaMov = ss.getSheetByName("Movimientos");
 
-    if (!hojaPed || !hojaDet || !hojaArt || !hojaMov) {
+    if (!hojaPed || !hojaDet || !hojaArt) {
       return { exito: false, error: "Faltan hojas necesarias" };
     }
 
@@ -1624,13 +1626,23 @@ function confirmarPedido(idPedido) {
           articuloId: String(datosDet[i][3] || "").trim(),
           categoria: String(datosDet[i][4] || "").trim(),
           cantidad: Number(datosDet[i][5]) || 0,
-          textoCantidad: String(datosDet[i][6] || "")
+          textoCantidad: String(datosDet[i][6] || ""),
+          formatoCantidad: String(datosDet[i][7] || "unidades").trim()
         });
       }
     }
 
     if (items.length === 0) {
       return { exito: false, error: "El pedido no tiene artículos" };
+    }
+
+    // ⚠️ DETECTAR PEDIDOS HISTÓRICOS (formato anterior con packs/cajas)
+    const esHistorico = items.some(function(it) {
+      return it.formatoCantidad !== "unidades" && /pack|caja|bulto/i.test(it.textoCantidad);
+    });
+
+    if (esHistorico) {
+      console.warn("⚠️ PEDIDO HISTÓRICO DETECTADO #" + idPedido + ": se interpretan cantidades como UNIDADES directas. Verificar antes de confirmar.");
     }
 
     const datosArt = hojaArt.getDataRange().getValues();
@@ -1667,9 +1679,139 @@ function confirmarPedido(idPedido) {
       };
     }
 
+    // ✅ SOLO CAMBIA ESTADO A "Confirmado" — NO descuenta stock, NO genera PDF
+    hojaPed.getRange(filaPed, 6).setValue("Confirmado");
+    // Columna H (PDF_Remito) queda vacía hasta la entrega real
+
+    return {
+      exito: true,
+      mensaje: "Pedido confirmado (lista guardada). Stock NO descontado. Use 'generarRemitoEntrega' cuando salgan los productos.",
+      estadoNuevo: "Confirmado",
+      esHistorico: esHistorico
+    };
+
+  } catch (e) {
+    return { exito: false, error: e.message };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// ------------------------------------------------------------
+// NUEVO: GENERAR REMITO ENTREGA - Descuenta stock + PDF con firmas
+// ------------------------------------------------------------
+
+function generarRemitoEntrega(idPedido) {
+  const lock = LockService.getScriptLock();
+
+  try {
+    lock.waitLock(30000);
+
+    if (!idPedido) {
+      return { exito: false, error: "Falta ID" };
+    }
+
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const hojaPed = ss.getSheetByName("Pedidos");
+    const hojaDet = ss.getSheetByName("Detalle_Pedido");
+    const hojaArt = ss.getSheetByName("API_Prueba");
+    const hojaMov = ss.getSheetByName("Movimientos");
+
+    if (!hojaPed || !hojaDet || !hojaArt || !hojaMov) {
+      return { exito: false, error: "Faltan hojas necesarias" };
+    }
+
+    const datosPed = hojaPed.getDataRange().getValues();
+    let filaPed = -1;
+    let pedido = null;
+
+    for (let i = 1; i < datosPed.length; i++) {
+      if (String(datosPed[i][0]).trim() === String(idPedido).trim()) {
+        filaPed = i + 1;
+
+        pedido = {
+          id: String(datosPed[i][0]).trim(),
+          nota: String(datosPed[i][1] || "").trim(),
+          direccion: String(datosPed[i][2] || "").trim(),
+          director: String(datosPed[i][3] || "").trim(),
+          referencia: String(datosPed[i][4] || "").trim(),
+          estado: String(datosPed[i][5] || "").trim()
+        };
+
+        break;
+      }
+    }
+
+    if (filaPed === -1) {
+      return { exito: false, error: "Pedido no encontrado" };
+    }
+
+    if (pedido.estado !== "Confirmado") {
+      return {
+        exito: false,
+        error: "Solo se pueden entregar pedidos en estado 'Confirmado'. Estado actual: " + pedido.estado
+      };
+    }
+
+    const datosDet = hojaDet.getDataRange().getValues();
+    const items = [];
+
+    for (let i = 1; i < datosDet.length; i++) {
+      if (String(datosDet[i][1]).trim() === String(idPedido).trim()) {
+        items.push({
+          articuloNombre: String(datosDet[i][2] || "").trim(),
+          articuloId: String(datosDet[i][3] || "").trim(),
+          categoria: String(datosDet[i][4] || "").trim(),
+          cantidad: Number(datosDet[i][5]) || 0,
+          textoCantidad: String(datosDet[i][6] || ""),
+          formatoCantidad: String(datosDet[i][7] || "unidades").trim()
+        });
+      }
+    }
+
+    if (items.length === 0) {
+      return { exito: false, error: "El pedido no tiene artículos" };
+    }
+
+    const datosArt = hojaArt.getDataRange().getValues();
+    const artIndex = {};
+
+    for (let i = 1; i < datosArt.length; i++) {
+      artIndex[String(datosArt[i][0]).trim()] = {
+        fila: i + 1,
+        nombre: String(datosArt[i][1] || "").trim(),
+        stock: Number(datosArt[i][2]) || 0
+      };
+    }
+
+    // Validar stock ANTES de descontar (doble chequeo por si cambió desde la confirmación)
+    const faltantes = [];
+
+    items.forEach(function(it) {
+      const art = artIndex[it.articuloId];
+
+      if (!art) {
+        faltantes.push(it.articuloNombre + " (no encontrado)");
+      } else if (art.stock < it.cantidad) {
+        faltantes.push(
+          it.articuloNombre +
+          " (stock " + art.stock +
+          ", pide " + it.cantidad + ")"
+        );
+      }
+    });
+
+    if (faltantes.length > 0) {
+      return {
+        exito: false,
+        error: "Stock insuficiente al momento de la entrega: " + faltantes.join(" / ")
+      };
+    }
+
     const nroRemito = obtenerProximoNroRemito();
     const ahoraARG = new Date(Date.now() - (3 * 60 * 60 * 1000));
 
+    // ✅ DESCONTA STOCK REAL + REGISTRA MOVIMIENTOS
     items.forEach(function(it) {
       const art = artIndex[it.articuloId];
 
@@ -1684,28 +1826,31 @@ function confirmarPedido(idPedido) {
         pedido.direccion,
         nroRemito,
         "",
-        "Pedido #" + pedido.id
+        "Entrega Pedido #" + pedido.id
       ]);
     });
 
     CacheService.getScriptCache().remove("articulos_v1");
 
+    // ✅ GENERA PDF CON FIRMAS
     let pdfUrl = "";
 
     try {
-      pdfUrl = generarYGuardarRemitoPDF(pedido, items, nroRemito);
+      pdfUrl = generarRemitoEntregaPDF(pedido, items, nroRemito);
     } catch (err) {
       pdfUrl = "ERROR_PDF: " + err.message;
     }
 
-    hojaPed.getRange(filaPed, 6).setValue("Confirmado");
+    // ✅ CAMBIA ESTADO A "Entregado" + GUARDA PDF
+    hojaPed.getRange(filaPed, 6).setValue("Entregado");
     hojaPed.getRange(filaPed, 8).setValue(pdfUrl || nroRemito);
 
     return {
       exito: true,
       nroRemito: nroRemito,
       pdfUrl: pdfUrl,
-      mensaje: "Pedido confirmado. Remito " + nroRemito + " generado."
+      mensaje: "Entrega registrada. Stock descontado. Remito " + nroRemito + " generado con firmas.",
+      estadoNuevo: "Entregado"
     };
 
   } catch (e) {
@@ -1746,6 +1891,7 @@ function obtenerProximoNroRemito() {
 // 10. GENERACIÓN DE PDF
 // ============================================================
 
+// PDF original (se mantiene por compatibilidad, pero ya no se usa en confirmarPedido)
 function generarYGuardarRemitoPDF(pedido, items, nroRemito) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const hojaConfig = ss.getSheetByName("Configuracion");
@@ -1826,6 +1972,121 @@ function generarYGuardarRemitoPDF(pedido, items, nroRemito) {
   return archivo.getUrl();
 }
 
+// ------------------------------------------------------------
+// NUEVO: PDF REMITO ENTREGA CON FIRMAS (Entrega / Recibe)
+// ------------------------------------------------------------
+
+function generarRemitoEntregaPDF(pedido, items, nroRemito) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const hojaConfig = ss.getSheetByName("Configuracion");
+
+  const textoRemito = hojaConfig
+    ? hojaConfig.getRange("B1").getValue()
+    : "En el día de la fecha, la Dirección de Compras, Contrataciones y Suministros se complace en informar que se procede a la entrega de los siguientes elementos.";
+
+  const firmaNombre = hojaConfig
+    ? hojaConfig.getRange("B2").getValue()
+    : "NOELIA N. ABELANDO";
+
+  const ahoraARG = new Date(Date.now() - (3 * 60 * 60 * 1000));
+
+  const fechaTxt = Utilities.formatDate(
+    ahoraARG,
+    "America/Argentina/Buenos_Aires",
+    "dd 'de' MMMM 'de' yyyy"
+  );
+
+  const fechaCorta = Utilities.formatDate(
+    ahoraARG,
+    "America/Argentina/Buenos_Aires",
+    "dd/MM/yyyy HH:mm"
+  );
+
+  const anioRemito = ahoraARG.getFullYear();
+
+  let filasHTML = "";
+
+  items.forEach(function(it, idx) {
+    const fondo = idx % 2 === 0 ? "#ffffff" : "#f8fafc";
+    const numArt = String(idx + 1).padStart(2, "0");
+    const cantidadMostrar = it.textoCantidad || it.cantidad;
+
+    filasHTML +=
+      '<tr style="background:' + fondo + '; border-bottom: 1px solid #e2e8f0;">' +
+        '<td style="padding: 8px 10px; font-size: 12px; text-align: center; border-right: 1px solid #e2e8f0;">' + numArt + '</td>' +
+        '<td style="padding: 8px 10px; font-size: 12px;">' + escaparHTML(it.articuloNombre) + '</td>' +
+        '<td style="padding: 8px 10px; font-size: 12px; text-align: center;">' + cantidadMostrar + '</td>' +
+      '</tr>';
+  });
+
+  // Total de unidades
+  const totalUnidades = items.reduce((sum, it) => sum + (Number(it.cantidad) || 0), 0);
+
+  const html =
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"></head>' +
+    '<body style="font-family: Arial, sans-serif; margin: 0; padding: 40px; color: #000000; background: #ffffff; line-height: 1.5;">' +
+      '<div style="text-align: right; font-size: 12px; margin-bottom: 30px;">La Plata, ' + fechaTxt + '</div>' +
+      '<div style="text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 25px; text-transform: uppercase;">Dirección de Compras, Contrataciones y Suministros</div>' +
+      '<div style="font-size: 12px; margin-bottom: 20px;">' +
+        '<div style="margin-bottom: 5px;"><strong>Área solicitante:</strong> ' + escaparHTML(pedido.direccion) + '</div>' +
+        '<div style="margin-bottom: 5px;"><strong>Director:</strong> ' + escaparHTML(pedido.director || "—") + '</div>' +
+        '<div style="margin-bottom: 5px;"><strong>Referencia:</strong> ' + escaparHTML(pedido.referencia || "—") + '</div>' +
+        '<div style="margin-bottom: 5px;"><strong>Nota Interna:</strong> ' + escaparHTML(pedido.nota || "—") + '</div>' +
+        '<div style="margin-bottom: 5px;"><strong>Número:</strong> NO-' + anioRemito + '-' + nroRemito.replace("-", "") + '-GDEBA-DPFTMTRAGP</div>' +
+      '</div>' +
+      '<div style="font-size: 12px; text-align: justify; margin-bottom: 25px;">' + escaparHTML(textoRemito) + '</div>' +
+      '<table style="width: 100%; border-collapse: collapse; border: 1px solid #000000; margin-bottom: 20px;">' +
+        '<thead><tr style="background: #e2e8f0; border-bottom: 1px solid #000000;">' +
+          '<th style="padding: 8px; text-align: center; font-size: 12px; font-weight: bold; width: 50px; border-right: 1px solid #000000;">Art</th>' +
+          '<th style="padding: 8px; text-align: left; font-size: 12px; font-weight: bold; border-right: 1px solid #000000;">Descripción</th>' +
+          '<th style="padding: 8px; text-align: center; font-size: 12px; font-weight: bold; width: 80px;">unidad</th>' +
+        '</tr></thead><tbody>' + filasHTML + '</tbody>' +
+      '</table>' +
+      '<div style="font-size: 12px; font-weight: bold; margin-bottom: 40px; text-align: right;">' +
+        'Total de unidades: ' + totalUnidades.toLocaleString('es-AR') +
+      '</div>' +
+
+      // FIRMAS
+      '<div style="margin-top: 60px; display: table; width: 100%;">' +
+        '<div style="display: table-row;">' +
+          '<div style="display: table-cell; width: 50%; padding-right: 40px; vertical-align: bottom;">' +
+            '<div style="height: 60px;"></div>' +
+            '<div style="border-top: 1px solid #000000; padding-top: 8px; font-size: 11px;">' +
+              '<strong>ENTREGA</strong><br>' +
+              'Nombre: ________________________________________<br>' +
+              'DNI: ________________________________________<br>' +
+              'Fecha: ____________________  Hora: _______________<br>' +
+              'Firma: ________________________________________' +
+            '</div>' +
+          '</div>' +
+          '<div style="display: table-cell; width: 50%; padding-left: 40px; vertical-align: bottom;">' +
+            '<div style="height: 60px;"></div>' +
+            '<div style="border-top: 1px solid #000000; padding-top: 8px; font-size: 11px;">' +
+              '<strong>RECIBE</strong><br>' +
+              'Nombre: ________________________________________<br>' +
+              'DNI: ________________________________________<br>' +
+              'Fecha: ____________________  Hora: _______________<br>' +
+              'Firma: ________________________________________' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div style="margin-top: 30px; text-align: center; font-size: 9px; color: #666666;">' +
+        'Documento generado automáticamente el ' + fechaCorta + ' · Pedido #' + pedido.id +
+      '</div>' +
+    '</body></html>';
+
+  const blob = Utilities
+    .newBlob(html, "text/html", "remito_entrega.html")
+    .getAs("application/pdf")
+    .setName("Remito_Entrega_" + nroRemito + ".pdf");
+
+  const archivo = DriveApp.getFolderById(CARPETA_REMITOS_ID).createFile(blob);
+
+  return archivo.getUrl();
+}
+
 // ============================================================
 // 11. CONFIGURACIÓN Y SETUP
 // ============================================================
@@ -1860,10 +2121,11 @@ function crearHojasPedidos() {
       "Articulo_ID",
       "Categoria",
       "Cantidad",
-      "Texto_Cantidad"
+      "Texto_Cantidad",
+      "Formato_Cantidad"
     ]);
 
-    hoja.getRange("A1:G1").setFontWeight("bold");
+    hoja.getRange("A1:H1").setFontWeight("bold");
   }
 }
 
@@ -1937,7 +2199,6 @@ function importarPedidosExternos() {
     let duplicados = 0;
     let saltados = 0;
 
-    // Cache de directores desde Estructura (columna B = nombre, columna G = director)
     const hojaEst = ss.getSheetByName("Estructura");
     const directoresCache = {};
     if (hojaEst) {
@@ -1982,7 +2243,6 @@ function importarPedidosExternos() {
           continue;
         }
 
-        // Buscar director en Estructura por destino normalizado
         const directorDestino = directoresCache[normalizarNombreDireccion(destino)] || "";
 
         const fechaPedido = construirFecha(fechaInicioRaw);
@@ -1994,7 +2254,7 @@ function importarPedidosExternos() {
           generarIDCorto(),
           notaExterna,
           destino,
-          directorDestino,  // Director desde Estructura (si existe)
+          directorDestino,
           referencia,
           "Pendiente",
           fechaPedido,
@@ -2042,9 +2302,6 @@ function importarPedidosExternos() {
   }
 }
 
-/**
- * Función de prueba para ejecutar manualmente.
- */
 function testImportar() {
   const r = importarPedidosExternos();
   console.log(JSON.stringify(r, null, 2));
@@ -2070,3 +2327,7 @@ function configurarTrigger15Minutos() {
 
   console.log("Trigger de 15 minutos configurado correctamente.");
 }
+
+// ============================================================
+// FIN DEL ARCHIVO
+// ============================================================

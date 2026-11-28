@@ -100,7 +100,7 @@ function navegarAPagina(nombre) {
         configurarBuscadorDestinos();
     }
     if (nombre === 'pedidos') {
-        cambiarTabPedidos('seguimiento');
+        cambiarTabPedidos('nuevo');
         cargarPedidos();
         configurarBuscadorArticulosPedido();
         configurarBuscadorDireccionesPedido();
@@ -2296,18 +2296,21 @@ function renderizarDetallePedido() {
                 </div>
                 <div class="detalle-pedido-item">
                     <span class="detalle-pedido-label">Estado</span>
-                    <div><span class="badge-estado ${estadoClase}">${escapeHtml(p.estado)}</span></div>
+                    <div><span class="detalle-pedido-valor">${escapeHtml(p.estado)}</span></div>
                 </div>
             </div>
 
             <div class="detalle-pedido-acciones">
                 ${esPendiente ? `
-                    <button class="btn-detalle editar" data-accion="editar">✏️ Editar</button>
+                    <button class="btn-detalle editar" data-accion="editar">➕ Seguir agregando al carrito</button>
                     <button class="btn-detalle cancelar" data-accion="cancelar">🗑️ Cancelar</button>
                     <button class="btn-detalle primario" data-accion="confirmar">✅ Confirmar pedido</button>
+                ` : (p.estado === 'Confirmado' ? `
+                    <button class="btn-detalle primario" data-accion="entregar">📦 Generar remito / Entregar</button>
+                    <button class="btn-detalle" data-accion="pdf">📄 Descargar PDF</button>
                 ` : `
                     <button class="btn-detalle primario" data-accion="pdf">📄 Descargar PDF</button>
-                `}
+                `)}
             </div>
         </div>
         
@@ -2324,6 +2327,7 @@ function renderizarDetallePedido() {
 
 async function manejarAccionPedido(accion, pedido) {
     if (accion === 'editar') {
+        cerrarModalDetallePedido();
         modoEdicionPedido = pedido.id;
         cambiarTabPedidos('nuevo');
         document.getElementById('directorPedido').value = pedido.director || '';
@@ -2380,7 +2384,7 @@ async function manejarAccionPedido(accion, pedido) {
             mostrarCartel('🗑️', 'PEDIDO CANCELADO',
                 `#${pedido.id} · ${pedido.direccion || ''}`, 'pedido-cancel');
 
-            pedidoSeleccionado = null;
+            cerrarModalDetallePedido();
             await cargarListaPedidos();
             renderizarDetallePedido();
         } catch (e) {
@@ -2398,7 +2402,7 @@ async function manejarAccionPedido(accion, pedido) {
 
         const confirmado = await confirmModal.confirmarAccion({
             titulo: 'Confirmar pedido',
-            mensaje: 'Vas a confirmar el siguiente pedido:',
+            mensaje: 'Se guardará la lista de items (valida stock, NO descuenta stock). ¿Confirmar?',
             items: itemsModal,
             direccion: pedido.direccion || '',
             solicitante: pedido.director || ''
@@ -2408,17 +2412,61 @@ async function manejarAccionPedido(accion, pedido) {
             const r = await apiService.post({ accion: 'confirmarPedido', id: pedido.id });
             if (!r || r.exito === false) throw new Error(r?.error || 'Error');
 
-            // ✅ Verificamos si falló el PDF
+            // ✅ Nuevo backend: solo confirma, NO descuenta stock, NO genera PDF
+            if (r.esHistorico) {
+                mostrarCartel('⚠️', 'PEDIDO CONFIRMADO', `Lista guardada · ⚠️ Era pedido histórico (formato anterior)`, 'pedido-ok');
+                mostrarToast('Pedido confirmado (lista guardada). Verificá cantidades antes de entregar.', 'exito');
+            } else {
+                mostrarCartel('✅', 'PEDIDO CONFIRMADO', 'Lista guardada. Stock NO descontado aún.', 'pedido-ok');
+                mostrarToast('Pedido confirmado. Usá "Generar remito / Entregar" cuando salgan los productos.', 'exito');
+            }
+
+            await cargarListaPedidos();
+            await cargarArticulos();
+            renderizarDetallePedido();
+        } catch (e) {
+            mostrarToast('Error: ' + e.message, 'error');
+        }
+        return;
+    }
+
+    // ===== NUEVO: GENERAR REMITO ENTREGA =====
+    if (accion === 'entregar') {
+        // Preparar items para el modal
+        const itemsModal = (pedido.items || []).map(it => ({
+            nombre: it.articuloNombre,
+            cantidad: `${Number(it.cantidad).toLocaleString('es-AR')} uds`
+        }));
+
+        const confirmado = await confirmModal.confirmarAccion({
+            titulo: 'Generar remito de entrega',
+            mensaje: 'Se descontará el stock y se generará el PDF con firmas (Entrega / Recibe). ¿Confirmar?',
+            items: itemsModal,
+            direccion: pedido.direccion || '',
+            solicitante: pedido.director || '',
+            danger: true
+        });
+        if (!confirmado) return;
+
+        try {
+            const r = await apiService.post({ accion: 'generarRemitoEntrega', id: pedido.id });
+            if (!r || r.exito === false) throw new Error(r?.error || 'Error');
+
             const pdfFallo = typeof r.pdfUrl === 'string' && r.pdfUrl.startsWith('ERROR_PDF');
 
             if (pdfFallo) {
                 const detalleError = (r.pdfUrl || '').replace('ERROR_PDF:', '').trim() || 'error desconocido';
-                mostrarCartel('⚠️', 'PEDIDO CONFIRMADO', `Stock descontado · Falló el PDF (${r.nroRemito})`, 'pedido-cancel');
+                mostrarCartel('⚠️', 'ENTREGA REGISTRADA', `Stock descontado · Falló el PDF (${r.nroRemito})`, 'pedido-cancel');
                 mostrarToast('Stock descontado, pero falló el remito: ' + detalleError, 'error');
             } else {
-                mostrarCartel('✅', 'PEDIDO CONFIRMADO', `Remito ${r.nroRemito} generado`, 'pedido-ok');
+                mostrarCartel('📦', 'ENTREGA REGISTRADA', `Remito ${r.nroRemito} generado con firmas`, 'pedido-ok');
+                // Abrir PDF automáticamente
+                if (r.pdfUrl && r.pdfUrl.startsWith('http')) {
+                    setTimeout(() => window.open(r.pdfUrl, '_blank'), 500);
+                }
             }
 
+            cerrarModalDetallePedido();
             await cargarListaPedidos();
             await cargarArticulos();
             renderizarDetallePedido();
@@ -2435,6 +2483,105 @@ async function manejarAccionPedido(accion, pedido) {
             mostrarToast('PDF no disponible', 'error');
         }
     }
+}
+
+// ============================================================
+// MODAL DETALLE PEDIDO - Fullscreen
+// ============================================================
+
+function renderizarContenidoModalDetallePedido(pedido, contenedor) {
+    if (!contenedor || !pedido) return;
+
+    const filas = (pedido.items || []).map(it => `
+        <tr>
+            <td>${escapeHtml(it.articuloNombre)}</td>
+            <td><span class="badge-categoria">ID ${escapeHtml(it.articuloId)}</span></td>
+            <td style="font-weight:700;">${Number(it.cantidad) || 0} unidades</td>
+        </tr>
+    `).join('') || '<tr><td colspan="3"><p class="placeholder">Sin artículos.</p></td></tr>';
+
+    const esPendiente = pedido.estado === 'Pendiente';
+
+    const fechaTxt = pedido.fecha ? new Date(pedido.fecha).toLocaleDateString('es-AR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }) : '—';
+
+    const estadoClase = normalizarTexto(pedido.estado || '').replace(/\s+/g, '-');
+
+    contenedor.innerHTML = `
+        <div class="detalle-pedido-card">
+
+            <div class="detalle-pedido-grid">
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Pedido</span>
+                    <span class="detalle-pedido-valor">#${escapeHtml(pedido.id)}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Dirección</span>
+                    <span class="detalle-pedido-valor">${escapeHtml(pedido.direccion)}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Solicitado por</span>
+                    <span class="detalle-pedido-valor">${escapeHtml(pedido.director || '—')}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Referencia</span>
+                    <span class="detalle-pedido-valor">${escapeHtml(pedido.referencia || '—')}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Fecha</span>
+                    <span class="detalle-pedido-valor fecha">${fechaTxt}</span>
+                </div>
+                <div class="detalle-pedido-item">
+                    <span class="detalle-pedido-label">Estado</span>
+                    <div><span class="detalle-pedido-valor">${escapeHtml(pedido.estado)}</span></div>
+                </div>
+            </div>
+
+            <div class="detalle-pedido-acciones">
+                ${esPendiente ? `
+                    <button class="btn-detalle editar" data-accion="editar">➕ Seguir agregando al carrito</button>
+                    <button class="btn-detalle cancelar" data-accion="cancelar">🗑️ Cancelar</button>
+                    <button class="btn-detalle primario" data-accion="confirmar">✅ Confirmar pedido</button>
+                ` : (pedido.estado === 'Confirmado' ? `
+                    <button class="btn-detalle primario" data-accion="entregar">📦 Generar remito / Entregar</button>
+                    <button class="btn-detalle" data-accion="pdf">📄 Descargar PDF</button>
+                ` : `
+                    <button class="btn-detalle primario" data-accion="pdf">📄 Descargar PDF</button>
+                `)}
+            </div>
+        </div>
+
+        <div class="inventario-tabla-wrapper" style="margin-top: 0;">
+            <table class="inventario-tabla">
+                <thead><tr><th>Artículo</th><th>ID</th><th>Cantidad</th></tr></thead>
+                <tbody>${filas}</tbody>
+            </table>
+        </div>
+    `;
+
+    contenedor.querySelectorAll('[data-accion]').forEach(btn => btn.addEventListener('click', () => manejarAccionPedido(btn.dataset.accion, pedido)));
+}
+
+function abrirModalDetallePedido(pedido) {
+    pedidoSeleccionado = pedido.id;  // Mantener para compatibilidad con otras funciones
+    const modal = document.getElementById('modalDetallePedido');
+    const contenedor = document.getElementById('modalDetallePedidoContenido');
+    if (!modal || !contenedor) return;
+
+    renderizarContenidoModalDetallePedido(pedido, contenedor);
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';  // Prevenir scroll de fondo
+}
+
+function cerrarModalDetallePedido() {
+    const modal = document.getElementById('modalDetallePedido');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    pedidoSeleccionado = null;
 }
 
 // Renderizado simplificado del carrito: solo unidades, stock visible, input con max=stock
@@ -2532,7 +2679,23 @@ function configurarPedidos() {
     configurarBuscadorDireccionesPedido();
     cambiarTabPedidos('seguimiento');
     cargarPedidos();
+
+    // Listeners del modal detalle pedido
+    document.getElementById('cerrarModalDetallePedido')?.addEventListener('click', cerrarModalDetallePedido);
+    document.getElementById('modalDetallePedido')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) cerrarModalDetallePedido();  // Click en overlay cierra
+    });
 }
+
+// Escape key para cerrar modal detalle pedido
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('modalDetallePedido');
+        if (modal && modal.style.display === 'flex') {
+            cerrarModalDetallePedido();
+        }
+    }
+});
 
 async function manejarSubmitPedido(e) {
     e.preventDefault();
@@ -2946,20 +3109,36 @@ function renderizarHojaSeguimiento() {
                     const acciones = p.estado === 'Pendiente'
                         ? `<button type="button" class="pedidos-acciones-icono" data-pedido-accion="ver" data-pedido-id="${escapeHtml(p.id)}" aria-label="Ver detalle">👁️</button><button type="button" class="pedidos-acciones-icono" data-pedido-accion="confirmar" data-pedido-id="${escapeHtml(p.id)}" aria-label="Confirmar pedido">✅</button>`
                         : `<button type="button" class="pedidos-acciones-icono" data-pedido-accion="ver" data-pedido-id="${escapeHtml(p.id)}" aria-label="Ver detalle">👁️</button><button type="button" class="pedidos-acciones-icono" data-pedido-accion="pdf" data-pedido-id="${escapeHtml(p.id)}" aria-label="Abrir remito PDF">🖨️</button>`;
-                    return `<tr><td><span class="pedidos-fecha-hora">${escapeHtml(hora)}</span></td><td><strong class="pedidos-direccion">${escapeHtml(p.direccion || 'Sin dirección')}</strong><span class="pedidos-codigo">${escapeHtml(p.nota || `#${p.id}`)}</span></td><td>${escapeHtml(p.director || '—')}</td><td><span class="pedidos-items-resumen">${items}</span></td><td><strong class="pedidos-unidades">${unidades}</strong><span class="pedidos-unidades-label">ud.</span></td><td><span class="badge-estado ${estadoClase}">${escapeHtml(p.estado || 'Sin estado')}</span></td><td><div class="pedidos-acciones">${acciones}</div></td></tr>`;
+                    return `<tr data-pedido-id="${escapeHtml(p.id)}"><td><span class="pedidos-fecha-hora">${escapeHtml(hora)}</span></td><td><strong class="pedidos-direccion">${escapeHtml(p.direccion || 'Sin dirección')}</strong><span class="pedidos-codigo">${escapeHtml(p.nota || `#${p.id}`)}</span></td><td>${escapeHtml(p.director || '—')}</td><td><span class="pedidos-items-resumen">${items}</span></td><td><strong class="pedidos-unidades">${unidades}</strong><span class="pedidos-unidades-label">ud.</span></td><td><span class="badge-estado ${estadoClase}">${escapeHtml(p.estado || 'Sin estado')}</span></td><td><div class="pedidos-acciones">${acciones}</div></td></tr>`;
                 }).join('')}</tbody>
             </table>
         </section>
     `).join('');
 
-    contenedor.querySelectorAll('[data-pedido-accion]').forEach(btn => btn.addEventListener('click', () => {
+    // Delegación de eventos en tbody: click en fila abre modal detalle, click en botones NO
+    contenedor.querySelectorAll('tbody').forEach(tbody => {
+        tbody.addEventListener('click', (e) => {
+            // Si el click fue en un botón (o dentro de uno), no hacemos nada: que maneje su propio listener
+            if (e.target.closest('button')) return;
+
+            const tr = e.target.closest('tr[data-pedido-id]');
+            if (!tr) return;
+
+            const pedidoId = tr.dataset.pedidoId;
+            const pedido = pedidosCache.find(p => String(p.id) === String(pedidoId));
+            if (!pedido) return;
+
+            abrirModalDetallePedido(pedido);
+        });
+    });
+
+    // Botones de acciones (ojito, confirmar, pdf) mantienen su listener propio
+    contenedor.querySelectorAll('[data-pedido-accion]').forEach(btn => btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evita que el click burbujee al tbody
         const pedido = pedidosCache.find(p => String(p.id) === String(btn.dataset.pedidoId));
         if (!pedido) return;
         if (btn.dataset.pedidoAccion === 'ver') {
-            pedidoSeleccionado = pedido.id;
-            renderizarListaPedidos();
-            renderizarDetallePedido();
-            document.getElementById('detallePedidoSeccion')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            abrirModalDetallePedido(pedido);
         } else manejarAccionPedido(btn.dataset.pedidoAccion, pedido);
     }));
 }
